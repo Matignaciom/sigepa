@@ -1,0 +1,633 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.leftSection {
+  width: 50%;
+  background-color: #4f46e5;
+  background-image: linear-gradient(135deg, #4f46e5 0%, #6474ed 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+.brandingContent {
+  position: relative;
+  z-index: 10;
+  max-width: 600px;
+  padding: 1rem;
+}
+
+.leftSection::before {
+  content: '';
+  position: absolute;
+  width: 60%;
+  height: 100%;
+  top: 0;
+  right: -20%;
+  background-color: rgba(255, 255, 255, 0.03);
+  transform: skewX(-15deg);
+}
+
+.leftSection::after {
+  content: '';
+  position: absolute;
+  width: 80%;
+  height: 70%;
+  bottom: -20%;
+  left: -10%;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 50%;
+}
+
+.brandLogo {
+  font-size: 2.5rem;
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  letter-spacing: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.brandTitle {
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.brandDescription {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+.decorationCircle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.circle1 {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 5%;
+}
+
+.circle2 {
+  width: 400px;
+  height: 400px;
+  bottom: -10%;
+  right: -5%;
+}
+
+.rightSection {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 450px;
+  padding: 1.25rem;
+  background-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  color: #4f46e5;
+  font-weight: bold;
+}
+
+.title {
+  color: #111827;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.infoIcon {
+  color: #6b7280;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.infoIcon:hover {
+  color: #4f46e5;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background-color: #fff;
+  width: 100%;
+  color: #111827;
+}
+
+.input::placeholder {
+  color: #a1a1aa;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+  background-color: white;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 0.75rem;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 1.1rem;
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.passwordToggle:hover {
+  color: #4f46e5;
+}
+
+.forgot {
+  text-align: right;
+  margin-top: 0.35rem;
+}
+
+.forgotLink {
+  font-size: 0.8rem;
+  color: #4f46e5;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgotLink:hover {
+  color: #4338ca;
+  text-decoration: underline;
+}
+
+.button {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.75rem;
+  position: relative;
+  letter-spacing: 0.5px;
+}
+
+.button:hover {
+  background-color: #4338ca;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.error {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 0.65rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  border-left: 4px solid #dc2626;
+}
+
+.errorText {
+  color: #b91c1c;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.links {
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.link {
+  color: #4f46e5;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+  padding: 0.5rem;
+}
+
+.link:hover {
+  color: #4338ca;
+  text-decoration: underline;
+}
+
+.tooltip {
+  display: none;
+}
+
+.passwordToggleTooltip {
+  display: none;
+}
+
+/* Tooltip para el botón de mostrar/ocultar contraseña */
+.passwordToggleTooltip {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  transform: translateY(-4px);
+  background-color: #1f2937;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.25rem;
+  width: max-content;
+  max-width: 180px;
+  z-index: 100;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.passwordToggleTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 10px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #1f2937;
+}
+
+.passwordToggle:hover .passwordToggleTooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Para pantallas de 1080p y tamaños similares */
+@media (min-width: 1025px) and (max-height: 1080px) {
+  .leftSection {
+    padding: 0;
+  }
+  
+  .brandLogo {
+    font-size: 2.25rem;
+    margin-bottom: 0.6rem;
+  }
+  
+  .brandTitle {
+    font-size: 1.75rem;
+    margin-bottom: 0.6rem;
+  }
+  
+  .brandDescription {
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+  
+  .formContainer {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .leftSection {
+    padding: 0;
+  }
+  
+  .rightSection {
+    padding: 0;
+  }
+  
+  .formContainer {
+    padding: 1rem;
+  }
+  
+  .brandTitle {
+    font-size: 1.75rem;
+  }
+  
+  .brandDescription {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  
+  .leftSection, 
+  .rightSection {
+    width: 100%;
+  }
+  
+  .leftSection {
+    height: 150px;
+    padding: 0;
+  }
+  
+  .brandingContent {
+    text-align: center;
+    padding: 0.5rem;
+  }
+  
+  .brandLogo {
+    font-size: 2rem;
+    margin-bottom: 0.35rem;
+  }
+  
+  .brandTitle {
+    font-size: 1.5rem;
+    margin-bottom: 0.35rem;
+  }
+  
+  .brandDescription {
+    display: none;
+  }
+  
+  .formContainer {
+    max-width: 500px;
+    padding: 1rem;
+  }
+}
+
+/* Optimizado específicamente para 418px de ancho (teléfono mencionado) */
+@media (max-width: 450px) {
+  .formContainer {
+    padding: 0.85rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  
+  .input, .button {
+    padding: 0.6rem;
+  }
+  
+  .leftSection {
+    height: 120px;
+  }
+  
+  .brandLogo {
+    font-size: 1.75rem;
+  }
+  
+  .brandTitle {
+    font-size: 1.25rem;
+  }
+  
+  .logoContainer {
+    margin-bottom: 0.75rem;
+  }
+  
+  .logo {
+    font-size: 1.25rem;
+  }
+  
+  .form {
+    gap: 0.85rem;
+  }
+}
+
+/* Media queries para diferentes alturas de pantalla */
+@media (max-height: 800px) {
+  .brandLogo {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .brandTitle {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .brandDescription {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .formContainer {
+    padding: 1rem;
+  }
+  
+  .form {
+    gap: 0.85rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .subtitle {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-height: 600px) {
+  .container {
+    min-height: auto;
+    height: 100vh;
+  }
+  
+  .brandLogo {
+    font-size: 1.75rem;
+    margin-bottom: 0.35rem;
+  }
+  
+  .brandTitle {
+    font-size: 1.25rem;
+    margin-bottom: 0.35rem;
+  }
+  
+  .brandDescription {
+    font-size: 0.8rem;
+    line-height: 1.2;
+    margin-bottom: 0.35rem;
+  }
+  
+  .formContainer {
+    padding: 0.75rem;
+  }
+  
+  .form {
+    gap: 0.75rem;
+  }
+  
+  .title {
+    font-size: 1.25rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .subtitle {
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .label {
+    margin-bottom: 0.25rem;
+  }
+  
+  .input, .button {
+    padding: 0.5rem 0.65rem;
+  }
+  
+  .forgot {
+    margin-top: 0.25rem;
+  }
+  
+  .button {
+    margin-top: 0.5rem;
+  }
+}
+
+/* Para pantallas muy pequeñas en altura */
+@media (max-height: 500px) {
+  .container {
+    flex-direction: row;
+  }
+  
+  .leftSection {
+    padding: 0;
+  }
+  
+  .brandDescription {
+    display: none;
+  }
+  
+  .formContainer {
+    padding: 0.5rem;
+  }
+  
+  .logo {
+    font-size: 1.2rem;
+  }
+  
+  .logoContainer {
+    margin-bottom: 0.5rem;
+  }
+  
+  .title {
+    font-size: 1.1rem;
+  }
+  
+  .subtitle {
+    margin-bottom: 0.5rem;
+  }
+  
+  .form {
+    gap: 0.5rem;
+  }
+  
+  .links {
+    margin-top: 0.75rem;
+  }
+}
+
+/* Combinación de altura y ancho para dispositivos pequeños */
+@media (max-width: 768px) and (max-height: 700px) {
+  .leftSection {
+    height: 130px;
+  }
+}
+
+@media (max-width: 768px) and (max-height: 600px) {
+  .leftSection {
+    height: 100px;
+  }
+  
+  .brandLogo {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .brandTitle {
+    font-size: 1rem;
+  }
+}

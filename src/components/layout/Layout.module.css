@@ -1,0 +1,30 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  display: flex;
+  flex: 1;
+}
+
+.main {
+  flex: 1;
+  padding: 2rem;
+  margin-left: 250px; /* Ancho del sidebar */
+  min-height: calc(100vh - 60px); /* Altura total menos el header */
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  
+  .main {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}

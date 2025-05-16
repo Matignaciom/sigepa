@@ -1,0 +1,226 @@
+.pagosContainer {
+  width: 100%;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.tabsContainer {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #eee;
+}
+
+.tabButton {
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tabButton:hover {
+  color: #333;
+  background-color: #f8f9fa;
+}
+
+.activeTab {
+  color: #0070f3;
+  font-weight: 600;
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #0070f3;
+}
+
+.tabContent {
+  padding: 1.5rem;
+}
+
+.pagosTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHeader {
+  display: flex;
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #eee;
+}
+
+.tableRow {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: #f8f9fa;
+}
+
+.tableCell {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.statusBadge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.pendiente {
+  background-color: #fff4e5;
+  color: #ff9800;
+}
+
+.próximo {
+  background-color: #e6f7ff;
+  color: #0070f3;
+}
+
+.pagado {
+  background-color: #e6f9ee;
+  color: #28a745;
+}
+
+.payButton {
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.payButton:hover {
+  background-color: #0060df;
+}
+
+.detailButton {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.detailButton:hover {
+  background-color: #eee;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #666;
+}
+
+.resumenPago {
+  margin-top: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #eee;
+}
+
+.resumenPago h3 {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.resumenItem {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed #eee;
+}
+
+.resumenMonto {
+  font-weight: 700;
+  color: #0070f3;
+}
+
+.pagarTodoButton {
+  width: 100%;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-top: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.pagarTodoButton:hover {
+  background-color: #0060df;
+}
+
+@media (max-width: 768px) {
+  .tableHeader, .tableRow {
+    display: block;
+  }
+  
+  .tableHeader {
+    display: none;
+  }
+  
+  .tableRow {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #eee;
+    border-radius: 8px;
+  }
+  
+  .tableCell {
+    display: flex;
+    padding: 0.5rem 0;
+    justify-content: space-between;
+  }
+  
+  .tableCell::before {
+    content: attr(data-label);
+    font-weight: 600;
+  }
+}
