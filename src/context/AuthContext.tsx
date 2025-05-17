@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (name: string, email: string, password: string, rut: string, communityId: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_URL}/autenticacion/login/registrar-nuevo-usuario`, {
+      const response = await fetch(`${API_URL}/registrar-usuario`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

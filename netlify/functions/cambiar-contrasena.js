@@ -68,19 +68,22 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const { email, oldPassword, newPassword, confirmPassword } = data;
+    const { email, newPassword, confirmPassword } = data;
 
-    // Validar que se proporcionen todos los campos requeridos
-    if (!email || !oldPassword || !newPassword || !confirmPassword) {
+    // Validar campos requeridos actualizados
+    if (!email || !newPassword || !confirmPassword) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
           success: false, 
-          message: 'Todos los campos son requeridos (email, contraseña actual, nueva contraseña y confirmación)' 
+          message: 'Todos los campos son requeridos (email, nueva contraseña y confirmación)' 
         }),
       };
     }
+
+    // Eliminar verificación de contraseña anterior
+    console.log(`Solicitud de cambio de contraseña para: ${email}`);
 
     // Verificar que la nueva contraseña y la confirmación coincidan
     if (newPassword !== confirmPassword) {
@@ -114,35 +117,33 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Verificar si el usuario existe y la contraseña actual es correcta
+    // Verificar si el usuario existe
     try {
-      const hashedOldPassword = hashPassword(oldPassword);
-      
       const [existingUsers] = await connection.execute(
-        'SELECT idUsuario FROM Usuario WHERE email = ? AND contrasena = ?',
-        [email, hashedOldPassword]
+        'SELECT idUsuario FROM Usuario WHERE email = ?',
+        [email]
       );
-
+    
       if (existingUsers.length === 0) {
         await connection.end();
         return {
-          statusCode: 401,
+          statusCode: 404,
           headers,
           body: JSON.stringify({ 
             success: false, 
-            message: 'Correo electrónico o contraseña actual incorrectos' 
+            message: 'Usuario no encontrado' 
           }),
         };
       }
     } catch (error) {
-      console.error('Error al verificar credenciales:', error);
+      console.error('Error al verificar usuario:', error);
       await connection.end();
       return {
         statusCode: 500,
         headers,
         body: JSON.stringify({ 
           success: false, 
-          message: 'Error al verificar credenciales',
+          message: 'Error al verificar usuario',
           error: error.message 
         }),
       };

@@ -39,7 +39,6 @@ export const ForgotPassword = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [email, setEmail] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -85,32 +84,24 @@ export const ForgotPassword = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/recuperacion/enviar-codigo`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: data.email }),
-      });
-
-      const responseData = await response.json();
-
-      if (response.ok && responseData.success) {
-        setEmail(data.email);
-        setSuccess(`Código enviado a ${data.email}. Por favor, revisa tu correo.`);
-        
-        // Si estamos en desarrollo, mostrar el código en la consola
-        if (responseData.codigo) {
-          console.log(`Código de verificación: ${responseData.codigo}`);
-        }
-        
-        setTimeout(() => {
-          setCurrentStep(2);
-          setSuccess(null);
-        }, 1500);
-      } else {
-        setError(responseData.error || 'Error al enviar el código. Por favor, inténtalo nuevamente.');
-      }
+      // Simulamos el envío del código (en un entorno real, esto enviaría un correo)
+      // Generamos un código de 6 dígitos aleatorio
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // En un entorno real, aquí enviaríamos el código por correo
+      // Por ahora, solo lo mostramos en la consola para pruebas
+      console.log(`Código de verificación para ${data.email}: ${verificationCode}`);
+      
+      setEmail(data.email);
+      setSuccess(`Código enviado a ${data.email}. Por favor, revisa la consola para obtener el código.`);
+      
+      // Almacenamos el código en localStorage para verificarlo después
+      localStorage.setItem(`verification_code_${data.email}`, verificationCode);
+      
+      setTimeout(() => {
+        setCurrentStep(2);
+        setSuccess(null);
+      }, 1500);
     } catch (err) {
       setError('Error al enviar el código. Por favor, inténtalo nuevamente.');
       console.error(err);
@@ -124,28 +115,17 @@ export const ForgotPassword = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/recuperacion/verificar-codigo`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email: email,
-          codigo: data.code 
-        }),
-      });
-
-      const responseData = await response.json();
-
-      if (response.ok && responseData.success) {
-        setVerificationCode(data.code);
+      // Obtenemos el código almacenado para este email
+      const storedCode = localStorage.getItem(`verification_code_${email}`);
+      
+      if (data.code === storedCode) {
         setSuccess('Código verificado correctamente.');
         setTimeout(() => {
           setCurrentStep(3);
           setSuccess(null);
         }, 1500);
       } else {
-        setError(responseData.error || 'Código incorrecto. Por favor, verifica e intenta nuevamente.');
+        setError('Código incorrecto. Por favor, verifica e intenta nuevamente.');
       }
     } catch (err) {
       setError('Error al verificar el código. Por favor, inténtalo nuevamente.');
@@ -160,27 +140,30 @@ export const ForgotPassword = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/recuperacion/cambiar-contrasena`, {
+      const response = await fetch(`${API_URL}/cambiar-contrasena`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: email,
-          codigo: verificationCode,
-          newPassword: data.newPassword
+          newPassword: data.newPassword,
+          confirmPassword: data.confirmPassword
         }),
       });
 
       const responseData = await response.json();
 
       if (response.ok && responseData.success) {
+        // Limpiamos el código de verificación
+        localStorage.removeItem(`verification_code_${email}`);
+        
         setSuccess('¡Contraseña actualizada correctamente!');
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       } else {
-        setError(responseData.error || 'Error al restablecer la contraseña. Por favor, inténtalo nuevamente.');
+        setError(responseData.message || 'Error al restablecer la contraseña. Por favor, inténtalo nuevamente.');
       }
     } catch (err) {
       setError('Error al restablecer la contraseña. Por favor, inténtalo nuevamente.');
@@ -259,6 +242,25 @@ export const ForgotPassword = () => {
       case 3:
         return (
           <form onSubmit={handleSubmitReset(onSubmitReset)} className={styles.form}>
+            <div className={styles.formGroup}>
+              <label htmlFor="emailDisplay" className={styles.label}>
+                Correo Electrónico
+                <span className={styles.infoIcon} title="Correo electrónico asociado a tu cuenta">
+                  <FaInfoCircle />
+                </span>
+              </label>
+              <div className={styles.inputWrapper}>
+                <input
+                  id="emailDisplay"
+                  type="email"
+                  className={styles.input}
+                  placeholder="juan.perez@gmail.com"
+                  defaultValue={email}
+                  readOnly
+                />
+              </div>
+            </div>
+
             <div className={styles.formGroup}>
               <label htmlFor="newPassword" className={styles.label}>
                 Nueva Contraseña
@@ -395,4 +397,4 @@ export const ForgotPassword = () => {
       </div>
     </div>
   );
-}; 
+};

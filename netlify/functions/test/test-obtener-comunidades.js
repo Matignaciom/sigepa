@@ -1,35 +1,23 @@
-// Script para probar la función de cambiar-contrasena
+// Script para probar la función de obtener-comunidades
 const fetch = require('node-fetch');
 
 // URL de la función. Cuando se ejecuta localmente, normalmente es:
-const functionUrl = 'http://localhost:8889/.netlify/functions/cambiar-contrasena';
+const functionUrl = 'http://localhost:8889/.netlify/functions/obtener-comunidades';
 
-// Datos para prueba - Usando el usuario de prueba
-const testData = {
-  email: 'usuario.prueba@ejemplo.com',
-  newPassword: 'NuevaContraseña2023',
-  confirmPassword: 'NuevaContraseña2023'
-};
-
-// En la función testCambioContrasena, modificar el mensaje de log:
-console.log('PRUEBA DE CAMBIO DE CONTRASEÑA (3 CAMPOS)');
-
-async function testCambioContrasena() {
+async function testObtenerComunidades() {
   try {
     console.log('----------------------------------');
-    console.log('PRUEBA DE CAMBIO DE CONTRASEÑA');
+    console.log('PRUEBA DE OBTENCIÓN DE COMUNIDADES');
     console.log('----------------------------------');
     console.log('URL de la función:', functionUrl);
-    console.log('Datos de prueba:', testData);
     console.log('----------------------------------');
     
     console.log('Enviando solicitud...');
     const response = await fetch(functionUrl, {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(testData)
+      }
     });
     
     console.log('Respuesta recibida. Código de estado:', response.status);
@@ -41,10 +29,19 @@ async function testCambioContrasena() {
     console.log('----------------------------------');
     
     if (data.success) {
-      console.log('✅ PRUEBA EXITOSA - Cambio de contraseña correcto');
-      console.log('Mensaje:', data.message);
+      console.log('✅ PRUEBA EXITOSA - Comunidades obtenidas correctamente');
+      console.log('Número de comunidades:', data.comunidades ? data.comunidades.length : 0);
+      
+      if (data.comunidades && data.comunidades.length > 0) {
+        console.log('Lista de comunidades:');
+        data.comunidades.forEach((comunidad, index) => {
+          console.log(`${index + 1}. ${comunidad.nombre} (ID: ${comunidad.idComunidad})`);
+        });
+      } else {
+        console.log('No se encontraron comunidades en la base de datos');
+      }
     } else {
-      console.log('❌ PRUEBA FALLIDA - Cambio de contraseña incorrecto');
+      console.log('❌ PRUEBA FALLIDA - Error al obtener comunidades');
       console.log('Mensaje de error:', data.message);
       console.log('Detalles del error:', data.error || 'No proporcionado');
     }
@@ -56,4 +53,4 @@ async function testCambioContrasena() {
 }
 
 // Ejecutar la prueba
-testCambioContrasena();
+testObtenerComunidades();

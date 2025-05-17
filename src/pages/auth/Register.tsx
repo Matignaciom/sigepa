@@ -10,23 +10,36 @@ import { FaEye, FaEyeSlash, FaInfoCircle } from 'react-icons/fa';
 // URL base de API
 const API_URL = import.meta.env.VITE_API_URL || '/.netlify/functions';
 
-// Validador de RUT chileno
+// Validador de RUT chileno mejorado
 const validateRut = (rut: string) => {
-  if (!/^[0-9]+-[0-9kK]{1}$/.test(rut)) return false;
+  if (!rut) return false;
   
-  const [number, verifier] = rut.split('-');
-  let sum = 0;
-  let multiplier = 2;
+  // Eliminar todos los caracteres no alfanuméricos excepto K/k
+  const rutLimpio = rut.replace(/[^0-9kK]/g, '');
   
-  for (let i = number.length - 1; i >= 0; i--) {
-    sum += parseInt(number[i]) * multiplier;
-    multiplier = multiplier === 7 ? 2 : multiplier + 1;
+  // Verificar que tenga al menos 2 caracteres (1 número + dígito verificador)
+  if (rutLimpio.length < 2) return false;
+  
+  // Separar el cuerpo del dígito verificador
+  const cuerpo = rutLimpio.slice(0, -1);
+  const dv = rutLimpio.slice(-1).toLowerCase();
+  
+  // Calcular dígito verificador
+  let suma = 0;
+  let multiplicador = 2;
+  
+  // Recorrer el cuerpo de derecha a izquierda
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i]) * multiplicador;
+    multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
   }
   
-  const expectedVerifier = 11 - (sum % 11);
-  let calculatedVerifier = expectedVerifier === 11 ? '0' : expectedVerifier === 10 ? 'K' : expectedVerifier.toString();
+  // Calcular dígito verificador esperado
+  const dvEsperado = 11 - (suma % 11);
+  let dvCalculado = dvEsperado === 11 ? '0' : dvEsperado === 10 ? 'k' : dvEsperado.toString();
   
-  return calculatedVerifier.toLowerCase() === verifier.toLowerCase();
+  // Comparar dígito verificador calculado con el proporcionado
+  return dvCalculado === dv;
 };
 
 const registerSchema = z.object({
@@ -34,7 +47,7 @@ const registerSchema = z.object({
   email: z.string().email('Correo electrónico inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   confirmPassword: z.string().min(6, 'La confirmación de contraseña debe tener al menos 6 caracteres'),
-  rut: z.string().refine(validateRut, { message: 'RUT inválido. Formato correcto: 12345678-9' }),
+  rut: z.string().refine(validateRut, { message: 'RUT inválido. Formato correcto: 12.345.678-9' }),
   community: z.string().min(1, 'Seleccione una comunidad'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Las contraseñas no coinciden',
@@ -45,8 +58,41 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 // Tipo para las comunidades
 type Community = {
-  id: string;
-  name: string;
+  idComunidad: string;  // Cambiado de id a idComunidad
+  nombre: string;       // Cambiado de name a nombre
+};
+
+// Función para formatear RUT chileno automáticamente
+const formatRut = (value: string) => {
+  // Eliminar puntos y guiones
+  let rut = value.replace(/\./g, '').replace(/-/g, '');
+
+  // Eliminar caracteres no numéricos ni K/k
+  rut = rut.replace(/[^0-9kK]/g, '');
+
+  // Separar dígito verificador
+  let dv = '';
+  if (rut.length > 1) {
+    dv = rut.slice(-1);
+    rut = rut.slice(0, -1);
+  }
+
+  // Formatear con puntos
+  let rutFormateado = '';
+  for (let i = rut.length; i > 0; i -= 3) {
+    const inicio = Math.max(0, i - 3);
+    rutFormateado = '.' + rut.substring(inicio, i) + rutFormateado;
+  }
+
+  // Eliminar el primer punto
+  rutFormateado = rutFormateado.substring(1);
+
+  // Agregar guión y dígito verificador si existe
+  if (dv) {
+    rutFormateado = rutFormateado + '-' + dv;
+  }
+
+  return rutFormateado;
 };
 
 export const Register = () => {
@@ -58,6 +104,8 @@ export const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loadingCommunities, setLoadingCommunities] = useState(true);
+  // Eliminar la declaración de rutValue que no se usa
+  // Eliminar la función handleRutChange que no se usa
 
   const {
     register,
@@ -74,11 +122,11 @@ export const Register = () => {
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
-        const response = await fetch(`${API_URL}/autenticacion/obtener-comunidades`);
+        const response = await fetch(`${API_URL}/obtener-comunidades`);
         const data = await response.json();
-        
+
         if (response.ok && data.success) {
-          setCommunities(data.communities);
+          setCommunities(data.comunidades);  // Cambiado de data.communities a data.comunidades
         } else {
           console.error('Error al cargar comunidades:', data.error);
         }
@@ -187,7 +235,12 @@ export const Register = () => {
                   type="text"
                   className={styles.input}
                   placeholder="12.345.678-9"
-                  {...register('rut')}
+                  {...register('rut', {
+                    onChange: (e) => {
+                      const formattedValue = formatRut(e.target.value);
+                      e.target.value = formattedValue;
+                    }
+                  })}
                 />
               </div>
               {errors.rut && <span className={styles.errorText}>{errors.rut.message}</span>}
@@ -209,8 +262,8 @@ export const Register = () => {
                 >
                   <option value="">Selecciona tu comunidad</option>
                   {communities.map(community => (
-                    <option key={community.id} value={community.id}>
-                      {community.name}
+                    <option key={community.idComunidad} value={community.idComunidad}>
+                      {community.nombre}
                     </option>
                   ))}
                 </select>
@@ -233,7 +286,7 @@ export const Register = () => {
                   placeholder="Mínimo 6 caracteres"
                   {...register('password')}
                 />
-                <button 
+                <button
                   type="button"
                   className={styles.passwordToggle}
                   onClick={() => setShowPassword(!showPassword)}
@@ -260,7 +313,7 @@ export const Register = () => {
                   placeholder="Confirme su contraseña"
                   {...register('confirmPassword')}
                 />
-                <button 
+                <button
                   type="button"
                   className={styles.passwordToggle}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
