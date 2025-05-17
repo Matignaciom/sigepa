@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       // Proxy para las funciones de Netlify en desarrollo
       '/.netlify/functions': {
-        target: 'http://localhost:8888',
+        target: 'http://localhost:8889',
         changeOrigin: true,
         rewrite: (path) => path
       }
@@ -19,8 +19,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          react: ['react', 'react-dom'],
-          router: ['react-router-dom']
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['react-icons'],
+          'form-vendor': ['react-hook-form', 'zod', '@hookform/resolvers/zod']
         }
       }
     }

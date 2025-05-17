@@ -6,6 +6,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { FaEye, FaEyeSlash, FaInfoCircle, FaCheck, FaLock, FaEnvelope, FaKey } from 'react-icons/fa';
 import styles from './ForgotPassword.module.css';
 
+// URL base de API
+const API_URL = import.meta.env.VITE_API_URL || '/.netlify/functions';
+
 // Esquema para el paso 1: Solicitar correo
 const emailSchema = z.object({
   email: z.string().email('Correo electrónico inválido'),
@@ -18,7 +21,6 @@ const verifyCodeSchema = z.object({
 
 // Esquema para el paso 3: Cambiar contraseña
 const resetPasswordSchema = z.object({
-  oldPassword: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   newPassword: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   confirmPassword: z.string().min(6, 'La confirmación debe tener al menos 6 caracteres'),
 }).refine((data) => data.newPassword === data.confirmPassword, {
@@ -37,7 +39,7 @@ export const ForgotPassword = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [email, setEmail] = useState('');
-  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -83,14 +85,32 @@ export const ForgotPassword = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simular envío de código al correo
-      console.log(`Código de verificación para ${data.email}: 123456`);
-      setEmail(data.email);
-      setSuccess(`Código enviado a ${data.email}. Revisa la consola para ver el código.`);
-      setTimeout(() => {
-        setCurrentStep(2);
-        setSuccess(null);
-      }, 1500);
+      const response = await fetch(`${API_URL}/recuperacion/enviar-codigo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: data.email }),
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok && responseData.success) {
+        setEmail(data.email);
+        setSuccess(`Código enviado a ${data.email}. Por favor, revisa tu correo.`);
+        
+        // Si estamos en desarrollo, mostrar el código en la consola
+        if (responseData.codigo) {
+          console.log(`Código de verificación: ${responseData.codigo}`);
+        }
+        
+        setTimeout(() => {
+          setCurrentStep(2);
+          setSuccess(null);
+        }, 1500);
+      } else {
+        setError(responseData.error || 'Error al enviar el código. Por favor, inténtalo nuevamente.');
+      }
     } catch (err) {
       setError('Error al enviar el código. Por favor, inténtalo nuevamente.');
       console.error(err);
@@ -104,15 +124,28 @@ export const ForgotPassword = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simular verificación de código
-      if (data.code === '123456') {
+      const response = await fetch(`${API_URL}/recuperacion/verificar-codigo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email: email,
+          codigo: data.code 
+        }),
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok && responseData.success) {
+        setVerificationCode(data.code);
         setSuccess('Código verificado correctamente.');
         setTimeout(() => {
           setCurrentStep(3);
           setSuccess(null);
         }, 1500);
       } else {
-        setError('Código incorrecto. Por favor, verifica e intenta nuevamente.');
+        setError(responseData.error || 'Código incorrecto. Por favor, verifica e intenta nuevamente.');
       }
     } catch (err) {
       setError('Error al verificar el código. Por favor, inténtalo nuevamente.');
@@ -127,14 +160,28 @@ export const ForgotPassword = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simular cambio de contraseña
-      console.log('Contraseña restablecida para:', email);
-      console.log('Contraseña antigua:', data.oldPassword);
-      console.log('Contraseña nueva:', data.newPassword);
-      setSuccess('¡Contraseña actualizada correctamente!');
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+      const response = await fetch(`${API_URL}/recuperacion/cambiar-contrasena`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          codigo: verificationCode,
+          newPassword: data.newPassword
+        }),
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok && responseData.success) {
+        setSuccess('¡Contraseña actualizada correctamente!');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        setError(responseData.error || 'Error al restablecer la contraseña. Por favor, inténtalo nuevamente.');
+      }
     } catch (err) {
       setError('Error al restablecer la contraseña. Por favor, inténtalo nuevamente.');
       console.error(err);
@@ -212,35 +259,6 @@ export const ForgotPassword = () => {
       case 3:
         return (
           <form onSubmit={handleSubmitReset(onSubmitReset)} className={styles.form}>
-            <div className={styles.formGroup}>
-              <label htmlFor="oldPassword" className={styles.label}>
-                Contraseña Actual
-                <span className={styles.infoIcon} title="Ingresa tu contraseña actual">
-                  <FaInfoCircle />
-                </span>
-              </label>
-              <div className={styles.inputWrapper}>
-                <input
-                  id="oldPassword"
-                  type={showOldPassword ? "text" : "password"}
-                  className={styles.input}
-                  placeholder="Contraseña actual"
-                  {...registerReset('oldPassword')}
-                />
-                <button 
-                  type="button" 
-                  className={styles.passwordToggle} 
-                  onClick={() => setShowOldPassword(!showOldPassword)}
-                  title={showOldPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                >
-                  {showOldPassword ? <FaEyeSlash /> : <FaEye />}
-                </button>
-              </div>
-              {errorsReset.oldPassword && 
-                <span className={styles.errorText}>{errorsReset.oldPassword.message}</span>
-              }
-            </div>
-
             <div className={styles.formGroup}>
               <label htmlFor="newPassword" className={styles.label}>
                 Nueva Contraseña

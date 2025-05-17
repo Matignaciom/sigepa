@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Layout } from '../../../components/layout/Layout';
-import styles from './Historial.module.css';
+import styles from './Documentos.module.css';
 
 export const Historial = () => {
   const [filtroAnio, setFiltroAnio] = useState('2023');
@@ -72,7 +72,7 @@ export const Historial = () => {
   });
   
   // Función para formatear montos en pesos chilenos
-  const formatMonto = (monto) => {
+  const formatMonto = (monto: number | null): string => {
     if (monto === null) return '-';
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -81,7 +81,7 @@ export const Historial = () => {
   };
   
   // Función para obtener el color del estado
-  const getEstadoClass = (estado) => {
+  const getEstadoClass = (estado: string): string => {
     switch (estado.toLowerCase()) {
       case 'completado':
         return styles.estadoCompletado;
@@ -97,7 +97,7 @@ export const Historial = () => {
   };
   
   // Función para obtener el icono según el tipo
-  const getTipoIcon = (tipo) => {
+  const getTipoIcon = (tipo: string): string => {
     switch (tipo) {
       case 'pago':
         return '💰';

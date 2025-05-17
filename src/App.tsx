@@ -4,9 +4,9 @@ import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { Dashboard } from './pages/dashboard/Dashboard';
-import { Parcela } from './pages/dashboard/parcela/Parcela';
+import { Parcela } from './pages/dashboard/parcelas/Parcelas';
 import { Pagos } from './pages/dashboard/pagos/Pagos';
-import { Historial } from './pages/dashboard/historial/Historial';
+import { Historial } from './pages/dashboard/documentos/Documentos';
 import { Estadisticas } from './pages/dashboard/estadisticas/Estadisticas';
 import { Perfil } from './pages/dashboard/perfil/Perfil';
 import { Admin } from './pages/admin/Admin';
@@ -17,31 +17,54 @@ import { Alertas } from './pages/admin/alertas/Alertas';
 import { Usuarios } from './pages/admin/usuarios/Usuarios';
 import { CrearNotificacion } from './pages/admin/notificaciones/CrearNotificacion';
 import { PerfilAdmin } from './pages/admin/perfil/PerfilAdmin';
+import { LoadingTransition } from './components/LoadingTransition';
+import type { ReactNode } from 'react';
 import './App.css';
 import './styles/variables.css';
 
+// Definición de tipos para las props de ProtectedRoute
+interface ProtectedRouteProps {
+  children: ReactNode;
+  requiredRole?: string | null;
+}
+
 // Componente para rutas protegidas
-const ProtectedRoute = ({ children, requiredRole = null }) => {
+const ProtectedRoute = ({ children, requiredRole = null }: ProtectedRouteProps) => {
   // Verificar si el usuario está autenticado
   const userJson = localStorage.getItem('user');
   const isAuthenticated = !!userJson;
   
+  // Si no está autenticado, redirigir a login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  
   // Si se requiere un rol específico, verificar el rol del usuario
-  if (isAuthenticated && requiredRole) {
+  if (requiredRole) {
     const user = JSON.parse(userJson);
-    if (user.role !== requiredRole) {
-      // Redirigir según el rol
-      return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} />;
+    // Normalizar el rol para comparación (admin y administrador son equivalentes)
+    const normalizedUserRole = user.role.toLowerCase();
+    const isAdmin = normalizedUserRole === 'admin' || normalizedUserRole === 'administrador';
+    const isCopropietario = normalizedUserRole === 'copropietario';
+    
+    // Verificar si el rol coincide con el requerido
+    if (requiredRole === 'admin' && !isAdmin) {
+      return <Navigate to="/dashboard" />;
+    }
+    
+    if (requiredRole === 'copropietario' && !isCopropietario) {
+      return <Navigate to="/admin" />;
     }
   }
   
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return children;
 };
 
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <LoadingTransition />
         <Routes>
           {/* Rutas públicas */}
           <Route path="/login" element={<Login />} />
@@ -50,31 +73,36 @@ function App() {
           
           {/* Rutas de copropietario */}
           <Route path="/dashboard" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="copropietario">
               <Dashboard />
             </ProtectedRoute>
           } />
-          <Route path="/dashboard/parcela" element={
-            <ProtectedRoute>
+          <Route path="/parcelas" element={
+            <ProtectedRoute requiredRole="copropietario">
               <Parcela />
             </ProtectedRoute>
           } />
-          <Route path="/dashboard/pagos" element={
-            <ProtectedRoute>
+          <Route path="/pagos" element={
+            <ProtectedRoute requiredRole="copropietario">
               <Pagos />
             </ProtectedRoute>
           } />
-          <Route path="/dashboard/historial" element={
-            <ProtectedRoute>
+          <Route path="/documentos" element={
+            <ProtectedRoute requiredRole="copropietario">
               <Historial />
             </ProtectedRoute>
           } />
           <Route path="/dashboard/estadisticas" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="copropietario">
               <Estadisticas />
             </ProtectedRoute>
           } />
-          <Route path="/dashboard/perfil" element={
+          <Route path="/estadisticas" element={
+            <ProtectedRoute requiredRole="copropietario">
+              <Estadisticas />
+            </ProtectedRoute>
+          } />
+          <Route path="/perfil" element={
             <ProtectedRoute>
               <Perfil />
             </ProtectedRoute>

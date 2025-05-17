@@ -1,5 +1,5 @@
 import { Layout } from '../../../components/layout/Layout';
-import styles from './Parcela.module.css';
+import styles from './Parcelas.module.css';
 
 export const Parcela = () => {
   // Datos de ejemplo para la parcela

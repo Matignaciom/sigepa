@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { adminService } from '../../services/api';
 import styles from './Admin.module.css';
 
 interface ResumenData {

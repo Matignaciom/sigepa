@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,6 +6,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Register.module.css';
 import { FaEye, FaEyeSlash, FaInfoCircle } from 'react-icons/fa';
+
+// URL base de API
+const API_URL = import.meta.env.VITE_API_URL || '/.netlify/functions';
 
 // Validador de RUT chileno
 const validateRut = (rut: string) => {
@@ -32,9 +35,6 @@ const registerSchema = z.object({
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   confirmPassword: z.string().min(6, 'La confirmación de contraseña debe tener al menos 6 caracteres'),
   rut: z.string().refine(validateRut, { message: 'RUT inválido. Formato correcto: 12345678-9' }),
-  role: z.enum(['admin', 'coproprietario'], { 
-    errorMap: () => ({ message: 'Seleccione un rol' }) 
-  }),
   community: z.string().min(1, 'Seleccione una comunidad'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Las contraseñas no coinciden',
@@ -43,14 +43,11 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-// Lista de comunidades (simulada)
-const COMMUNITIES = [
-  { id: '1', name: 'Edificio Las Palmas' },
-  { id: '2', name: 'Condominio El Bosque' },
-  { id: '3', name: 'Edificio Parque Central' },
-  { id: '4', name: 'Condominio Los Alpes' },
-  { id: '5', name: 'Edificio Mirador' },
-];
+// Tipo para las comunidades
+type Community = {
+  id: string;
+  name: string;
+};
 
 export const Register = () => {
   const { register: registerUser } = useAuth();
@@ -59,6 +56,8 @@ export const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [loadingCommunities, setLoadingCommunities] = useState(true);
 
   const {
     register,
@@ -67,18 +66,38 @@ export const Register = () => {
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      role: '',
       community: '',
     }
   });
+
+  // Cargar comunidades al montar el componente
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        const response = await fetch(`${API_URL}/autenticacion/obtener-comunidades`);
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          setCommunities(data.communities);
+        } else {
+          console.error('Error al cargar comunidades:', data.error);
+        }
+      } catch (error) {
+        console.error('Error al cargar comunidades:', error);
+      } finally {
+        setLoadingCommunities(false);
+      }
+    };
+
+    fetchCommunities();
+  }, []);
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Aquí añadiríamos los campos adicionales al registro
-      const success = await registerUser(data.name, data.email, data.password);
+      const success = await registerUser(data.name, data.email, data.password, data.rut, data.community);
       if (success) {
         navigate('/dashboard');
       } else {
@@ -175,27 +194,6 @@ export const Register = () => {
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="role" className={styles.label}>
-                Rol
-                <span className={styles.infoIcon} title="Selecciona tu rol en el sistema">
-                  <FaInfoCircle />
-                </span>
-              </label>
-              <div className={styles.inputWrapper}>
-                <select
-                  id="role"
-                  className={styles.select}
-                  {...register('role')}
-                >
-                  <option value="">Selecciona tu rol</option>
-                  <option value="admin">Administrador</option>
-                  <option value="coproprietario">Copropietario</option>
-                </select>
-              </div>
-              {errors.role && <span className={styles.errorText}>{errors.role.message}</span>}
-            </div>
-
-            <div className={styles.formGroup}>
               <label htmlFor="community" className={styles.label}>
                 Comunidad
                 <span className={styles.infoIcon} title="Selecciona la comunidad a la que perteneces">
@@ -207,9 +205,10 @@ export const Register = () => {
                   id="community"
                   className={styles.select}
                   {...register('community')}
+                  disabled={loadingCommunities}
                 >
                   <option value="">Selecciona tu comunidad</option>
-                  {COMMUNITIES.map(community => (
+                  {communities.map(community => (
                     <option key={community.id} value={community.id}>
                       {community.name}
                     </option>
