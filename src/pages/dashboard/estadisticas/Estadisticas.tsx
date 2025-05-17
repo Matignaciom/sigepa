@@ -42,7 +42,7 @@ export const Estadisticas = () => {
   };
   
   // Función para cambiar el periodo de visualización
-  const cambiarPeriodo = (periodo) => {
+  const cambiarPeriodo = (periodo: string) => {
     setPeriodoSeleccionado(periodo);
   };
   

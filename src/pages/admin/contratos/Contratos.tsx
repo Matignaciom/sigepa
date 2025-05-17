@@ -12,7 +12,7 @@ interface Contrato {
 }
 
 export const Contratos = () => {
-  const [contratos, setContratos] = useState<Contrato[]>([
+  const [contratos] = useState<Contrato[]>([
     {
       id: 1,
       numeroParcela: 'P-001',

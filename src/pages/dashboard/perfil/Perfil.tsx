@@ -47,9 +47,9 @@ export const Perfil = () => {
         const response = await userService.getProfile();
         if (response.success && response.data) {
           reset({
-            nombre: response.data.nombre,
-            apellido: response.data.apellido,
-            email: response.data.email,
+            nombre: response.data.nombre || '',
+            apellido: response.data.apellido || '',
+            email: response.data.email || '',
             telefono: response.data.telefono || '',
             direccion: response.data.direccion || '',
           });

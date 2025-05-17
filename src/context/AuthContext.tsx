@@ -1,12 +1,20 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
-type User = {
+export type User = {
   id: string;
   name: string;
   email: string;
   role: 'administrador' | 'copropietario';
   communityId?: number;
+  nombre?: string;
+  apellido?: string;
+  telefono?: string;
+  direccion?: string;
+  parcelaId?: string;
+  superficie?: string;
+  fechaAdquisicion?: string;
+  estadoContrato?: string;
 };
 
 type AuthContextType = {
@@ -15,6 +23,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string, rut: string, communityId: string) => Promise<boolean>;
   logout: () => void;
+  updateUserData?: (userData: User) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -116,6 +125,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('token');
   };
 
+  const updateUserData = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -124,6 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         register,
         logout,
+        updateUserData
       }}
     >
       {children}

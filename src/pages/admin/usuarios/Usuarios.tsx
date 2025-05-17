@@ -34,21 +34,21 @@ export const Usuarios = () => {
         
         // Datos simulados para desarrollo
         setTimeout(() => {
-          const usuariosData = [
+          const usuariosData: Usuario[] = [
             { 
               id: 1, 
               email: 'admin@sigepa.com', 
               nombre: 'Administrador', 
               apellido: 'Sistema', 
-              role: 'admin', // Cambiar de 'administrador' a 'admin'
-              estado: 'activo' 
+              role: 'admin', 
+              estado: 'activo' as 'activo' | 'inactivo' | 'suspendido'
             },
-            { id: 2, email: 'user@sigepa.com', nombre: 'Usuario', apellido: 'Prueba', role: 'copropietario', telefono: '987654321', direccion: 'Calle Principal 123', estado: 'activo', parcelaId: 'P001' },
-            { id: 3, email: 'maria@ejemplo.com', nombre: 'María', apellido: 'González', role: 'copropietario', telefono: '123456789', direccion: 'Avenida Central 456', estado: 'activo', parcelaId: 'P002' },
-            { id: 4, email: 'carlos@ejemplo.com', nombre: 'Carlos', apellido: 'Rodríguez', role: 'copropietario', telefono: '456789123', direccion: 'Calle Norte 789', estado: 'activo', parcelaId: 'P005' },
-            { id: 5, email: 'ana@ejemplo.com', nombre: 'Ana', apellido: 'Martínez', role: 'copropietario', telefono: '789123456', direccion: 'Avenida Sur 321', estado: 'activo', parcelaId: 'P006' },
-            { id: 6, email: 'pedro@ejemplo.com', nombre: 'Pedro', apellido: 'Sánchez', role: 'copropietario', telefono: '321654987', direccion: 'Calle Este 654', estado: 'activo', parcelaId: 'P008' },
-            { id: 7, email: 'laura@ejemplo.com', nombre: 'Laura', apellido: 'López', role: 'copropietario', telefono: '654987321', direccion: 'Avenida Oeste 987', estado: 'inactivo' },
+            { id: 2, email: 'user@sigepa.com', nombre: 'Usuario', apellido: 'Prueba', role: 'copropietario', telefono: '987654321', direccion: 'Calle Principal 123', estado: 'activo' as 'activo' | 'inactivo' | 'suspendido', parcelaId: 'P001' },
+            { id: 3, email: 'maria@ejemplo.com', nombre: 'María', apellido: 'González', role: 'copropietario', telefono: '123456789', direccion: 'Avenida Central 456', estado: 'activo' as 'activo' | 'inactivo' | 'suspendido', parcelaId: 'P002' },
+            { id: 4, email: 'carlos@ejemplo.com', nombre: 'Carlos', apellido: 'Rodríguez', role: 'copropietario', telefono: '456789123', direccion: 'Calle Norte 789', estado: 'activo' as 'activo' | 'inactivo' | 'suspendido', parcelaId: 'P005' },
+            { id: 5, email: 'ana@ejemplo.com', nombre: 'Ana', apellido: 'Martínez', role: 'copropietario', telefono: '789123456', direccion: 'Avenida Sur 321', estado: 'activo' as 'activo' | 'inactivo' | 'suspendido', parcelaId: 'P006' },
+            { id: 6, email: 'pedro@ejemplo.com', nombre: 'Pedro', apellido: 'Sánchez', role: 'copropietario', telefono: '321654987', direccion: 'Calle Este 654', estado: 'activo' as 'activo' | 'inactivo' | 'suspendido', parcelaId: 'P008' },
+            { id: 7, email: 'laura@ejemplo.com', nombre: 'Laura', apellido: 'López', role: 'copropietario', telefono: '654987321', direccion: 'Avenida Oeste 987', estado: 'inactivo' as 'activo' | 'inactivo' | 'suspendido' },
           ];
           setUsuarios(usuariosData);
           setIsLoading(false);
@@ -185,7 +185,7 @@ export const Usuarios = () => {
                 </td>
                 <td>
                   <span className={`${styles.badge} ${styles[usuario.estado || 'activo']}`}>
-                    {(usuario.estado?.charAt(0).toUpperCase() + usuario.estado?.slice(1)) || 'Activo'}
+                    {usuario.estado ? (usuario.estado.charAt(0).toUpperCase() + usuario.estado.slice(1)) : 'Activo'}
                   </span>
                 </td>
                 <td>{usuario.parcelaId || '-'}</td>
