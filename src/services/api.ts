@@ -8,6 +8,20 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+// Interfaces para los tipos de datos
+export interface UserProfile {
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono: string;
+  direccion: string;
+}
+
+export interface PasswordChangeRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 // Opciones por defecto para las peticiones fetch
 const defaultOptions: RequestInit = {
   headers: {
@@ -88,9 +102,9 @@ export const authService = {
 };
 
 export const userService = {
-  getProfile: () => api.get('/users/profile'),
-  updateProfile: (userData: any) => api.put('/users/profile', userData),
-  changePassword: (passwords: { currentPassword: string; newPassword: string }) =>
+  getProfile: () => api.get<UserProfile>('/users/profile'),
+  updateProfile: (userData: Partial<UserProfile>) => api.put<UserProfile>('/users/profile', userData),
+  changePassword: (passwords: PasswordChangeRequest) =>
     api.post('/users/change-password', passwords),
 };
 

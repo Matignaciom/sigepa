@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../../context/AuthContext';
 import { userService } from '../../../services/api';
+import type { UserProfile } from '../../../services/api';
 import styles from './Perfil.module.css';
 
 // Esquema de validación para el formulario de perfil
@@ -46,12 +47,13 @@ export const Perfil = () => {
       try {
         const response = await userService.getProfile();
         if (response.success && response.data) {
+          const profileData = response.data;
           reset({
-            nombre: response.data.nombre || '',
-            apellido: response.data.apellido || '',
-            email: response.data.email || '',
-            telefono: response.data.telefono || '',
-            direccion: response.data.direccion || '',
+            nombre: profileData.nombre || '',
+            apellido: profileData.apellido || '',
+            email: profileData.email || '',
+            telefono: profileData.telefono || '',
+            direccion: profileData.direccion || '',
           });
         }
       } catch (error) {

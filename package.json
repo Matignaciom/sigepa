@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b --skipLibCheck --noEmit false --incremental && vite build",
+    "build": "tsc -b --incremental && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "init-db": "node netlify/functions/initDatabase.js",
