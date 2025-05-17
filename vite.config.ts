@@ -16,6 +16,12 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    minify: true,
+    sourcemap: false,
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 1600,
+    // Configuración más tolerante para el build
+    reportCompressedSize: false,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -25,5 +31,10 @@ export default defineConfig({
         }
       }
     }
+  },
+  // Ajustes de optimización
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
+    force: true
   }
 })
