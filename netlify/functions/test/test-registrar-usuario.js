@@ -7,7 +7,7 @@ const functionUrl = 'http://localhost:8889/.netlify/functions/registrar-usuario'
 // Datos para prueba - Ajusta estos datos según tu base de datos
 const testData = {
   nombreCompleto: 'Usuario de Prueba',
-  email: 'usuario.prueba@ejemplo.com',
+  email: `usuario.prueba.${Date.now()}@ejemplo.com`, // Correo único usando timestamp
   password: 'Prueba2023',
   rut: '12345678-9',
   comunidad: '1', // ID de la comunidad existente en tu base de datos

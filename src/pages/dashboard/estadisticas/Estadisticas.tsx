@@ -34,7 +34,7 @@ export const Estadisticas = () => {
   ];
   
   // Función para formatear montos en pesos chilenos
-  const formatMonto = (monto) => {
+  const formatMonto = (monto: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP'

@@ -15,7 +15,7 @@ import { Resumen } from './pages/admin/resumen/Resumen';
 import { Contratos } from './pages/admin/contratos/Contratos';
 import { Alertas } from './pages/admin/alertas/Alertas';
 import { Usuarios } from './pages/admin/usuarios/Usuarios';
-import { CrearNotificacion } from './pages/admin/notificaciones/CrearNotificacion';
+import { GestionarNotificaciones } from './pages/admin/notificaciones/GestionarNotificaciones';
 import { PerfilAdmin } from './pages/admin/perfil/PerfilAdmin';
 import { LoadingTransition } from './components/LoadingTransition';
 import type { ReactNode } from 'react';
@@ -139,9 +139,9 @@ function App() {
               <Usuarios />
             </ProtectedRoute>
           } />
-          <Route path="/admin/notificaciones/crear" element={
+          <Route path="/admin/notificaciones" element={
             <ProtectedRoute requiredRole="admin">
-              <CrearNotificacion />
+              <GestionarNotificaciones />
             </ProtectedRoute>
           } />
           <Route path="/admin/perfil" element={

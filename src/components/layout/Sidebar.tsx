@@ -5,7 +5,7 @@ import styles from './Sidebar.module.css';
 export const Sidebar = () => {
   const { user } = useAuth();
   
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'administrador';
   
   const adminLinks = [
     { to: '/admin', label: 'Inicio', exact: true },
@@ -14,7 +14,7 @@ export const Sidebar = () => {
     { to: '/admin/contratos', label: 'Contratos' },
     { to: '/admin/alertas', label: 'Alertas' },
     { to: '/admin/usuarios', label: 'Gestión de Usuarios' },
-    { to: '/admin/notificaciones/crear', label: 'Crear Notificación' },
+    { to: '/admin/notificaciones', label: 'Gestionar Notificaciones' },
     { to: '/admin/perfil', label: 'Mi Perfil' },
   ];
   

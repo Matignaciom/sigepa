@@ -305,12 +305,12 @@ export const Admin = () => {
             <h3 className={styles.navTitle}>Comunicación</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/notificaciones/crear" 
-                  className={`${styles.navLink} ${window.location.pathname === '/admin/notificaciones/crear' ? styles.active : ''}`}
+                <Link to="/admin/notificaciones" 
+                  className={`${styles.navLink} ${window.location.pathname === '/admin/notificaciones' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>✉️</span>
-                  Crear Notificación
+                  Gestionar Notificaciones
                 </Link>
               </li>
             </ul>
@@ -464,11 +464,11 @@ export const Admin = () => {
           </div>
         </section>
 
-        {/* Botón para crear notificación */}
+        {/* Botón para gestionar notificaciones */}
         <div className={styles.actionContainer}>
-          <Link to="/admin/notificaciones/crear" className={styles.createNotificationButton}>
+          <Link to="/admin/notificaciones" className={styles.createNotificationButton}>
             <span className={styles.btnIcon}>✉️</span>
-            <span>Crear Nueva Notificación</span>
+            <span>Gestionar Notificaciones</span>
           </Link>
         </div>
 

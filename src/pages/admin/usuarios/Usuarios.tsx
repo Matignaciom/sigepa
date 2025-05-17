@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { adminService } from '../../../services/api';
+// Eliminar la importación no usada
+// import { adminService } from '../../../services/api';
 import styles from './Usuarios.module.css';
 
 interface Usuario {
@@ -34,7 +35,14 @@ export const Usuarios = () => {
         // Datos simulados para desarrollo
         setTimeout(() => {
           const usuariosData = [
-            { id: 1, email: 'admin@sigepa.com', nombre: 'Administrador', apellido: 'Sistema', role: 'admin', estado: 'activo' },
+            { 
+              id: 1, 
+              email: 'admin@sigepa.com', 
+              nombre: 'Administrador', 
+              apellido: 'Sistema', 
+              role: 'admin', // Cambiar de 'administrador' a 'admin'
+              estado: 'activo' 
+            },
             { id: 2, email: 'user@sigepa.com', nombre: 'Usuario', apellido: 'Prueba', role: 'copropietario', telefono: '987654321', direccion: 'Calle Principal 123', estado: 'activo', parcelaId: 'P001' },
             { id: 3, email: 'maria@ejemplo.com', nombre: 'María', apellido: 'González', role: 'copropietario', telefono: '123456789', direccion: 'Avenida Central 456', estado: 'activo', parcelaId: 'P002' },
             { id: 4, email: 'carlos@ejemplo.com', nombre: 'Carlos', apellido: 'Rodríguez', role: 'copropietario', telefono: '456789123', direccion: 'Calle Norte 789', estado: 'activo', parcelaId: 'P005' },
@@ -177,7 +185,7 @@ export const Usuarios = () => {
                 </td>
                 <td>
                   <span className={`${styles.badge} ${styles[usuario.estado || 'activo']}`}>
-                    {usuario.estado?.charAt(0).toUpperCase() + usuario.estado?.slice(1) || 'Activo'}
+                    {(usuario.estado?.charAt(0).toUpperCase() + usuario.estado?.slice(1)) || 'Activo'}
                   </span>
                 </td>
                 <td>{usuario.parcelaId || '-'}</td>

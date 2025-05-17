@@ -20,13 +20,13 @@ export const Header = () => {
           <div className={styles.userInfo}>
             <button onClick={toggleDropdown} className={styles.userButton}>
               <span>{user.name}</span>
-              <span className={styles.userRole}>{user.role === 'admin' ? 'Administrador' : 'Copropietario'}</span>
+              <span className={styles.userRole}>{user.role === 'administrador' ? 'Administrador' : 'Copropietario'}</span>
             </button>
             {showDropdown && (
               <div className={styles.dropdown}>
                 <ul>
                   <li>
-                    <a href={user.role === 'admin' ? '/admin/perfil' : '/dashboard/perfil'}>Mi Perfil</a>
+                    <a href={user.role === 'administrador' ? '/admin/perfil' : '/dashboard/perfil'}>Mi Perfil</a>
                   </li>
                   <li>
                     <button onClick={logout}>Cerrar Sesión</button>
