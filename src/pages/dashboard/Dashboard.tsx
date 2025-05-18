@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Dashboard.module.css';
+import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 interface ResumenData {
   estadoCuenta: string;
@@ -19,8 +21,45 @@ interface ResumenData {
   avisos: number;
 }
 
+interface Actividad {
+  id: number;
+  fecha: string;
+  tipo: string;
+  icono: string;
+  titulo: string;
+  descripcion: string;
+  detalles: any;
+}
+
+interface Parcela {
+  id: number;
+  nombre: string;
+  direccion: string;
+  area: number;
+  estado: string;
+  fechaAdquisicion: string;
+  valorCatastral: number;
+  ubicacion?: {
+    longitud: number;
+    latitud: number;
+  };
+  contrato?: {
+    id: number;
+    estado: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+  };
+  propietario?: {
+    id: number;
+    nombre: string;
+  };
+}
+
 export const Dashboard = () => {
+  const { user } = useAuth();
   const [resumenData, setResumenData] = useState<ResumenData | null>(null);
+  const [actividades, setActividades] = useState<Actividad[]>([]);
+  const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -49,29 +88,41 @@ export const Dashboard = () => {
       setError(null);
       
       try {
-        // En un entorno real, esto sería una llamada a la API
-        // const response = await userService.getDashboardSummary();
+        // Obtener el resumen del dashboard
+        const resumenResponse = await api.get(
+          '/.netlify/functions/obtener-resumen-dashboard'
+        );
         
-        // Datos simulados para desarrollo basados en la estructura de la BD
-        setTimeout(() => {
-          setResumenData({
-            estadoCuenta: "Al día",
-            proximoPago: {
-              fecha: "15/06/2023",
-              monto: "$150.000",
-              concepto: "Cuota Ordinaria Junio 2023"
-            },
-            parcelas: {
-              total: 2,
-              alDia: 2,
-              pendientes: 0
-            },
-            gastosPendientes: 3,
-            notificaciones: 2,
-            avisos: 1
-          });
-          setIsLoading(false);
-        }, 800);
+        if (resumenResponse.success && resumenResponse.data) {
+          setResumenData(resumenResponse.data.data);
+        } else {
+          console.error('Error al obtener resumen del dashboard:', resumenResponse.error);
+          setError('No se pudo cargar el resumen del dashboard');
+        }
+        
+        // Obtener actividades recientes
+        const actividadesResponse = await api.get(
+          '/.netlify/functions/obtener-actividades-recientes?limit=4'
+        );
+        
+        if (actividadesResponse.success && actividadesResponse.data) {
+          setActividades(actividadesResponse.data.data);
+        } else {
+          console.error('Error al obtener actividades recientes:', actividadesResponse.error);
+        }
+        
+        // Obtener parcelas del usuario
+        const parcelasResponse = await api.get(
+          '/.netlify/functions/obtener-parcelas-usuario'
+        );
+        
+        if (parcelasResponse.success && parcelasResponse.data) {
+          setParcelas(parcelasResponse.data.data.parcelas);
+        } else {
+          console.error('Error al obtener parcelas del usuario:', parcelasResponse.error);
+        }
+        
+        setIsLoading(false);
       } catch (err) {
         console.error('Error al cargar datos del dashboard:', err);
         setError('No se pudieron cargar los datos del panel. Por favor, intente nuevamente.');
@@ -247,7 +298,7 @@ export const Dashboard = () => {
           <div className={styles.brandLogo}>
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
           </div>
-          <h1 className={styles.brandTitle}>Panel de Copropietario</h1>
+          <h1 className={styles.brandTitle}>Panel de {user?.role === 'administrador' ? 'Administrador' : 'Copropietario'}</h1>
           <p className={styles.brandDescription}>
             Gestiona tus parcelas, realiza pagos y mantente al día con toda la información de tu propiedad.
           </p>
@@ -429,41 +480,34 @@ export const Dashboard = () => {
           </div>
         </section>
 
-        {/* Actividad reciente basada en el schema de la BD */}
+        {/* Actividad reciente */}
         <section>
           <h2 className={styles.sectionTitle}>
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.faviconSmall} />
             Actividad Reciente
           </h2>
           <div className={styles.activityContainer}>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>💰</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}>Pago de gasto común registrado</p>
-                <p className={styles.activityTime}>10/05/2023 - Cuota Ordinaria Mayo - $150.000</p>
+            {actividades.length > 0 ? (
+              actividades.map((actividad, index) => (
+                <div className={styles.activityItem} key={actividad.id || index}>
+                  <div className={styles.activityIcon}>{actividad.icono}</div>
+                  <div className={styles.activityContent}>
+                    <p className={styles.activityText}>{actividad.titulo}</p>
+                    <p className={styles.activityTime}>
+                      {new Date(actividad.fecha).toLocaleDateString('es-ES')} - {actividad.descripcion}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.activityItem}>
+                <div className={styles.activityIcon}>📋</div>
+                <div className={styles.activityContent}>
+                  <p className={styles.activityText}>No hay actividades recientes</p>
+                  <p className={styles.activityTime}>Las actividades aparecerán aquí cuando haya movimientos</p>
+                </div>
               </div>
-            </div>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>📣</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}>Nuevo aviso comunitario publicado</p>
-                <p className={styles.activityTime}>05/05/2023 - Asamblea Ordinaria</p>
-              </div>
-            </div>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>📝</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}>Actualización de contrato de parcela</p>
-                <p className={styles.activityTime}>02/05/2023</p>
-              </div>
-            </div>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>🔔</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}>Nueva notificación recibida</p>
-                <p className={styles.activityTime}>28/04/2023 - Recordatorio de pago</p>
-              </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -474,20 +518,31 @@ export const Dashboard = () => {
             Mis Parcelas
           </h2>
           <div className={styles.activityContainer}>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>🏞️</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}>Parcela 1 - Sector Norte</p>
-                <p className={styles.activityTime}>Estado: <span style={{color: '#22c55e', fontWeight: 'bold'}}>Al día</span> - Área: 0.75 hectáreas</p>
+            {parcelas.length > 0 ? (
+              parcelas.map((parcela, index) => (
+                <div className={styles.activityItem} key={parcela.id || index}>
+                  <div className={styles.activityIcon}>🏞️</div>
+                  <div className={styles.activityContent}>
+                    <p className={styles.activityText}>{parcela.nombre}</p>
+                    <p className={styles.activityTime}>
+                      Estado: <span style={{
+                        color: parcela.estado === 'Al día' ? '#22c55e' : 
+                               parcela.estado === 'Pendiente' ? '#f59e0b' : '#ef4444',
+                        fontWeight: 'bold'
+                      }}>{parcela.estado}</span> - Área: {parcela.area} hectáreas
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.activityItem}>
+                <div className={styles.activityIcon}>🏞️</div>
+                <div className={styles.activityContent}>
+                  <p className={styles.activityText}>No hay parcelas registradas</p>
+                  <p className={styles.activityTime}>Las parcelas aparecerán aquí cuando estén disponibles</p>
+                </div>
               </div>
-            </div>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>🏞️</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}>Parcela 2 - Sector Sur</p>
-                <p className={styles.activityTime}>Estado: <span style={{color: '#22c55e', fontWeight: 'bold'}}>Al día</span> - Área: 1.25 hectáreas</p>
-              </div>
-            </div>
+            )}
           </div>
         </section>
 

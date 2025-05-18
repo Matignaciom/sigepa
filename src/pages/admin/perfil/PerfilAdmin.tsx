@@ -141,60 +141,174 @@ export const PerfilAdmin = () => {
     const loadProfileData = async () => {
       setIsLoading(true);
       try {
-        // Simulamos carga de datos, aquí se llamaría a una API real
-        setTimeout(() => {
-          reset({
-            nombreCompleto: datosDeMuestra.nombreCompleto,
-            email: datosDeMuestra.email,
-            telefono: datosDeMuestra.telefono,
-            direccion: datosDeMuestra.direccion,
-            cargo: datosDeMuestra.cargo,
-            rut: datosDeMuestra.rut,
+        console.log('Obteniendo perfil de administrador...');
+        
+        // Obtener el token del localStorage
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.error('No hay token de autenticación');
+          setMessage({
+            text: 'No hay sesión activa. Por favor, inicie sesión nuevamente.',
+            type: 'error',
           });
           setIsLoading(false);
-        }, 800);
+          return;
+        }
+        
+        // Realizar la solicitud a la función de Netlify
+        const response = await fetch(`${import.meta.env.DEV 
+          ? 'http://localhost:8889/.netlify/functions'
+          : '/.netlify/functions'}/obtener-perfil-usuario`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          console.log('Perfil de administrador obtenido correctamente:', data.data);
+          const perfil = data.data;
+          
+          // Guardar los datos completos del perfil
+          const comunidadData = {
+            id: perfil.idComunidad,
+            nombre: perfil.comunidad,
+            fecha_creacion: perfil.comunidadStats?.fecha_creacion || '01/01/2023',
+            total_parcelas: perfil.comunidadStats?.total_parcelas || 0,
+            usuarios_registrados: perfil.comunidadStats?.usuarios_registrados || 0,
+            direccion_administrativa: perfil.direccionComunidad || '',
+            telefono_contacto: perfil.comunidadStats?.telefono_contacto || '',
+            email_contacto: perfil.comunidadStats?.email_contacto || '',
+            sitio_web: perfil.comunidadStats?.sitio_web || ''
+          };
+          
+          // Actualizar el formulario con los datos obtenidos
+          reset({
+            nombreCompleto: perfil.nombreCompleto,
+            email: perfil.email,
+            telefono: perfil.telefono || '',
+            direccion: perfil.direccion || '',
+            cargo: 'Administrador de Comunidad',
+            rut: datosDeMuestra.rut, // Usar el RUT de muestra ya que no está en el API
+          });
+          
+          // Actualizar el formulario de comunidad
+          resetComunidad({
+            nombre: comunidadData.nombre,
+            fecha_creacion: comunidadData.fecha_creacion
+          });
+          
+          // Reemplazar los datos de muestra con los datos reales
+          datosDeMuestra.comunidad = comunidadData;
+        } else {
+          console.warn('No se pudo obtener el perfil:', data.message || 'Error desconocido');
+          setMessage({
+            text: 'Error al cargar el perfil: ' + (data.message || 'Error desconocido'),
+            type: 'error',
+          });
+        }
       } catch (error) {
         console.error('Error al cargar el perfil:', error);
         setMessage({
           text: 'Error al cargar los datos del perfil',
           type: 'error',
         });
+      } finally {
         setIsLoading(false);
       }
     };
 
     loadProfileData();
-  }, [reset]);
+  }, [reset, resetComunidad]);
 
   const onSubmit = async (data: PerfilAdminFormData) => {
     setIsLoading(true);
     setMessage(null);
 
     try {
-      // Simulamos actualización de datos, aquí se llamaría a una API real
-      setTimeout(() => {
+      console.log('Actualizando perfil de administrador:', data);
+      
+      // Obtener el token del localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setMessage({
+          text: 'No hay sesión activa. Por favor, inicie sesión nuevamente.',
+          type: 'error',
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Realizar la solicitud a la función de Netlify
+      const response = await fetch(`${import.meta.env.DEV 
+        ? 'http://localhost:8889/.netlify/functions'
+        : '/.netlify/functions'}/editar-perfil-admin`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      const responseData = await response.json();
+      
+      if (responseData.success) {
         setMessage({
           text: 'Perfil actualizado correctamente',
           type: 'success',
         });
+        
         // Actualizar datos del usuario en el contexto
         if (updateUserData && user) {
           updateUserData({
             ...user,
-            // Solo actualizamos campos que probablemente existan en el objeto user
             email: data.email,
-            // Otros campos específicos podrían necesitar una adaptación particular
+            // Otros campos específicos
           });
         }
+        
+        // Recargar los datos del perfil
+        try {
+          const profileResponse = await fetch(`${import.meta.env.DEV 
+            ? 'http://localhost:8889/.netlify/functions'
+            : '/.netlify/functions'}/obtener-perfil-usuario`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          const profileData = await profileResponse.json();
+          
+          if (profileData.success && profileData.data) {
+            console.log('Perfil recargado después de actualización:', profileData.data);
+            // Actualizar datos locales si es necesario
+          }
+        } catch (error) {
+          console.error('Error al recargar el perfil:', error);
+        }
+        
         setIsEditing(false);
-        setIsLoading(false);
-      }, 800);
+      } else {
+        setMessage({
+          text: responseData.message || 'Error al actualizar el perfil',
+          type: 'error',
+        });
+      }
     } catch (error) {
       console.error('Error al actualizar el perfil:', error);
       setMessage({
         text: 'Error al actualizar el perfil',
         type: 'error',
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -204,22 +318,45 @@ export const PerfilAdmin = () => {
     setMessage(null);
 
     try {
-      // Simulamos actualización de contraseña, aquí se llamaría a una API real
-      setTimeout(() => {
+      console.log('Cambiando contraseña:', data.email);
+      
+      // Realizar la solicitud a la función de Netlify para cambiar la contraseña
+      const response = await fetch(`${import.meta.env.DEV 
+        ? 'http://localhost:8889/.netlify/functions'
+        : '/.netlify/functions'}/cambiar-contrasena`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: data.email,
+          newPassword: data.password,
+          confirmPassword: data.confirmPassword
+        })
+      });
+      
+      const responseData = await response.json();
+      
+      if (responseData.success) {
         setMessage({
           text: 'Contraseña actualizada correctamente',
           type: 'success',
         });
-        setIsLoading(false);
         setChangePasswordMode(false);
         resetPassword();
-      }, 800);
+      } else {
+        setMessage({
+          text: responseData.message || 'Error al actualizar la contraseña',
+          type: 'error',
+        });
+      }
     } catch (error) {
       console.error('Error al actualizar la contraseña:', error);
       setMessage({
         text: 'Error al actualizar la contraseña',
         type: 'error',
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -244,21 +381,75 @@ export const PerfilAdmin = () => {
     setMessage(null);
 
     try {
-      // Simulamos actualización de datos, aquí se llamaría a una API real
-      setTimeout(() => {
+      console.log('Actualizando información de la comunidad:', data);
+      
+      // Obtener el token del localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setMessage({
+          text: 'No hay sesión activa. Por favor, inicie sesión nuevamente.',
+          type: 'error',
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Preparar los datos para enviar a la API
+      const comunidadData = {
+        nombre: data.nombre,
+        direccion_administrativa: datosDeMuestra.comunidad.direccion_administrativa,
+        telefono_contacto: datosDeMuestra.comunidad.telefono_contacto,
+        email_contacto: datosDeMuestra.comunidad.email_contacto,
+        sitio_web: datosDeMuestra.comunidad.sitio_web
+      };
+      
+      // Realizar la solicitud a la función de Netlify
+      const response = await fetch(`${import.meta.env.DEV 
+        ? 'http://localhost:8889/.netlify/functions'
+        : '/.netlify/functions'}/editar-comunidad`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(comunidadData)
+      });
+      
+      const responseData = await response.json();
+      
+      if (responseData.success) {
         setMessage({
           text: 'Información de la comunidad actualizada correctamente',
           type: 'success',
         });
+        
+        // Actualizar los datos locales con la respuesta
+        if (responseData.data) {
+          datosDeMuestra.comunidad = {
+            ...datosDeMuestra.comunidad,
+            nombre: responseData.data.nombre,
+            direccion_administrativa: responseData.data.direccion_administrativa,
+            telefono_contacto: responseData.data.telefono_contacto,
+            email_contacto: responseData.data.email_contacto,
+            sitio_web: responseData.data.sitio_web
+          };
+        }
+        
         setEditingComunidad(false);
-        setIsLoading(false);
-      }, 800);
+      } else {
+        setMessage({
+          text: responseData.message || 'Error al actualizar la información de la comunidad',
+          type: 'error',
+        });
+      }
     } catch (error) {
       console.error('Error al actualizar la información de la comunidad:', error);
       setMessage({
         text: 'Error al actualizar la información de la comunidad',
         type: 'error',
       });
+    } finally {
       setIsLoading(false);
     }
   };

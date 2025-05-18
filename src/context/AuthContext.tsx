@@ -7,8 +7,7 @@ export type User = {
   email: string;
   role: 'administrador' | 'copropietario';
   communityId?: number;
-  nombre?: string;
-  apellido?: string;
+  nombreCompleto?: string;
   telefono?: string;
   direccion?: string;
   parcelaId?: string;
@@ -21,7 +20,7 @@ type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string, rut: string, communityId: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, rut: string, communityId: string) => Promise<{ success: boolean; errorCode?: string; message?: string }>;
   logout: () => void;
   updateUserData?: (userData: User) => void;
 };
@@ -29,7 +28,9 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // URL base de API
-const API_URL = import.meta.env.VITE_API_URL || '/.netlify/functions';
+const API_URL = import.meta.env.DEV
+  ? 'http://localhost:8889/.netlify/functions'
+  : '/.netlify/functions';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
@@ -78,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (name: string, email: string, password: string, rut: string, communityId: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string, rut: string, communityId: string): Promise<{ success: boolean; errorCode?: string; message?: string }> => {
     try {
       const response = await fetch(`${API_URL}/registrar-usuario`, {
         method: 'POST',
@@ -97,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const data = await response.json();
 
-      if (response.ok && data.token) {
+      if (response.ok && data.success && data.token) {
         // Guardar datos del usuario en el estado y localStorage
         const userData = {
           id: data.user.id,
@@ -110,12 +111,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('token', data.token);
-        return true;
+        return { success: true };
       }
-      return false;
+      
+      // Si hay un mensaje de error en la respuesta, lo devolvemos
+      return { 
+        success: false, 
+        errorCode: data.errorCode || 'UNKNOWN_ERROR',
+        message: data.message || 'Error desconocido durante el registro'
+      };
     } catch (error) {
       console.error('Error durante el registro:', error);
-      return false;
+      return { 
+        success: false, 
+        errorCode: 'CONNECTION_ERROR',
+        message: 'Error de conexión con el servidor'
+      };
     }
   };
 

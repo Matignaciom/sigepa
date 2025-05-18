@@ -9,7 +9,7 @@ const testData = {
   nombreCompleto: 'Usuario de Prueba',
   email: `usuario.prueba.${Date.now()}@ejemplo.com`, // Correo único usando timestamp
   password: 'Prueba2023',
-  rut: '12345678-9',
+  rut: '12.345.678-9', // RUT con formato completo
   comunidad: '1', // ID de la comunidad existente en tu base de datos
   rol: 'Copropietario'
 };

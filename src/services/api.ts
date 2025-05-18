@@ -1,6 +1,11 @@
 // Configuración de la API
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+// URL base para las funciones de Netlify (si estamos en desarrollo, usamos localhost)
+const NETLIFY_FUNCTIONS_URL = import.meta.env.DEV 
+  ? 'http://localhost:8889/.netlify/functions'
+  : '/.netlify/functions';
+
 // Tipos de datos para las respuestas de la API
 export interface ApiResponse<T> {
   success: boolean;
@@ -10,8 +15,7 @@ export interface ApiResponse<T> {
 
 // Interfaces para los tipos de datos
 export interface UserProfile {
-  nombre: string;
-  apellido: string;
+  nombreCompleto: string;
   email: string;
   telefono: string;
   direccion: string;
@@ -20,6 +24,31 @@ export interface UserProfile {
 export interface PasswordChangeRequest {
   currentPassword: string;
   newPassword: string;
+}
+
+export interface UsuarioCompleto {
+  id: number;
+  nombreCompleto: string;
+  email: string;
+  rol: string;
+  idComunidad: number;
+  telefono: string;
+  direccion: string;
+  comunidad: string;
+  direccionComunidad: string;
+  parcela?: {
+    id: number;
+    nombre: string;
+    direccion: string;
+    superficie: number;
+    fechaAdquisicion: string;
+    valorCatastral: number;
+    estado: string;
+    contrato: {
+      id: number;
+      estado: string;
+    }
+  };
 }
 
 // Opciones por defecto para las peticiones fetch
@@ -43,7 +72,23 @@ async function fetchApi<T>(
   customOptions: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   try {
-    const url = `${API_URL}${endpoint}`;
+    // Determinar la URL base adecuada
+    let baseUrl = '';
+    
+    // Si la URL empieza con http o /, usar la URL directamente
+    if (endpoint.startsWith('http') || endpoint.startsWith('/')) {
+      baseUrl = '';
+    } else if (endpoint.includes('.netlify/functions')) {
+      // Si es una función de Netlify, usar la URL de las funciones
+      baseUrl = '';
+    } else {
+      // En otro caso, usar la URL de la API
+      baseUrl = API_URL;
+    }
+    
+    const url = `${baseUrl}${endpoint}`;
+    console.log(`Realizando solicitud ${method} a: ${url}`);
+    
     const options: RequestInit = {
       ...defaultOptions,
       ...customOptions,
@@ -60,12 +105,26 @@ async function fetchApi<T>(
     }
 
     const response = await fetch(url, options);
-    const data = await response.json();
+    
+    // Intentar parsear la respuesta como JSON, incluso si hay error
+    let data;
+    try {
+      data = await response.json();
+    } catch (e) {
+      console.error('Error al parsear respuesta como JSON:', e);
+      data = { message: 'Error al parsear la respuesta' };
+    }
 
     if (!response.ok) {
+      console.error(`Error en solicitud ${method} a ${url}:`, {
+        status: response.status,
+        statusText: response.statusText,
+        data
+      });
+      
       return {
         success: false,
-        error: data.message || 'Error en la petición',
+        error: data.message || `Error ${response.status}: ${response.statusText}`,
       };
     }
 
@@ -74,7 +133,7 @@ async function fetchApi<T>(
       data,
     };
   } catch (error) {
-    console.error('Error en la petición:', error);
+    console.error(`Error en solicitud ${method} a ${endpoint}:`, error);
     return {
       success: false,
       error: 'Error de conexión con el servidor',
@@ -102,10 +161,17 @@ export const authService = {
 };
 
 export const userService = {
+  // Estas funciones ya no se usan, las mantenemos por compatibilidad
   getProfile: () => api.get<UserProfile>('/users/profile'),
   updateProfile: (userData: Partial<UserProfile>) => api.put<UserProfile>('/users/profile', userData),
   changePassword: (passwords: PasswordChangeRequest) =>
     api.post('/users/change-password', passwords),
+    
+  // Funciones para usar con Netlify Functions
+  updateCopropietarioPerfil: (userData: Partial<UserProfile>) => 
+    api.put<any>(`${NETLIFY_FUNCTIONS_URL}/editar-perfil-copropietario`, userData),
+  obtenerPerfilCompleto: () => 
+    api.get<UsuarioCompleto>(`${NETLIFY_FUNCTIONS_URL}/obtener-perfil-usuario`),
 };
 
 export const parcelaService = {

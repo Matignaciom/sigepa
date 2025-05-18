@@ -294,6 +294,31 @@
   margin-top: 0.25rem;
 }
 
+/* Estilos para el indicador de carga */
+.loadingIndicator {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 0.35rem;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+  font-size: 1rem;
+  color: #4f46e5;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .links {
   margin-top: 1.25rem;
   text-align: center;

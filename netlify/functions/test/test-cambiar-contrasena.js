@@ -4,23 +4,44 @@ const fetch = require('node-fetch');
 // URL de la función. Cuando se ejecuta localmente, normalmente es:
 const functionUrl = 'http://localhost:8889/.netlify/functions/cambiar-contrasena';
 
-// Datos para prueba - Usando el usuario de prueba
+// Datos para prueba - Usando el usuario de prueba con contraseña que cumple todos los requisitos
 const testData = {
   email: 'usuario.prueba@ejemplo.com',
   newPassword: 'NuevaContraseña2023',
   confirmPassword: 'NuevaContraseña2023'
 };
 
-// En la función testCambioContrasena, modificar el mensaje de log:
-console.log('PRUEBA DE CAMBIO DE CONTRASEÑA (3 CAMPOS)');
+// Datos para prueba - Contraseña débil (para probar validaciones)
+const weakPasswordData = {
+  email: 'usuario.prueba@ejemplo.com',
+  newPassword: 'prueba',
+  confirmPassword: 'prueba'
+};
 
-async function testCambioContrasena() {
+// Datos para prueba - Contraseñas no coinciden
+const mismatchPasswordData = {
+  email: 'usuario.prueba@ejemplo.com',
+  newPassword: 'NuevaContraseña2023',
+  confirmPassword: 'DiferenteContraseña2023'
+};
+
+// Datos para prueba - Email no válido
+const invalidEmailData = {
+  email: 'correo-no-valido',
+  newPassword: 'NuevaContraseña2023',
+  confirmPassword: 'NuevaContraseña2023'
+};
+
+console.log('PRUEBA DE CAMBIO DE CONTRASEÑA (VALIDACIÓN MEJORADA)');
+
+// Función para probar un caso específico
+async function testCase(testData, description) {
   try {
     console.log('----------------------------------');
-    console.log('PRUEBA DE CAMBIO DE CONTRASEÑA');
+    console.log(`PRUEBA: ${description}`);
     console.log('----------------------------------');
     console.log('URL de la función:', functionUrl);
-    console.log('Datos de prueba:', testData);
+    console.log('Datos de prueba:', JSON.stringify(testData));
     console.log('----------------------------------');
     
     console.log('Enviando solicitud...');
@@ -44,7 +65,11 @@ async function testCambioContrasena() {
       console.log('✅ PRUEBA EXITOSA - Cambio de contraseña correcto');
       console.log('Mensaje:', data.message);
     } else {
-      console.log('❌ PRUEBA FALLIDA - Cambio de contraseña incorrecto');
+      if (description.includes('VALIDACIÓN')) {
+        console.log('✅ PRUEBA EXITOSA - Validación correcta');
+      } else {
+        console.log('❌ PRUEBA FALLIDA - Cambio de contraseña incorrecto');
+      }
       console.log('Mensaje de error:', data.message);
       console.log('Detalles del error:', data.error || 'No proporcionado');
     }
@@ -55,5 +80,20 @@ async function testCambioContrasena() {
   }
 }
 
-// Ejecutar la prueba
-testCambioContrasena();
+// Función para ejecutar todas las pruebas
+async function runAllTests() {
+  // Caso 1: Contraseña fuerte (caso exitoso)
+  await testCase(testData, 'CAMBIO DE CONTRASEÑA EXITOSO');
+
+  // Caso 2: Contraseña débil
+  await testCase(weakPasswordData, 'VALIDACIÓN DE CONTRASEÑA DÉBIL');
+
+  // Caso 3: Contraseñas no coinciden
+  await testCase(mismatchPasswordData, 'VALIDACIÓN DE CONTRASEÑAS NO COINCIDENTES');
+
+  // Caso 4: Email no válido
+  await testCase(invalidEmailData, 'VALIDACIÓN DE EMAIL NO VÁLIDO');
+}
+
+// Ejecutar todas las pruebas
+runAllTests();

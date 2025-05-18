@@ -17,6 +17,37 @@ const hashPassword = (password) => {
   return crypto.createHash('sha256').update(password).digest('hex');
 };
 
+// Función para validar la fortaleza de la contraseña
+const validatePasswordStrength = (password) => {
+  const minLength = 6;
+  const maxLength = 50;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasDigit = /\d/.test(password);
+
+  if (password.length < minLength) {
+    return { isValid: false, message: 'La contraseña debe tener al menos 6 caracteres' };
+  }
+  
+  if (password.length > maxLength) {
+    return { isValid: false, message: 'La contraseña no debe exceder los 50 caracteres' };
+  }
+  
+  if (!hasUppercase) {
+    return { isValid: false, message: 'La contraseña debe contener al menos una letra mayúscula' };
+  }
+  
+  if (!hasLowercase) {
+    return { isValid: false, message: 'La contraseña debe contener al menos una letra minúscula' };
+  }
+  
+  if (!hasDigit) {
+    return { isValid: false, message: 'La contraseña debe contener al menos un número' };
+  }
+  
+  return { isValid: true };
+};
+
 // Para depuración
 console.log('Configuración de la DB:', {
   host: dbConfig.host,
@@ -82,7 +113,19 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Eliminar verificación de contraseña anterior
+    // Validar formato de email básico
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          success: false, 
+          message: 'Formato de correo electrónico inválido' 
+        }),
+      };
+    }
+
     console.log(`Solicitud de cambio de contraseña para: ${email}`);
 
     // Verificar que la nueva contraseña y la confirmación coincidan
@@ -93,6 +136,19 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ 
           success: false, 
           message: 'La nueva contraseña y la confirmación no coinciden' 
+        }),
+      };
+    }
+
+    // Validar la fortaleza de la contraseña
+    const passwordValidation = validatePasswordStrength(newPassword);
+    if (!passwordValidation.isValid) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          success: false, 
+          message: passwordValidation.message 
         }),
       };
     }

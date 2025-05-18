@@ -5,12 +5,53 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../../context/AuthContext';
 import { userService } from '../../../services/api';
+import type { UsuarioCompleto } from '../../../services/api';
 import styles from './Perfil.module.css';
+
+// URL base para las funciones de Netlify (si estamos en desarrollo, usamos localhost)
+const NETLIFY_FUNCTIONS_URL = import.meta.env.DEV 
+  ? 'http://localhost:8889/.netlify/functions'
+  : '/.netlify/functions';
+
+// Actualizar interfaces para incluir nombreCompleto
+interface User {
+  id?: number;
+  nombreCompleto?: string;
+  email?: string;
+  rol?: string;
+  idComunidad?: number;
+  parcelaId?: string;
+  superficie?: string;
+  fechaAdquisicion?: string;
+  estadoContrato?: string;
+}
+
+interface UserProfile {
+  nombreCompleto?: string;
+  email?: string;
+  telefono?: string;
+  direccion?: string;
+}
+
+// Estilo para requisitos de contraseña
+const passwordRequirementsStyle = {
+  marginBottom: '20px',
+  padding: '15px',
+  backgroundColor: '#f8f9fa',
+  borderRadius: '5px',
+  border: '1px solid #e0e0e0',
+};
+
+const passwordRequirementsListStyle = {
+  margin: '10px 0 0 0',
+  paddingLeft: '20px',
+  fontSize: '0.9rem',
+  color: '#666',
+};
 
 // Esquema de validación para el formulario de perfil
 const perfilSchema = z.object({
-  nombre: z.string().min(2, 'El nombre es requerido'),
-  apellido: z.string().min(2, 'El apellido es requerido'),
+  nombreCompleto: z.string().min(2, 'El nombre completo es requerido'),
   email: z.string().email('Correo electrónico inválido'),
   telefono: z.string().min(9, 'El teléfono debe tener al menos 9 dígitos'),
   direccion: z.string().min(5, 'La dirección es requerida'),
@@ -20,10 +61,11 @@ const perfilSchema = z.object({
 const passwordSchema = z.object({
   email: z.string().email('Correo electrónico inválido'),
   password: z.string()
-    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .min(6, 'La contraseña debe tener al menos 6 caracteres')
     .regex(/[A-Z]/, 'La contraseña debe tener al menos una letra mayúscula')
     .regex(/[a-z]/, 'La contraseña debe tener al menos una letra minúscula')
-    .regex(/[0-9]/, 'La contraseña debe tener al menos un número'),
+    .regex(/[0-9]/, 'La contraseña debe tener al menos un número')
+    .max(50, 'La contraseña no debe exceder los 50 caracteres'),
   confirmPassword: z.string().min(1, 'La confirmación de contraseña es requerida')
 }).refine(data => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
@@ -54,6 +96,7 @@ export const Perfil = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [changePasswordMode, setChangePasswordMode] = useState(false);
+  const [userProfileData, setUserProfileData] = useState<UsuarioCompleto | null>(null);
   
   const currentYear = new Date().getFullYear();
   
@@ -65,8 +108,7 @@ export const Perfil = () => {
   } = useForm<PerfilFormData>({
     resolver: zodResolver(perfilSchema),
     defaultValues: {
-      nombre: datosDeMuestra.nombre,
-      apellido: datosDeMuestra.apellido,
+      nombreCompleto: `${datosDeMuestra.nombre} ${datosDeMuestra.apellido}`,
       email: datosDeMuestra.email,
       telefono: datosDeMuestra.telefono,
       direccion: datosDeMuestra.direccion,
@@ -107,24 +149,60 @@ export const Perfil = () => {
     const loadProfileData = async () => {
       setIsLoading(true);
       try {
-        const response = await userService.getProfile();
-        if (response.success && response.data) {
-          const profileData = response.data;
-          reset({
-            nombre: profileData.nombre || datosDeMuestra.nombre,
-            apellido: profileData.apellido || datosDeMuestra.apellido,
-            email: profileData.email || datosDeMuestra.email,
-            telefono: profileData.telefono || datosDeMuestra.telefono,
-            direccion: profileData.direccion || datosDeMuestra.direccion,
+        console.log('Obteniendo perfil de usuario...');
+        
+        // Obtener el token del localStorage
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.error('No hay token de autenticación');
+          setMessage({
+            text: 'No hay sesión activa. Por favor, inicie sesión nuevamente.',
+            type: 'error',
           });
-        } else {
-          // Si no hay datos reales, usar los de muestra
+          setIsLoading(false);
+          return;
+        }
+        
+        // Realizar solicitud para obtener los datos completos del perfil
+        const perfilResponse = await fetch(`${NETLIFY_FUNCTIONS_URL}/obtener-perfil-usuario`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const perfilData = await perfilResponse.json();
+        
+        if (perfilData.success && perfilData.data) {
+          console.log('Perfil obtenido correctamente:', perfilData.data);
+          const perfil = perfilData.data;
+          
+          // Guardar los datos completos del perfil
+          setUserProfileData(perfil);
+          
+          // Actualizar el formulario con los datos del perfil
           reset({
-            nombre: datosDeMuestra.nombre,
-            apellido: datosDeMuestra.apellido,
-            email: datosDeMuestra.email,
-            telefono: datosDeMuestra.telefono,
-            direccion: datosDeMuestra.direccion,
+            nombreCompleto: perfil.nombreCompleto || '',
+            email: perfil.email || '',
+            telefono: perfil.telefono || '',
+            direccion: perfil.direccion || '',
+          });
+          
+          // Si también estamos en modo de cambio de contraseña, actualizar ese formulario
+          if (changePasswordMode) {
+            resetPassword({
+              email: perfil.email || '',
+              password: '',
+              confirmPassword: '',
+            });
+          }
+        } else {
+          console.warn('No se pudo obtener el perfil:', perfilData.message || 'Error desconocido');
+          setMessage({
+            text: 'Error al cargar el perfil: ' + (perfilData.message || 'Error desconocido'),
+            type: 'error',
           });
         }
       } catch (error) {
@@ -133,46 +211,86 @@ export const Perfil = () => {
           text: 'Error al cargar los datos del perfil',
           type: 'error',
         });
-        // Si hay error, usar los datos de muestra
-        reset({
-          nombre: datosDeMuestra.nombre,
-          apellido: datosDeMuestra.apellido,
-          email: datosDeMuestra.email,
-          telefono: datosDeMuestra.telefono,
-          direccion: datosDeMuestra.direccion,
-        });
       } finally {
         setIsLoading(false);
       }
     };
 
     loadProfileData();
-  }, [reset]);
+  }, [reset, changePasswordMode, resetPassword]);
 
   const onSubmit = async (data: PerfilFormData) => {
     setIsLoading(true);
     setMessage(null);
 
     try {
-      const response = await userService.updateProfile(data);
-      if (response.success) {
+      console.log('Actualizando perfil de usuario:', data);
+      
+      // Obtener el token del localStorage
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setMessage({
+          text: 'No hay sesión activa. Por favor, inicie sesión nuevamente.',
+          type: 'error',
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Realizar la solicitud a la función de Netlify para actualizar el perfil
+      const response = await fetch(`${NETLIFY_FUNCTIONS_URL}/editar-perfil-copropietario`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      const responseData = await response.json();
+      
+      if (responseData.success) {
         setMessage({
           text: 'Perfil actualizado correctamente',
           type: 'success',
         });
+        
         // Actualizar datos del usuario en el contexto
-        if (updateUserData) {
+        if (updateUserData && user) {
           updateUserData({
             ...user,
-            nombre: data.nombre,
-            apellido: data.apellido,
+            nombreCompleto: data.nombreCompleto,
+            name: data.nombreCompleto, // Actualizar ambos campos para consistencia
             email: data.email,
+            telefono: data.telefono,
+            direccion: data.direccion
           });
         }
+        
+        // Recargar los datos del perfil
+        try {
+          const profileResponse = await fetch(`${NETLIFY_FUNCTIONS_URL}/obtener-perfil-usuario`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          const profileData = await profileResponse.json();
+          
+          if (profileData.success && profileData.data) {
+            setUserProfileData(profileData.data);
+          }
+        } catch (error) {
+          console.error('Error al recargar el perfil:', error);
+        }
+        
         setIsEditing(false);
       } else {
         setMessage({
-          text: response.error || 'Error al actualizar el perfil',
+          text: responseData.message || 'Error al actualizar el perfil',
           type: 'error',
         });
       }
@@ -192,30 +310,55 @@ export const Perfil = () => {
     setMessage(null);
 
     try {
-      // Simulamos actualización de contraseña
-      setTimeout(() => {
+      console.log('Cambiando contraseña para:', data.email);
+      
+      // Realizar la solicitud a la función de Netlify para cambiar la contraseña
+      const response = await fetch(`${NETLIFY_FUNCTIONS_URL}/cambiar-contrasena`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: data.email,
+          newPassword: data.password,
+          confirmPassword: data.confirmPassword
+        })
+      });
+      
+      const responseData = await response.json();
+      
+      if (responseData.success) {
         setMessage({
-          text: 'Contraseña actualizada correctamente',
+          text: 'Contraseña actualizada exitosamente',
           type: 'success',
         });
-        setIsLoading(false);
         setChangePasswordMode(false);
         resetPassword();
-      }, 1500);
+      } else {
+        setMessage({
+          text: responseData.message || 'Error al actualizar la contraseña',
+          type: 'error',
+        });
+      }
     } catch (error) {
       console.error('Error al actualizar la contraseña:', error);
       setMessage({
-        text: 'Error al actualizar la contraseña',
+        text: 'Error al actualizar la contraseña. Por favor, intente nuevamente más tarde.',
         type: 'error',
       });
+    } finally {
       setIsLoading(false);
     }
   };
 
   const handleCambiarPassword = () => {
     setChangePasswordMode(true);
+    
+    // Usar el email real del usuario en lugar del email de muestra
+    const userEmail = userProfileData?.email || user?.email || '';
+    
     resetPassword({
-      email: datosDeMuestra.email,
+      email: userEmail,
       password: '',
       confirmPassword: '',
     });
@@ -481,30 +624,16 @@ export const Perfil = () => {
 
           {!changePasswordMode && (
             <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="nombre">Nombre</label>
-                  <input
-                    id="nombre"
-                    type="text"
-                    disabled={!isEditing}
-                    className={errors.nombre ? styles.inputError : ''}
-                    {...register('nombre')}
-                  />
-                  {errors.nombre && <span className={styles.errorText}>{errors.nombre.message}</span>}
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="apellido">Apellido</label>
-                  <input
-                    id="apellido"
-                    type="text"
-                    disabled={!isEditing}
-                    className={errors.apellido ? styles.inputError : ''}
-                    {...register('apellido')}
-                  />
-                  {errors.apellido && <span className={styles.errorText}>{errors.apellido.message}</span>}
-                </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="nombreCompleto">Nombre Completo</label>
+                <input
+                  id="nombreCompleto"
+                  type="text"
+                  disabled={!isEditing}
+                  className={errors.nombreCompleto ? styles.inputError : ''}
+                  {...register('nombreCompleto')}
+                />
+                {errors.nombreCompleto && <span className={styles.errorText}>{errors.nombreCompleto.message}</span>}
               </div>
 
               <div className={styles.formGroup}>
@@ -575,6 +704,7 @@ export const Perfil = () => {
                   type="email"
                   className={passwordErrors.email ? styles.inputError : ''}
                   {...registerPassword('email')}
+                  readOnly
                 />
                 {passwordErrors.email && <span className={styles.errorText}>{passwordErrors.email.message}</span>}
               </div>
@@ -586,6 +716,7 @@ export const Perfil = () => {
                   type="password"
                   className={passwordErrors.password ? styles.inputError : ''}
                   {...registerPassword('password')}
+                  placeholder="Ingrese su nueva contraseña"
                 />
                 {passwordErrors.password && <span className={styles.errorText}>{passwordErrors.password.message}</span>}
               </div>
@@ -597,8 +728,20 @@ export const Perfil = () => {
                   type="password"
                   className={passwordErrors.confirmPassword ? styles.inputError : ''}
                   {...registerPassword('confirmPassword')}
+                  placeholder="Repita su nueva contraseña"
                 />
                 {passwordErrors.confirmPassword && <span className={styles.errorText}>{passwordErrors.confirmPassword.message}</span>}
+              </div>
+              
+              <div className={styles.passwordRequirements} style={passwordRequirementsStyle}>
+                <h4>Requisitos de seguridad:</h4>
+                <ul style={passwordRequirementsListStyle}>
+                  <li>Mínimo 6 caracteres</li>
+                  <li>Al menos una letra mayúscula</li>
+                  <li>Al menos una letra minúscula</li>
+                  <li>Al menos un número</li>
+                  <li>Máximo 50 caracteres</li>
+                </ul>
               </div>
               
               <div className={styles.formActions}>
@@ -645,30 +788,105 @@ export const Perfil = () => {
               <h2>Información de Parcela</h2>
             </div>
             <div className={styles.parcelaInfo}>
+              {userProfileData && userProfileData.parcela ? (
+                <>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>🏞️</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Nombre de Parcela:</strong> {userProfileData.parcela.nombre}</p>
+                    </div>
+                  </div>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>📍</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Dirección:</strong> {userProfileData.parcela.direccion}</p>
+                    </div>
+                  </div>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>📏</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Superficie:</strong> {userProfileData.parcela.superficie} hectáreas</p>
+                    </div>
+                  </div>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>📅</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Fecha de Adquisición:</strong> {new Date(userProfileData.parcela.fechaAdquisicion).toLocaleDateString('es-CL')}</p>
+                    </div>
+                  </div>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>💰</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Valor Catastral:</strong> ${userProfileData.parcela.valorCatastral.toLocaleString('es-CL')}</p>
+                    </div>
+                  </div>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>📝</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Estado:</strong> {userProfileData.parcela.estado}</p>
+                    </div>
+                  </div>
+                  {userProfileData.parcela.contrato && (
+                    <div className={styles.parcelaItem}>
+                      <div className={styles.parcelaIcon}>📄</div>
+                      <div className={styles.parcelaContent}>
+                        <p className={styles.parcelaText}><strong>Estado de Contrato:</strong> {userProfileData.parcela.contrato.estado}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>🏞️</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Número de Parcela:</strong> {user?.parcelaId || datosDeMuestra.parcelaId}</p>
+                    </div>
+                  </div>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>📏</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Superficie:</strong> {user?.superficie || datosDeMuestra.superficie} m²</p>
+                    </div>
+                  </div>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>📅</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Fecha de Adquisición:</strong> {user?.fechaAdquisicion || datosDeMuestra.fechaAdquisicion}</p>
+                    </div>
+                  </div>
+                  <div className={styles.parcelaItem}>
+                    <div className={styles.parcelaIcon}>📝</div>
+                    <div className={styles.parcelaContent}>
+                      <p className={styles.parcelaText}><strong>Estado de Contrato:</strong> {user?.estadoContrato || datosDeMuestra.estadoContrato}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!changePasswordMode && userProfileData && (
+          <div className={styles.activityContainer}>
+            <div className={styles.cardHeader}>
+              <h2>Información de Comunidad</h2>
+            </div>
+            <div className={styles.parcelaInfo}>
               <div className={styles.parcelaItem}>
-                <div className={styles.parcelaIcon}>🏞️</div>
+                <div className={styles.parcelaIcon}>🏘️</div>
                 <div className={styles.parcelaContent}>
-                  <p className={styles.parcelaText}><strong>Número de Parcela:</strong> {user?.parcelaId || datosDeMuestra.parcelaId}</p>
+                  <p className={styles.parcelaText}><strong>Nombre de Comunidad:</strong> {userProfileData.comunidad}</p>
                 </div>
               </div>
-              <div className={styles.parcelaItem}>
-                <div className={styles.parcelaIcon}>📏</div>
-                <div className={styles.parcelaContent}>
-                  <p className={styles.parcelaText}><strong>Superficie:</strong> {user?.superficie || datosDeMuestra.superficie} m²</p>
+              {userProfileData.direccionComunidad && (
+                <div className={styles.parcelaItem}>
+                  <div className={styles.parcelaIcon}>📍</div>
+                  <div className={styles.parcelaContent}>
+                    <p className={styles.parcelaText}><strong>Dirección Administrativa:</strong> {userProfileData.direccionComunidad}</p>
+                  </div>
                 </div>
-              </div>
-              <div className={styles.parcelaItem}>
-                <div className={styles.parcelaIcon}>📅</div>
-                <div className={styles.parcelaContent}>
-                  <p className={styles.parcelaText}><strong>Fecha de Adquisición:</strong> {user?.fechaAdquisicion || datosDeMuestra.fechaAdquisicion}</p>
-                </div>
-              </div>
-              <div className={styles.parcelaItem}>
-                <div className={styles.parcelaIcon}>📝</div>
-                <div className={styles.parcelaContent}>
-                  <p className={styles.parcelaText}><strong>Estado de Contrato:</strong> {user?.estadoContrato || datosDeMuestra.estadoContrato}</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         )}

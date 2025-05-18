@@ -21,7 +21,12 @@ const verifyCodeSchema = z.object({
 
 // Esquema para el paso 3: Cambiar contraseña
 const resetPasswordSchema = z.object({
-  newPassword: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  newPassword: z.string()
+    .min(6, 'La contraseña debe tener al menos 6 caracteres')
+    .max(50, 'La contraseña no debe exceder los 50 caracteres')
+    .regex(/.*[A-Z].*/, 'La contraseña debe contener al menos una letra mayúscula')
+    .regex(/.*[a-z].*/, 'La contraseña debe contener al menos una letra minúscula')
+    .regex(/.*\d.*/, 'La contraseña debe contener al menos un número'),
   confirmPassword: z.string().min(6, 'La confirmación debe tener al menos 6 caracteres'),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: 'Las contraseñas no coinciden',
@@ -163,10 +168,21 @@ export const ForgotPassword = () => {
           navigate('/login');
         }, 2000);
       } else {
-        setError(responseData.message || 'Error al restablecer la contraseña. Por favor, inténtalo nuevamente.');
+        // Mostrar mensaje de error más específico
+        if (response.status === 404) {
+          setError('Usuario no encontrado. Verifica el correo electrónico.');
+        } else if (response.status === 400) {
+          if (responseData.message.includes('coinciden')) {
+            setError('Las contraseñas no coinciden. Por favor, inténtalo nuevamente.');
+          } else {
+            setError(responseData.message || 'Error al restablecer la contraseña. Por favor, inténtalo nuevamente.');
+          }
+        } else {
+          setError(responseData.message || 'Error al restablecer la contraseña. Por favor, inténtalo nuevamente.');
+        }
       }
     } catch (err) {
-      setError('Error al restablecer la contraseña. Por favor, inténtalo nuevamente.');
+      setError('Error de conexión al servidor. Por favor, inténtalo nuevamente más tarde.');
       console.error(err);
     } finally {
       setIsLoading(false);

@@ -86,6 +86,9 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Limpiar el RUT (eliminar puntos y guiones)
+    const rutLimpio = rut.replace(/[.-]/g, '');
+
     console.log(`Intento de registro para: ${email}`);
 
     // Conectar a la base de datos
@@ -120,7 +123,8 @@ exports.handler = async (event, context) => {
           headers,
           body: JSON.stringify({ 
             success: false, 
-            message: 'El correo electrónico ya está registrado' 
+            message: 'El correo electrónico ya está registrado',
+            errorCode: 'EMAIL_ALREADY_EXISTS'
           }),
         };
       }
@@ -152,7 +156,7 @@ exports.handler = async (event, context) => {
       
       [result] = await connection.execute(
         query,
-        [nombreCompleto, email, hashedPassword, rut, rol, comunidad]
+        [nombreCompleto, email, hashedPassword, rutLimpio, rol, comunidad]
       );
       
       console.log('Usuario registrado con éxito. ID:', result.insertId);

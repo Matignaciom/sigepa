@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Register.module.css';
-import { FaEye, FaEyeSlash, FaInfoCircle } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaInfoCircle, FaSpinner } from 'react-icons/fa';
 
 // URL base de API
 const API_URL = import.meta.env.VITE_API_URL || '/.netlify/functions';
@@ -58,8 +58,8 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 // Tipo para las comunidades
 type Community = {
-  idComunidad: string;  // Cambiado de id a idComunidad
-  nombre: string;       // Cambiado de name a nombre
+  idComunidad: string;
+  nombre: string;
 };
 
 // Función para formatear RUT chileno automáticamente
@@ -104,8 +104,7 @@ export const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [loadingCommunities, setLoadingCommunities] = useState(true);
-  // Eliminar la declaración de rutValue que no se usa
-  // Eliminar la función handleRutChange que no se usa
+  const [communitiesError, setCommunitiesError] = useState<string | null>(null);
 
   const {
     register,
@@ -122,16 +121,23 @@ export const Register = () => {
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
+        setLoadingCommunities(true);
+        setCommunitiesError(null);
+        
+        console.log('Obteniendo comunidades desde:', `${API_URL}/obtener-comunidades`);
         const response = await fetch(`${API_URL}/obtener-comunidades`);
         const data = await response.json();
 
         if (response.ok && data.success) {
-          setCommunities(data.comunidades);  // Cambiado de data.communities a data.comunidades
+          console.log('Comunidades obtenidas:', data.comunidades.length);
+          setCommunities(data.comunidades);
         } else {
-          console.error('Error al cargar comunidades:', data.error);
+          console.error('Error en la respuesta:', data);
+          setCommunitiesError(data.message || 'Error al cargar las comunidades');
         }
       } catch (error) {
         console.error('Error al cargar comunidades:', error);
+        setCommunitiesError('Error de conexión. No se pudieron cargar las comunidades.');
       } finally {
         setLoadingCommunities(false);
       }
@@ -145,15 +151,27 @@ export const Register = () => {
     setError(null);
 
     try {
-      const success = await registerUser(data.name, data.email, data.password, data.rut, data.community);
-      if (success) {
+      // Llamar a la función de registro con el RUT formateado
+      const result = await registerUser(data.name, data.email, data.password, data.rut, data.community);
+      
+      if (result.success) {
         navigate('/dashboard');
       } else {
-        setError('Error al registrar usuario. Por favor, intente nuevamente.');
+        // Mostrar mensajes de error específicos basados en el código de error
+        switch (result.errorCode) {
+          case 'EMAIL_ALREADY_EXISTS':
+            setError('El correo electrónico ya está registrado. Por favor, utilice otro correo o inicie sesión.');
+            break;
+          case 'CONNECTION_ERROR':
+            setError('Error de conexión con el servidor. Por favor, verifique su conexión e intente nuevamente.');
+            break;
+          default:
+            setError(result.message || 'Error al registrar usuario. Por favor, intente nuevamente.');
+        }
       }
     } catch (err) {
-      setError('Ocurrió un error durante el registro. Por favor, intente nuevamente.');
-      console.error(err);
+      console.error('Error en registro:', err);
+      setError('Ocurrió un error inesperado. Por favor, intente nuevamente más tarde.');
     } finally {
       setIsLoading(false);
     }
@@ -267,7 +285,13 @@ export const Register = () => {
                     </option>
                   ))}
                 </select>
+                {loadingCommunities && (
+                  <div className={styles.loadingIndicator}>
+                    <FaSpinner className={styles.spinner} /> Cargando...
+                  </div>
+                )}
               </div>
+              {communitiesError && <span className={styles.errorText}>{communitiesError}</span>}
               {errors.community && <span className={styles.errorText}>{errors.community.message}</span>}
             </div>
 
