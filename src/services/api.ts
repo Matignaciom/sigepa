@@ -51,6 +51,69 @@ export interface UsuarioCompleto {
   };
 }
 
+// Interfaces para pagos
+export interface PagoPendiente {
+  id: number;
+  idGasto: number;
+  idParcela: number;
+  concepto: string;
+  fechaVencimiento: string;
+  monto: number;
+  estado: 'Pendiente' | 'Próximo' | 'Atrasado';
+  tipo: string;
+  nombreParcela?: string;
+}
+
+export interface PagoRealizado {
+  id: number;
+  idGasto: number;
+  idParcela: number;
+  concepto: string;
+  fechaPago: string;
+  monto: number;
+  comprobante: string;
+  transaccion_id?: string;
+  descripcion?: string;
+  nombreParcela?: string;
+  tipo?: string;
+}
+
+export interface ResumenPagosPendientes {
+  proximoVencimiento: {
+    fecha: string | null;
+    concepto: string;
+    tipo: string;
+    monto: number;
+  };
+  totalPendiente: {
+    monto: number;
+    cantidadCuotas: number;
+  };
+  pagosPendientes: PagoPendiente[];
+}
+
+export interface ResumenPagosRealizados {
+  resumen: {
+    cantidadPagos: number;
+    fechaUltimoPago: string | null;
+    totalPagado: number;
+    totalTrimestre: number;
+  };
+  pagosRealizados: PagoRealizado[];
+  comprobante?: PagoRealizado & {
+    nombreUsuario?: string;
+    emailUsuario?: string;
+  };
+}
+
+export interface RespuestaProcesoPago {
+  transaccion_id: string;
+  comprobante: string;
+  monto: number;
+  fechaPago: string;
+  cantidadPagosRealizados?: number;
+}
+
 // Opciones por defecto para las peticiones fetch
 const defaultOptions: RequestInit = {
   headers: {
@@ -180,9 +243,54 @@ export const parcelaService = {
 };
 
 export const pagosService = {
+  // Funciones antiguas - mantenidas por compatibilidad
   getPendingPayments: () => api.get('/pagos/pendientes'),
   getPaymentHistory: () => api.get('/pagos/historial'),
   makePayment: (paymentData: any) => api.post('/pagos/realizar', paymentData),
+  
+  // Nuevas funciones que usan Netlify Functions
+  obtenerPagosPendientes: () => 
+    api.get<ResumenPagosPendientes>(`${NETLIFY_FUNCTIONS_URL}/obtener-pagos-pendientes`),
+  
+  obtenerPagosRealizados: (idComprobante?: number) => {
+    const url = idComprobante 
+      ? `${NETLIFY_FUNCTIONS_URL}/obtener-pagos-realizados?idComprobante=${idComprobante}`
+      : `${NETLIFY_FUNCTIONS_URL}/obtener-pagos-realizados`;
+    return api.get<ResumenPagosRealizados>(url);
+  },
+  
+  procesarPagoTransbank: (pagoData: { 
+    idGasto?: number; 
+    idParcela?: number; 
+    monto?: number; 
+    descripcion?: string;
+    pagarTodos?: boolean;
+  }) => {
+    console.log('Procesando pago con Transbank:', pagoData);
+    
+    // Validar datos mínimos necesarios para procesar el pago
+    if (!pagoData.pagarTodos && (!pagoData.idGasto || !pagoData.idParcela || !pagoData.monto)) {
+      console.error('Datos de pago incompletos:', pagoData);
+      return Promise.resolve({
+        success: false,
+        error: 'Datos de pago incompletos. Se requiere idGasto, idParcela y monto.'
+      });
+    }
+    
+    // Agregar descripción por defecto si no se proporciona
+    if (!pagoData.descripcion) {
+      if (pagoData.pagarTodos) {
+        pagoData.descripcion = 'Pago múltiple con Transbank';
+      } else {
+        pagoData.descripcion = 'Pago con Transbank';
+      }
+    }
+    
+    return api.post<RespuestaProcesoPago>(
+      `${NETLIFY_FUNCTIONS_URL}/procesar-pago-transbank`, 
+      pagoData
+    );
+  }
 };
 
 export const adminService = {

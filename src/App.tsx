@@ -5,7 +5,7 @@ import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import { Parcela } from './pages/dashboard/parcelas/Parcelas';
-import { Pagos } from './pages/dashboard/pagos/Pagos';
+import { Pagos, PagoRetorno } from './pages/dashboard/pagos';
 import { Historial } from './pages/dashboard/documentos/Documentos';
 import { Estadisticas } from './pages/dashboard/estadisticas/Estadisticas';
 import { Perfil } from './pages/dashboard/perfil/Perfil';
@@ -108,6 +108,7 @@ function App() {
               <Perfil />
             </ProtectedRoute>
           } />
+          <Route path="/pago-retorno" element={<PagoRetorno />} />
           
           {/* Redirecciones para mantener compatibilidad con rutas antiguas */}
           <Route path="/parcelas" element={<Navigate to="/dashboard/parcelas" />} />

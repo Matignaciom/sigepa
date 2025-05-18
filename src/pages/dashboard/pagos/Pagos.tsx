@@ -1,31 +1,75 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './Pagos.module.css';
+import { pagosService } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
+import { default as transbankService } from '../../../services/transbank';
+import type { PagoPendiente, PagoRealizado, ResumenPagosPendientes, ResumenPagosRealizados } from '../../../services/api';
 
-// Tipos para integrar con el esquema de la base de datos
-interface PagoPendiente {
-  id: number;
-  idGasto: number;
-  idParcela: number;
-  concepto: string;
-  fechaVencimiento: string;
-  monto: number;
-  estado: 'Pendiente' | 'Próximo' | 'Atrasado';
-  tipo: string;
-}
+// Estilos en línea para componentes que no tienen estilos en el CSS
+const inlineStyles = {
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '2rem',
+    textAlign: 'center' as const
+  },
+  spinner: {
+    width: '40px',
+    height: '40px',
+    border: '4px solid rgba(0, 0, 0, 0.1)',
+    borderLeft: '4px solid #4f46e5',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginBottom: '1rem'
+  },
+  spinnerSmall: {
+    display: 'inline-block',
+    width: '20px',
+    height: '20px',
+    border: '3px solid rgba(255, 255, 255, 0.3)',
+    borderLeft: '3px solid #ffffff',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginRight: '0.5rem',
+    verticalAlign: 'middle'
+  },
+  errorMessage: {
+    backgroundColor: '#fee2e2',
+    color: '#b91c1c',
+    border: '1px solid #ef4444',
+    borderRadius: '0.5rem',
+    padding: '1rem',
+    marginBottom: '1rem',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
+  errorButton: {
+    backgroundColor: '#b91c1c',
+    color: 'white',
+    border: 'none',
+    borderRadius: '0.25rem',
+    padding: '0.5rem 1rem',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s',
+    fontWeight: 'bold' as const
+  }
+};
 
-interface PagoRealizado {
-  id: number;
-  idGasto: number;
-  idParcela: number;
-  concepto: string;
-  fechaPago: string;
-  monto: number;
-  comprobante: string;
-  transaccion_id?: string;
-}
+// Agregar un elemento de estilo para la animación del spinner
+const spinnerAnimation = `
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
 
 export const Pagos = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('pendientes');
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -35,6 +79,28 @@ export const Pagos = () => {
   const [medioPago, setMedioPago] = useState('credito');
   const [mostrarComprobante, setMostrarComprobante] = useState(false);
   const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState<PagoRealizado | null>(null);
+  
+  // Estados para almacenar datos de la API
+  const [pagosPendientes, setPagosPendientes] = useState<PagoPendiente[]>([]);
+  const [pagosRealizados, setPagosRealizados] = useState<PagoRealizado[]>([]);
+  const [resumenPendientes, setResumenPendientes] = useState<ResumenPagosPendientes['proximoVencimiento'] & ResumenPagosPendientes['totalPendiente']>({
+    fecha: null,
+    concepto: 'Sin pagos pendientes',
+    tipo: '',
+    monto: 0,
+    cantidadCuotas: 0
+  });
+  const [resumenRealizados, setResumenRealizados] = useState({
+    cantidadPagos: 0,
+    fechaUltimoPago: null as string | null,
+    totalPagado: 0,
+    totalTrimestre: 0
+  });
+  
+  // Estados para manejar carga y errores
+  const [cargandoPendientes, setCargandoPendientes] = useState(false);
+  const [cargandoRealizados, setCargandoRealizados] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const currentYear = new Date().getFullYear();
 
@@ -53,86 +119,335 @@ export const Pagos = () => {
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
   
-  // Datos de ejemplo para pagos pendientes basados en el esquema
-  const pagosPendientes: PagoPendiente[] = [
-    {
-      id: 1,
-      idGasto: 101,
-      idParcela: 1,
-      concepto: 'Cuota Ordinaria Junio 2023',
-      fechaVencimiento: '15/06/2023',
-      monto: 150000,
-      estado: 'Pendiente',
-      tipo: 'Cuota Ordinaria'
-    },
-    {
-      id: 2,
-      idGasto: 102,
-      idParcela: 1,
-      concepto: 'Cuota Extraordinaria Mantención',
-      fechaVencimiento: '15/07/2023',
-      monto: 75000,
-      estado: 'Próximo',
-      tipo: 'Cuota Extraordinaria'
-    },
-    {
-      id: 3,
-      idGasto: 103,
-      idParcela: 2,
-      concepto: 'Multa por atraso en pago',
-      fechaVencimiento: '10/06/2023',
-      monto: 15000,
-      estado: 'Atrasado',
-      tipo: 'Multa'
+  // Cargar pagos pendientes
+  useEffect(() => {
+    if (activeTab === 'pendientes') {
+      cargarPagosPendientes();
     }
-  ];
+  }, [activeTab]);
   
-  // Datos de ejemplo para pagos realizados basados en el esquema
-  const pagosRealizados: PagoRealizado[] = [
-    {
-      id: 101,
-      idGasto: 98,
-      idParcela: 1,
-      concepto: 'Cuota Ordinaria Mayo 2023',
-      fechaPago: '10/05/2023',
-      monto: 150000,
-      comprobante: 'COMP-2023-05-001',
-      transaccion_id: 'TB-982736451'
-    },
-    {
-      id: 102,
-      idGasto: 97,
-      idParcela: 1,
-      concepto: 'Cuota Ordinaria Abril 2023',
-      fechaPago: '10/04/2023',
-      monto: 150000,
-      comprobante: 'COMP-2023-04-001',
-      transaccion_id: 'TB-975632147'
-    },
-    {
-      id: 103,
-      idGasto: 96,
-      idParcela: 1,
-      concepto: 'Cuota Ordinaria Marzo 2023',
-      fechaPago: '10/03/2023',
-      monto: 150000,
-      comprobante: 'COMP-2023-03-001',
-      transaccion_id: 'TB-963258741'
+  // Cargar pagos realizados
+  useEffect(() => {
+    if (activeTab === 'realizados') {
+      cargarPagosRealizados();
     }
-  ];
+  }, [activeTab]);
+  
+  // Función para cargar pagos pendientes desde la API
+  const cargarPagosPendientes = async () => {
+    try {
+      setCargandoPendientes(true);
+      setError(null);
+      
+      console.log("Cargando pagos pendientes...");
+      const response = await pagosService.obtenerPagosPendientes();
+      console.log("Respuesta de pagos pendientes:", response);
+      
+      if (response.success && response.data) {
+        console.log("Datos de pagos pendientes recibidos:", response.data);
+        console.log("Estructura completa:", JSON.stringify(response.data));
+        
+        // Validación de datos de respuesta - manejar estructura anidada
+        let responseData = response.data as any;
+        
+        // Manejar el caso donde la respuesta está doblemente anidada (success dentro de success)
+        if ('success' in responseData && responseData.success === true && 'data' in responseData) {
+          console.log('Detectada estructura anidada en respuesta');
+          responseData = responseData.data;
+        }
+        
+        const typedData = responseData as ResumenPagosPendientes;
+        
+        if (!typedData.pagosPendientes) {
+          console.warn('No se recibieron pagos pendientes en la respuesta');
+          // Intentar estructurar la respuesta - puede venir con diferente formato
+          const respData = responseData as any; // Usar any temporalmente para manejar estructura desconocida
+          
+          if (respData.data && respData.data.pagosPendientes) {
+            console.log('Usando estructura alternativa para pagos pendientes');
+            responseData = respData.data as ResumenPagosPendientes;
+          } else if (Array.isArray(respData)) {
+            console.log('La respuesta es un array, adaptando estructura');
+            const pagosList = respData as PagoPendiente[];
+            responseData = {
+              pagosPendientes: pagosList,
+              proximoVencimiento: pagosList.length > 0 ? {
+                fecha: pagosList[0].fechaVencimiento,
+                concepto: pagosList[0].concepto,
+                tipo: pagosList[0].tipo,
+                monto: pagosList[0].monto
+              } : null as any, // Casting necesario para mantener compatibilidad con el tipo
+              totalPendiente: {
+                monto: pagosList.reduce((sum, pago) => sum + pago.monto, 0),
+                cantidadCuotas: pagosList.length
+              }
+            };
+          } else {
+            // Si no se puede adaptar, inicializar con estructura vacía
+            (responseData as any).pagosPendientes = [];
+          }
+        }
+        
+        // Guardar datos en los estados
+        setPagosPendientes(typedData.pagosPendientes || []);
+        
+        // Convertir montos de string a número
+        let montoProximoVencimiento = 0;
+        if (typedData.proximoVencimiento && typedData.proximoVencimiento.monto) {
+          montoProximoVencimiento = typeof typedData.proximoVencimiento.monto === 'string' ? 
+            parseFloat(typedData.proximoVencimiento.monto) : typedData.proximoVencimiento.monto;
+        }
+        
+        let montoTotalPendiente = 0;
+        if (typedData.totalPendiente && typedData.totalPendiente.monto) {
+          montoTotalPendiente = typeof typedData.totalPendiente.monto === 'string' ? 
+            parseFloat(typedData.totalPendiente.monto) : typedData.totalPendiente.monto;
+        }
+        
+        // Actualizar resumen con validación para evitar errores
+        setResumenPendientes({
+          fecha: typedData.proximoVencimiento?.fecha || null,
+          concepto: typedData.proximoVencimiento?.concepto || 'Sin pagos pendientes',
+          tipo: typedData.proximoVencimiento?.tipo || '',
+          monto: montoProximoVencimiento,
+          cantidadCuotas: typedData.totalPendiente?.cantidadCuotas || 0
+        });
+        
+        console.log("Resumen de pagos pendientes actualizado:", {
+          fecha: typedData.proximoVencimiento?.fecha,
+          monto: montoProximoVencimiento,
+          cantidadCuotas: typedData.totalPendiente?.cantidadCuotas
+        });
+      } else {
+        console.error("Error en la respuesta:", response.error || 'Error desconocido');
+        setError(response.error || 'Error al cargar pagos pendientes');
+        
+        // Restablecer los estados a valores por defecto
+        setPagosPendientes([]);
+        setResumenPendientes({
+          fecha: null,
+          concepto: 'Sin pagos pendientes',
+          tipo: '',
+          monto: 0,
+          cantidadCuotas: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar pagos pendientes:', error);
+      setError('Error de conexión al cargar pagos pendientes');
+      
+      // Restablecer los estados a valores por defecto
+      setPagosPendientes([]);
+      setResumenPendientes({
+        fecha: null,
+        concepto: 'Sin pagos pendientes',
+        tipo: '',
+        monto: 0,
+        cantidadCuotas: 0
+      });
+    } finally {
+      setCargandoPendientes(false);
+    }
+  };
+  
+  // Función para cargar pagos realizados desde la API
+  const cargarPagosRealizados = async () => {
+    try {
+      setCargandoRealizados(true);
+      setError(null);
+      
+      console.log("Cargando pagos realizados...");
+      const response = await pagosService.obtenerPagosRealizados();
+      console.log("Respuesta de pagos realizados:", response);
+      
+      if (response.success && response.data) {
+        console.log("Datos de pagos realizados recibidos:", response.data);
+        console.log("Estructura completa:", JSON.stringify(response.data));
+        
+        // Validación de datos de respuesta - manejar estructura anidada
+        let responseData = response.data as any;
+        
+        // Manejar el caso donde la respuesta está doblemente anidada (success dentro de success)
+        if ('success' in responseData && responseData.success === true && 'data' in responseData) {
+          console.log('Detectada estructura anidada en respuesta');
+          responseData = responseData.data;
+        }
+        
+        const typedData = responseData as ResumenPagosRealizados;
+        
+        if (!typedData.pagosRealizados) {
+          console.warn('No se recibieron pagos realizados en la respuesta');
+          // Intentar estructurar la respuesta - puede venir con diferente formato
+          const respData = responseData as any; // Usar any temporalmente para manejar estructura desconocida
+          
+          if (respData.data && respData.data.pagosRealizados) {
+            console.log('Usando estructura alternativa para pagos realizados');
+            responseData = respData.data as ResumenPagosRealizados;
+          } else if (Array.isArray(respData)) {
+            console.log('La respuesta es un array, adaptando estructura');
+            const pagosList = respData as PagoRealizado[];
+            responseData = {
+              pagosRealizados: pagosList,
+              resumen: {
+                cantidadPagos: pagosList.length,
+                fechaUltimoPago: pagosList.length > 0 ? pagosList[0].fechaPago : null,
+                totalPagado: pagosList.reduce((sum, pago) => sum + pago.monto, 0),
+                totalTrimestre: 0 // Esto requeriría un cálculo más complejo
+              }
+            };
+          } else {
+            // Si no se puede adaptar, inicializar con estructura vacía
+            (responseData as any).pagosRealizados = [];
+          }
+        }
+        
+        // Guardar datos en los estados
+        setPagosRealizados(typedData.pagosRealizados || []);
+        
+        // Convertir montos de string a número si es necesario
+        let totalPagado = 0;
+        if (typedData.resumen && typedData.resumen.totalPagado !== undefined) {
+          totalPagado = typeof typedData.resumen.totalPagado === 'string' ? 
+            parseFloat(typedData.resumen.totalPagado) : typedData.resumen.totalPagado;
+        }
+        
+        let totalTrimestre = 0;
+        if (typedData.resumen && typedData.resumen.totalTrimestre !== undefined) {
+          totalTrimestre = typeof typedData.resumen.totalTrimestre === 'string' ? 
+            parseFloat(typedData.resumen.totalTrimestre) : typedData.resumen.totalTrimestre;
+        }
+        
+        // Actualizar resumen con validación
+        setResumenRealizados({
+          cantidadPagos: typedData.resumen?.cantidadPagos || 0,
+          fechaUltimoPago: typedData.resumen?.fechaUltimoPago || null,
+          totalPagado: totalPagado,
+          totalTrimestre: totalTrimestre
+        });
+        
+        console.log("Resumen de pagos realizados actualizado:", {
+          cantidadPagos: typedData.resumen?.cantidadPagos,
+          totalPagado: totalPagado,
+          totalTrimestre: totalTrimestre
+        });
+      } else {
+        console.error("Error en la respuesta:", response.error || 'Error desconocido');
+        setError(response.error || 'Error al cargar pagos realizados');
+        
+        // Restablecer los estados a valores por defecto
+        setPagosRealizados([]);
+        setResumenRealizados({
+          cantidadPagos: 0,
+          fechaUltimoPago: null,
+          totalPagado: 0,
+          totalTrimestre: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar pagos realizados:', error);
+      setError('Error de conexión al cargar pagos realizados');
+      
+      // Restablecer los estados a valores por defecto
+      setPagosRealizados([]);
+      setResumenRealizados({
+        cantidadPagos: 0,
+        fechaUltimoPago: null,
+        totalPagado: 0,
+        totalTrimestre: 0
+      });
+    } finally {
+      setCargandoRealizados(false);
+    }
+  };
+  
+  // Función para obtener detalles del comprobante
+  const cargarComprobante = async (idComprobante: number) => {
+    try {
+      console.log(`Cargando comprobante ID: ${idComprobante}`);
+      const response = await pagosService.obtenerPagosRealizados(idComprobante);
+      console.log("Respuesta de comprobante:", response);
+      
+      if (response.success && response.data) {
+        // Manejar estructura anidada
+        let responseData = response.data as any;
+        
+        // Manejar el caso donde la respuesta está doblemente anidada (success dentro de success)
+        if ('success' in responseData && responseData.success === true && 'data' in responseData) {
+          console.log('Detectada estructura anidada en respuesta de comprobante');
+          responseData = responseData.data;
+        }
+        
+        if (responseData.comprobante) {
+          console.log("Comprobante encontrado:", responseData.comprobante);
+          setComprobanteSeleccionado(responseData.comprobante);
+          setMostrarComprobante(true);
+        } else {
+          console.error("No se encontró el comprobante en la respuesta");
+          alert('No se pudo obtener el detalle del comprobante. No encontrado.');
+        }
+      } else {
+        console.error("Error en la respuesta del comprobante:", response.error);
+        alert('No se pudo obtener el detalle del comprobante');
+      }
+    } catch (error) {
+      console.error('Error al cargar comprobante:', error);
+      alert('Error al cargar el detalle del comprobante');
+    }
+  };
   
   // Función para formatear montos en pesos chilenos
-  const formatMonto = (monto: number) => {
+  const formatMonto = (monto: number | string | null | undefined): string => {
+    // Si es null o undefined, mostrar 0
+    if (monto === null || monto === undefined) {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP'
-    }).format(monto);
+      }).format(0);
+    }
+    
+    // Asegurar que monto sea un número
+    const montoNumerico = typeof monto === 'string' ? parseFloat(monto) : monto;
+    
+    // Si no es un número válido, mostrar 0
+    if (isNaN(montoNumerico)) {
+      return new Intl.NumberFormat('es-CL', {
+        style: 'currency',
+        currency: 'CLP'
+      }).format(0);
+    }
+    
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP'
+    }).format(montoNumerico);
   };
   
   // Función para formatear fechas en formato español
   const formatFecha = (fecha: string) => {
     const [day, month, year] = fecha.split('/');
     return `${day}/${month}/${year}`;
+  };
+  
+  // Función para formatear fechas ISO a formato español (DD/MM/YYYY)
+  const formatearFechaISO = (fechaISO: string | null): string => {
+    if (!fechaISO) return 'N/A';
+    
+    try {
+      // Convertir a fecha
+      const fecha = new Date(fechaISO);
+      // Verificar si la fecha es válida
+      if (isNaN(fecha.getTime())) return 'N/A';
+      
+      // Formatear a DD/MM/YYYY
+      const dia = fecha.getDate().toString().padStart(2, '0');
+      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const anio = fecha.getFullYear();
+      
+      return `${dia}/${mes}/${anio}`;
+    } catch (error) {
+      console.error('Error al formatear la fecha:', error, 'Fecha original:', fechaISO);
+      return 'N/A';
+    }
   };
   
   // Función para abrir/cerrar el menú en móviles
@@ -157,8 +472,7 @@ export const Pagos = () => {
 
   // Función para ver detalle del comprobante
   const verComprobante = (pago: PagoRealizado) => {
-    setComprobanteSeleccionado(pago);
-    setMostrarComprobante(true);
+    cargarComprobante(pago.id);
   };
 
   // Función para cambiar medio de pago
@@ -166,26 +480,117 @@ export const Pagos = () => {
     setMedioPago(e.target.value);
   };
 
-  // Función para simular procesamiento de pago con Transbank
-  const procesarPagoTransbank = () => {
+  // Función para procesar pago con Transbank
+  const procesarPagoTransbank = async () => {
     if (!pagoSeleccionado) return;
     
     setProcesandoPago(true);
     
-    // Simulación de la integración con Transbank
-    setTimeout(() => {
+    try {
+      // Simulación de Transbank
+      const userId = user?.id ? parseInt(user.id) : 0;
+      
+      // Generar datos para la simulación
+      const buyOrder = transbankService.generateBuyOrder(pagoSeleccionado.id);
+      const sessionId = transbankService.generateSessionId(userId);
+      const returnUrl = transbankService.getReturnUrl();
+      
+      // Crear transacción simulada en Transbank
+      const transbankResponse = await transbankService.createTransaction(
+        buyOrder,
+        sessionId,
+        pagoSeleccionado.monto,
+        returnUrl
+      );
+      
+      // Procesar el pago en nuestra API
+      const pagoData = {
+        idGasto: pagoSeleccionado.idGasto,
+        idParcela: pagoSeleccionado.idParcela,
+        monto: pagoSeleccionado.monto,
+        descripcion: `Pago ${pagoSeleccionado.concepto} con ${medioPago === 'credito' ? 'tarjeta de crédito' : 'tarjeta de débito'}`
+      };
+      
+      const response = await pagosService.procesarPagoTransbank(pagoData);
+      
+      if (response.success && 'data' in response) {
       setProcesandoPago(false);
       setMostrarModal(false);
       
-      // Aquí se implementaría la redirección a Transbank o procesamiento WebPay
-      alert(`Redirigiendo a Transbank para procesar el pago de ${formatMonto(pagoSeleccionado.monto)} con ${medioPago === 'credito' ? 'tarjeta de crédito' : 'tarjeta de débito'}`);
+        // Recargar los datos después del pago exitoso
+        cargarPagosPendientes();
+        
+        // Redirigir a Transbank (simulación)
+        window.location.href = transbankResponse.url;
+      } else {
+        setProcesandoPago(false);
+        alert('Error al procesar el pago: ' + (response.error || 'Error desconocido'));
+      }
+    } catch (error) {
+      console.error('Error al procesar pago:', error);
+      setProcesandoPago(false);
+      alert('Error de conexión al procesar el pago');
+    }
+  };
+  
+  // Función para procesar pago múltiple (Pagar Todo)
+  const procesarPagoMultiple = async () => {
+    if (!pagosPendientes || pagosPendientes.length === 0) return;
+    
+    setProcesandoPago(true);
+    
+    try {
+      // Simulación de Transbank
+      const userId = user?.id ? parseInt(user.id) : 0;
       
-      // Después se procesaría el callback de Transbank
-    }, 1500);
+      // Calcular monto total
+      const montoTotal = pagosPendientes.reduce((total, pago) => total + pago.monto, 0);
+      
+      // Generar datos para la simulación
+      const buyOrder = transbankService.generateBuyOrder(0);
+      const sessionId = transbankService.generateSessionId(userId);
+      const returnUrl = transbankService.getReturnUrl();
+      
+      // Crear transacción simulada en Transbank
+      const transbankResponse = await transbankService.createTransaction(
+        buyOrder,
+        sessionId,
+        montoTotal,
+        returnUrl
+      );
+      
+      const pagoData = {
+        pagarTodos: true,
+        descripcion: `Pago múltiple de ${pagosPendientes.length} cuotas con ${medioPago === 'credito' ? 'tarjeta de crédito' : 'tarjeta de débito'}`
+      };
+      
+      const response = await pagosService.procesarPagoTransbank(pagoData);
+      
+      if (response.success && 'data' in response) {
+        setProcesandoPago(false);
+        setMostrarModal(false);
+        
+        // Recargar los datos después del pago exitoso
+        cargarPagosPendientes();
+        
+        // Redirigir a Transbank (simulación)
+        window.location.href = transbankResponse.url;
+      } else {
+        setProcesandoPago(false);
+        alert('Error al procesar los pagos: ' + (response.error || 'Error desconocido'));
+      }
+    } catch (error) {
+      console.error('Error al procesar pagos múltiples:', error);
+      setProcesandoPago(false);
+      alert('Error de conexión al procesar los pagos');
+    }
   };
 
   return (
     <div className={styles.dashboardContainer}>
+      {/* Agregar el elemento style para la animación del spinner */}
+      <style dangerouslySetInnerHTML={{ __html: spinnerAnimation }} />
+      
       {/* Botón de menú hamburguesa para móviles */}
       {isMobile && (
         <>
@@ -419,6 +824,25 @@ export const Pagos = () => {
           {/* Contenido de la tab Pendientes */}
           {activeTab === 'pendientes' && (
             <div className={styles.tabContent}>
+              {error && (
+                <div style={inlineStyles.errorMessage}>
+                  <p>{error}</p>
+                  <button 
+                    style={inlineStyles.errorButton} 
+                    onClick={cargarPagosPendientes}
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              )}
+              
+              {cargandoPendientes ? (
+                <div style={inlineStyles.loadingContainer}>
+                  <div style={inlineStyles.spinner}></div>
+                  <p>Cargando pagos pendientes...</p>
+                </div>
+              ) : (
+                <>
               <div className={styles.statsRow}>
                 <div className={styles.statCard}>
                   <div className={styles.statIconContainer}>
@@ -426,8 +850,8 @@ export const Pagos = () => {
                   </div>
                   <div className={styles.statContent}>
                     <h3>Próximo Vencimiento</h3>
-                    <p className={styles.statNumber}>{pagosPendientes.length > 0 ? pagosPendientes[0].fechaVencimiento : 'N/A'}</p>
-                    <p className={`${styles.statDetail} ${styles.darkText}`}>{pagosPendientes.length > 0 ? pagosPendientes[0].concepto : 'Sin pagos pendientes'}</p>
+                        <p className={styles.statNumber}>{formatearFechaISO(resumenPendientes.fecha)}</p>
+                        <p className={`${styles.statDetail} ${styles.darkText}`}>{resumenPendientes.concepto}</p>
                   </div>
                 </div>
                 
@@ -437,13 +861,13 @@ export const Pagos = () => {
                   </div>
                   <div className={styles.statContent}>
                     <h3>Total Pendiente</h3>
-                    <p className={styles.statNumber}>{formatMonto(pagosPendientes.reduce((total, pago) => total + pago.monto, 0))}</p>
-                    <p className={`${styles.statDetail} ${styles.darkText}`}>{pagosPendientes.length} cuota(s) pendiente(s)</p>
+                        <p className={styles.statNumber}>{formatMonto(resumenPendientes.monto)}</p>
+                        <p className={`${styles.statDetail} ${styles.darkText}`}>{resumenPendientes.cantidadCuotas} cuota(s) pendiente(s)</p>
                   </div>
                 </div>
               </div>
               
-              {pagosPendientes.length > 0 ? (
+                  {pagosPendientes && pagosPendientes.length > 0 ? (
                 <div className={styles.activityContainer}>
                   <div className={styles.tableHeader}>
                     <div className={styles.tableCell}>Concepto</div>
@@ -458,7 +882,7 @@ export const Pagos = () => {
                     <div key={pago.id} className={styles.tableRow}>
                       <div className={styles.tableCell} data-label="Concepto">{pago.concepto}</div>
                       <div className={styles.tableCell} data-label="Tipo">{pago.tipo}</div>
-                      <div className={styles.tableCell} data-label="Fecha Vencimiento">{pago.fechaVencimiento}</div>
+                          <div className={styles.tableCell} data-label="Fecha Vencimiento">{formatearFechaISO(pago.fechaVencimiento)}</div>
                       <div className={styles.tableCell} data-label="Monto">{formatMonto(pago.monto)}</div>
                       <div className={styles.tableCell} data-label="Estado">
                         <span className={`${styles.statusBadge} ${styles[pago.estado.toLowerCase()]}`}>
@@ -479,12 +903,19 @@ export const Pagos = () => {
                   
                   <div className={styles.actionContainer}>
                     <div className={styles.transbankInfo}>
-                      <img src="https://www.transbank.cl/public/img/logo-transbank-color.png" alt="Transbank" className={styles.transbankLogo} />
+                          <img src="/favicon.svg" alt="Transbank" className={styles.transbankLogo} />
                       <p>Todos los pagos son procesados de forma segura a través de Transbank</p>
                     </div>
                     <button 
                       className={styles.transbankButtonLarge}
-                      onClick={() => iniciarPago(pagosPendientes[0])}
+                          onClick={() => {
+                            if (pagosPendientes && pagosPendientes.length > 0) {
+                              setPagoSeleccionado(pagosPendientes[0]);
+                              setMostrarModal(true);
+                              setMedioPago('credito');
+                            }
+                          }}
+                          disabled={!pagosPendientes || pagosPendientes.length === 0}
                     >
                       <span className={styles.btnIcon}>💰</span>
                       <span className={styles.btnText}>Pagar Todo con Transbank</span>
@@ -495,6 +926,8 @@ export const Pagos = () => {
                 <div className={styles.emptyState}>
                   <p className={styles.emptyStateText}>No tiene pagos pendientes actualmente.</p>
                 </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -502,6 +935,25 @@ export const Pagos = () => {
           {/* Contenido de la tab Realizados */}
           {activeTab === 'realizados' && (
             <div className={styles.tabContent}>
+              {error && (
+                <div style={inlineStyles.errorMessage}>
+                  <p>{error}</p>
+                  <button 
+                    style={inlineStyles.errorButton} 
+                    onClick={cargarPagosRealizados}
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              )}
+              
+              {cargandoRealizados ? (
+                <div style={inlineStyles.loadingContainer}>
+                  <div style={inlineStyles.spinner}></div>
+                  <p>Cargando pagos realizados...</p>
+                </div>
+              ) : (
+                <>
               <div className={styles.statsRow}>
                 <div className={styles.statCard}>
                   <div className={styles.statIconContainer}>
@@ -509,8 +961,8 @@ export const Pagos = () => {
                   </div>
                   <div className={styles.statContent}>
                     <h3>Pagos Realizados</h3>
-                    <p className={styles.statNumber}>{pagosRealizados.length}</p>
-                    <p className={`${styles.statDetail} ${styles.darkText}`}>Último: {pagosRealizados.length > 0 ? pagosRealizados[0].fechaPago : 'N/A'}</p>
+                        <p className={styles.statNumber}>{resumenRealizados.cantidadPagos}</p>
+                        <p className={`${styles.statDetail} ${styles.darkText}`}>Último: {formatearFechaISO(resumenRealizados.fechaUltimoPago)}</p>
                   </div>
                 </div>
                 
@@ -520,13 +972,13 @@ export const Pagos = () => {
                   </div>
                   <div className={styles.statContent}>
                     <h3>Total Pagado</h3>
-                    <p className={styles.statNumber}>{formatMonto(pagosRealizados.reduce((total, pago) => total + pago.monto, 0))}</p>
-                    <p className={`${styles.statDetail} ${styles.darkText}`}>Durante el último trimestre</p>
+                        <p className={styles.statNumber}>{formatMonto(resumenRealizados.totalPagado)}</p>
+                        <p className={`${styles.statDetail} ${styles.darkText}`}>Durante el último trimestre: {formatMonto(resumenRealizados.totalTrimestre)}</p>
                   </div>
                 </div>
               </div>
               
-              {pagosRealizados.length > 0 ? (
+                  {pagosRealizados && pagosRealizados.length > 0 ? (
                 <div className={styles.activityContainer}>
                   <div className={styles.tableHeader}>
                     <div className={styles.tableCell}>Concepto</div>
@@ -540,7 +992,7 @@ export const Pagos = () => {
                   {pagosRealizados.map(pago => (
                     <div key={pago.id} className={styles.tableRow}>
                       <div className={styles.tableCell} data-label="Concepto">{pago.concepto}</div>
-                      <div className={styles.tableCell} data-label="Fecha Pago">{pago.fechaPago}</div>
+                          <div className={styles.tableCell} data-label="Fecha Pago">{formatearFechaISO(pago.fechaPago)}</div>
                       <div className={styles.tableCell} data-label="Monto">{formatMonto(pago.monto)}</div>
                       <div className={styles.tableCell} data-label="Comprobante">{pago.comprobante}</div>
                       <div className={styles.tableCell} data-label="Transacción">{pago.transaccion_id || 'N/A'}</div>
@@ -560,6 +1012,8 @@ export const Pagos = () => {
                 <div className={styles.emptyState}>
                   <p className={styles.emptyStateText}>No tiene pagos realizados para mostrar.</p>
                 </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -572,12 +1026,12 @@ export const Pagos = () => {
           <p>Sistema de Gestión de Parcelas © {currentYear}</p>
           <div className={styles.securityBadges}>
             <img 
-              src="https://www.webpay.cl/assets/img/pci.svg" 
+              src="/favicon.svg" 
               alt="PCI Compliance" 
               className={styles.securityBadge} 
             />
             <img 
-              src="https://www.transbank.cl/public/img/logo-color.svg" 
+              src="/favicon.svg" 
               alt="Transbank Webpay" 
               className={styles.securityBadge} 
             />
@@ -597,11 +1051,14 @@ export const Pagos = () => {
               ×
             </button>
             <div className={styles.modalHeader}>
-              <img src="https://www.transbank.cl/public/img/logo-transbank-color.png" alt="Transbank" className={styles.transbankLogoModal} />
+              <img src="/favicon.svg" alt="Transbank" className={styles.transbankLogoModal} />
               <h3>Pago Seguro vía Transbank</h3>
             </div>
             <div className={styles.modalBody}>
               <div className={styles.pagoDetalles}>
+                {pagoSeleccionado.idGasto !== 0 ? (
+                  // Pago individual
+                  <>
                 <div className={styles.detalleItem}>
                   <span className={styles.detalleLabel}>Concepto:</span>
                   <span className={styles.detalleValor}>{pagoSeleccionado.concepto}</span>
@@ -612,8 +1069,26 @@ export const Pagos = () => {
                 </div>
                 <div className={styles.detalleItem}>
                   <span className={styles.detalleLabel}>Fecha Vencimiento:</span>
-                  <span className={styles.detalleValor}>{pagoSeleccionado.fechaVencimiento}</span>
+                      <span className={styles.detalleValor}>{formatearFechaISO(pagoSeleccionado.fechaVencimiento)}</span>
                 </div>
+                  </>
+                ) : (
+                  // Pago múltiple
+                  <>
+                    <div className={styles.detalleItem}>
+                      <span className={styles.detalleLabel}>Concepto:</span>
+                      <span className={styles.detalleValor}>Pago múltiple de cuotas</span>
+                    </div>
+                    <div className={styles.detalleItem}>
+                      <span className={styles.detalleLabel}>Monto Total:</span>
+                      <span className={styles.detalleMonto}>{formatMonto(resumenPendientes.monto)}</span>
+                    </div>
+                    <div className={styles.detalleItem}>
+                      <span className={styles.detalleLabel}>Cantidad de Cuotas:</span>
+                      <span className={styles.detalleValor}>{resumenPendientes.cantidadCuotas} cuota(s)</span>
+                    </div>
+                  </>
+                )}
               </div>
               
               <div className={styles.medioPagoOptions}>
@@ -644,10 +1119,10 @@ export const Pagos = () => {
                 </div>
                 
                 <div className={styles.tarjetasLogos}>
-                  <img src="https://www.transbank.cl/public/img/tarjetas/visa.svg" alt="Visa" className={styles.tarjetaLogo} />
-                  <img src="https://www.transbank.cl/public/img/tarjetas/mastercard.svg" alt="Mastercard" className={styles.tarjetaLogo} />
-                  <img src="https://www.transbank.cl/public/img/tarjetas/amex.svg" alt="American Express" className={styles.tarjetaLogo} />
-                  <img src="https://www.transbank.cl/public/img/tarjetas/diners.svg" alt="Diners" className={styles.tarjetaLogo} />
+                  <img src="/favicon.svg" alt="Visa" className={styles.tarjetaLogo} />
+                  <img src="/favicon.svg" alt="Mastercard" className={styles.tarjetaLogo} />
+                  <img src="/favicon.svg" alt="American Express" className={styles.tarjetaLogo} />
+                  <img src="/favicon.svg" alt="Diners" className={styles.tarjetaLogo} />
                 </div>
               </div>
             </div>
@@ -662,12 +1137,12 @@ export const Pagos = () => {
               </button>
               <button 
                 className={styles.modalPayButton} 
-                onClick={procesarPagoTransbank}
+                onClick={pagoSeleccionado.idGasto !== 0 ? procesarPagoTransbank : procesarPagoMultiple}
                 disabled={procesandoPago}
               >
                 {procesandoPago ? (
                   <>
-                    <span className={styles.spinnerSmall}></span>
+                    <span style={inlineStyles.spinnerSmall}></span>
                     Procesando...
                   </>
                 ) : (
@@ -721,7 +1196,7 @@ export const Pagos = () => {
                 </div>
                 <div className={styles.comprobanteRow}>
                   <span className={styles.comprobanteLabel}>Fecha de Pago:</span>
-                  <span className={styles.comprobanteValue}>{formatFecha(comprobanteSeleccionado.fechaPago)}</span>
+                  <span className={styles.comprobanteValue}>{formatearFechaISO(comprobanteSeleccionado.fechaPago)}</span>
                 </div>
                 <div className={styles.comprobanteRow}>
                   <span className={styles.comprobanteLabel}>Monto Pagado:</span>
@@ -746,9 +1221,9 @@ export const Pagos = () => {
               
               <div className={styles.comprobanteSello}>
                 <div className={styles.comprobanteSelloLeft}>
-                  <img src="https://www.transbank.cl/public/img/logo-transbank-color.png" alt="Transbank" className={styles.comprobanteSelloLogo} />
+                  <img src="/favicon.svg" alt="Transbank" className={styles.comprobanteSelloLogo} />
                   <div className={styles.comprobanteSelloTimestamp}>
-                    <span>Fecha emisión: {formatFecha(comprobanteSeleccionado.fechaPago)}</span>
+                    <span>Fecha emisión: {formatearFechaISO(comprobanteSeleccionado.fechaPago)}</span>
                     <div className={styles.comprobanteSelloVerificacion}>
                       <span className={styles.comprobanteVerificacionIcon}>🔒</span>
                       <span>Verificado por Transbank</span>
