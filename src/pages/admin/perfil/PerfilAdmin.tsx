@@ -1,45 +1,93 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import styles from '../Admin.module.css';
-import perfilStyles from './PerfilAdmin.module.css';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useAuth } from '../../../context/AuthContext';
+import styles from './PerfilAdmin.module.css';
 
-interface AdminData {
-  nombreCompleto: string;
-  email: string;
-  telefono: string;
-  cargo: string;
-  rut: string;
-  direccion: string;
-  fechaRegistro: string;
-  ultimoAcceso: string;
-}
+// Esquema de validación para el formulario de perfil de administrador
+const perfilAdminSchema = z.object({
+  nombreCompleto: z.string().min(2, 'El nombre completo es requerido'),
+  email: z.string().email('Correo electrónico inválido'),
+  telefono: z.string().min(9, 'El teléfono debe tener al menos 9 dígitos'),
+  direccion: z.string().min(5, 'La dirección es requerida'),
+  cargo: z.string().optional(),
+  rut: z.string().optional(),
+});
+
+// Esquema de validación para el cambio de contraseña
+const passwordSchema = z.object({
+  email: z.string().email('Correo electrónico inválido'),
+  password: z.string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .regex(/[A-Z]/, 'La contraseña debe tener al menos una letra mayúscula')
+    .regex(/[a-z]/, 'La contraseña debe tener al menos una letra minúscula')
+    .regex(/[0-9]/, 'La contraseña debe tener al menos un número'),
+  confirmPassword: z.string().min(1, 'La confirmación de contraseña es requerida')
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
+});
+
+type PerfilAdminFormData = z.infer<typeof perfilAdminSchema>;
+type PasswordFormData = z.infer<typeof passwordSchema>;
+
+// Datos de muestra para visualización
+const datosDeMuestra = {
+  nombreCompleto: 'Carlos Alvarado Ramírez',
+  email: 'carlos.alvarado@sigepa.com',
+  telefono: '+56 9 8765 4321',
+  direccion: 'Av. Principal #123, Santiago',
+  cargo: 'Administrador de Comunidad',
+  rut: '12.345.678-9',
+  fechaRegistro: '01/01/2023',
+  ultimoAcceso: '15/06/2023',
+  comunidadId: 1,
+  comunidadNombre: 'Parcelación Los Aromos'
+};
 
 export const PerfilAdmin = () => {
-  const [adminData, setAdminData] = useState<AdminData>({
-    nombreCompleto: 'Admin Sistema',
-    email: 'admin@sigepa.com',
-    telefono: '+56 9 1234 5678',
-    cargo: 'Administrador General',
-    rut: '12.345.678-9',
-    direccion: 'Av. Principal #123, Oficina Central',
-    fechaRegistro: '01/01/2023',
-    ultimoAcceso: '15/06/2023'
-  });
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<AdminData>(adminData);
-  const [passwordData, setPasswordData] = useState({
-    email: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const { user, updateUserData } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-
+  const [isEditing, setIsEditing] = useState(false);
+  const [changePasswordMode, setChangePasswordMode] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   
   const currentYear = new Date().getFullYear();
+  
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PerfilAdminFormData>({
+    resolver: zodResolver(perfilAdminSchema),
+    defaultValues: {
+      nombreCompleto: datosDeMuestra.nombreCompleto,
+      email: datosDeMuestra.email,
+      telefono: datosDeMuestra.telefono,
+      direccion: datosDeMuestra.direccion,
+      cargo: datosDeMuestra.cargo,
+      rut: datosDeMuestra.rut,
+    },
+  });
+  
+  const {
+    register: registerPassword,
+    handleSubmit: handleSubmitPassword,
+    reset: resetPassword,
+    formState: { errors: passwordErrors },
+  } = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      email: datosDeMuestra.email,
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
   useEffect(() => {
     const checkIfMobile = () => {
@@ -55,6 +103,108 @@ export const PerfilAdmin = () => {
     // Limpiar listener al desmontar
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
+
+  // Cargar datos del perfil
+  useEffect(() => {
+    const loadProfileData = async () => {
+      setIsLoading(true);
+      try {
+        // Simulamos carga de datos, aquí se llamaría a una API real
+        setTimeout(() => {
+          reset({
+            nombreCompleto: datosDeMuestra.nombreCompleto,
+            email: datosDeMuestra.email,
+            telefono: datosDeMuestra.telefono,
+            direccion: datosDeMuestra.direccion,
+            cargo: datosDeMuestra.cargo,
+            rut: datosDeMuestra.rut,
+          });
+          setIsLoading(false);
+        }, 800);
+      } catch (error) {
+        console.error('Error al cargar el perfil:', error);
+        setMessage({
+          text: 'Error al cargar los datos del perfil',
+          type: 'error',
+        });
+        setIsLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, [reset]);
+
+  const onSubmit = async (data: PerfilAdminFormData) => {
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      // Simulamos actualización de datos, aquí se llamaría a una API real
+      setTimeout(() => {
+        setMessage({
+          text: 'Perfil actualizado correctamente',
+          type: 'success',
+        });
+        // Actualizar datos del usuario en el contexto
+        if (updateUserData && user) {
+          updateUserData({
+            ...user,
+            // Solo actualizamos campos que probablemente existan en el objeto user
+            email: data.email,
+            // Otros campos específicos podrían necesitar una adaptación particular
+          });
+        }
+        setIsEditing(false);
+        setIsLoading(false);
+      }, 800);
+    } catch (error) {
+      console.error('Error al actualizar el perfil:', error);
+      setMessage({
+        text: 'Error al actualizar el perfil',
+        type: 'error',
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmitPassword = async (data: PasswordFormData) => {
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      // Simulamos actualización de contraseña, aquí se llamaría a una API real
+      setTimeout(() => {
+        setMessage({
+          text: 'Contraseña actualizada correctamente',
+          type: 'success',
+        });
+        setIsLoading(false);
+        setChangePasswordMode(false);
+        resetPassword();
+      }, 800);
+    } catch (error) {
+      console.error('Error al actualizar la contraseña:', error);
+      setMessage({
+        text: 'Error al actualizar la contraseña',
+        type: 'error',
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const handleCambiarPassword = () => {
+    setChangePasswordMode(true);
+    resetPassword({
+      email: datosDeMuestra.email,
+      password: '',
+      confirmPassword: '',
+    });
+  };
+  
+  const handleCancelPasswordChange = () => {
+    setChangePasswordMode(false);
+    setMessage(null);
+  };
   
   // Función para abrir/cerrar el menú en móviles
   const toggleMenu = () => {
@@ -68,59 +218,18 @@ export const PerfilAdmin = () => {
     window.location.href = '/login';
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswordData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Aquí iría la lógica para actualizar los datos en el backend
-    setAdminData(formData);
-    setIsEditing(false);
-    setMessage({ text: 'Perfil actualizado correctamente', type: 'success' });
-    setTimeout(() => setMessage(null), 3000);
-  };
-
-  const handlePasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Validar que las contraseñas coincidan
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setMessage({ text: 'Las contraseñas no coinciden', type: 'error' });
-      return;
-    }
-    
-    // Validar que el email coincida con el email del usuario
-    if (passwordData.email !== adminData.email) {
-      setMessage({ text: 'El email no coincide con su cuenta', type: 'error' });
-      return;
-    }
-    
-    // Aquí iría la lógica para actualizar la contraseña en el backend (hash SHA-256)
-    setPasswordData({
-      email: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
-    setShowPasswordForm(false);
-    setMessage({ text: 'Contraseña actualizada correctamente', type: 'success' });
-    setTimeout(() => setMessage(null), 3000);
-  };
+  if (isLoading && !isEditing && !changePasswordMode) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner}></div>
+        <p>Cargando información del perfil de administrador...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.adminContainer}>
-      {/* Botón de menú hamburguesa explícito para móviles */}
+    <div className={styles.dashboardContainer}>
+      {/* Botón de menú hamburguesa para móviles */}
       {isMobile && (
         <>
           <button 
@@ -221,7 +330,7 @@ export const PerfilAdmin = () => {
             Administración integral de parcelas, usuarios y pagos para mantener la eficiencia operativa del sistema.
           </p>
         </div>
-        <nav className={styles.adminNav}>
+        <nav className={styles.dashboardNav}>
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Principal</h3>
             <ul className={styles.navList}>
@@ -236,20 +345,11 @@ export const PerfilAdmin = () => {
               </li>
               <li>
                 <Link to="/admin/mapa" 
-                  className={`${styles.navLink} ${window.location.pathname === '/admin/mapa' ? styles.active : ''}`}
+                  className={`${styles.navLink} ${window.location.pathname.includes('/admin/mapa') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>🗺️</span>
                   Mapa Geoespacial
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/resumen" 
-                  className={`${styles.navLink} ${window.location.pathname === '/admin/resumen' ? styles.active : ''}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <span className={styles.navIcon}>📈</span>
-                  Resumen
                 </Link>
               </li>
             </ul>
@@ -260,7 +360,7 @@ export const PerfilAdmin = () => {
             <ul className={styles.navList}>
               <li>
                 <Link to="/admin/contratos" 
-                  className={`${styles.navLink} ${window.location.pathname === '/admin/contratos' ? styles.active : ''}`}
+                  className={`${styles.navLink} ${window.location.pathname.includes('/admin/contratos') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>📄</span>
@@ -269,7 +369,7 @@ export const PerfilAdmin = () => {
               </li>
               <li>
                 <Link to="/admin/alertas" 
-                  className={`${styles.navLink} ${window.location.pathname === '/admin/alertas' ? styles.active : ''}`}
+                  className={`${styles.navLink} ${window.location.pathname.includes('/admin/alertas') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>🔔</span>
@@ -278,26 +378,11 @@ export const PerfilAdmin = () => {
               </li>
               <li>
                 <Link to="/admin/usuarios" 
-                  className={`${styles.navLink} ${window.location.pathname === '/admin/usuarios' ? styles.active : ''}`}
+                  className={`${styles.navLink} ${window.location.pathname.includes('/admin/usuarios') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>👥</span>
                   Usuarios
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
-          <div className={styles.navSection}>
-            <h3 className={styles.navTitle}>Comunicación</h3>
-            <ul className={styles.navList}>
-              <li>
-                <Link to="/admin/notificaciones" 
-                  className={`${styles.navLink} ${window.location.pathname === '/admin/notificaciones' ? styles.active : ''}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <span className={styles.navIcon}>✉️</span>
-                  Gestionar Notificaciones
                 </Link>
               </li>
             </ul>
@@ -349,257 +434,310 @@ export const PerfilAdmin = () => {
           </div>
         </header>
         
-        {/* Contenido del perfil */}
-        <div className={perfilStyles.profileSection}>
-          {message && (
-            <div className={`${perfilStyles.message} ${perfilStyles[message.type]}`}>
-              {message.text}
+        {message && (
+          <div className={`${styles.message} ${styles[message.type]}`}>
+            {message.text}
+          </div>
+        )}
+        
+        <div className={styles.profileCard}>
+          <div className={styles.profileHeader}>
+            <div className={styles.avatarContainer}>
+              <div className={styles.avatar}>
+                {datosDeMuestra.nombreCompleto.split(' ')[0].charAt(0)}
+                {datosDeMuestra.nombreCompleto.split(' ').length > 1 
+                  ? datosDeMuestra.nombreCompleto.split(' ')[1].charAt(0) 
+                  : ''}
+              </div>
             </div>
-          )}
+            <div className={styles.profileInfo}>
+              <h2>{datosDeMuestra.nombreCompleto}</h2>
+              <p className={styles.cargo}>{datosDeMuestra.cargo}</p>
+              <p className={styles.email}>{datosDeMuestra.email}</p>
+              
+              {!isEditing && !changePasswordMode && (
+                <button 
+                  className={styles.editButton}
+                  onClick={() => setIsEditing(true)}
+                >
+                  <span className={styles.btnIcon}>✏️</span> Editar Perfil
+                </button>
+              )}
+            </div>
+          </div>
           
-          <div className={perfilStyles.profileCard}>
-            <div className={perfilStyles.profileHeader}>
-              <div className={perfilStyles.avatarContainer}>
-                <div className={perfilStyles.avatar}>
-                  {adminData.nombreCompleto.split(' ')[0].charAt(0)}
-                  {adminData.nombreCompleto.split(' ').length > 1 ? adminData.nombreCompleto.split(' ')[1].charAt(0) : ''}
+          <div className={styles.profileContent}>
+            {!isEditing && !changePasswordMode && (
+              <div className={styles.activityContainer}>
+                <div className={styles.cardHeader}>
+                  <h2>Información Personal</h2>
                 </div>
-              </div>
-              <div className={perfilStyles.profileInfo}>
-                <h2>{adminData.nombreCompleto}</h2>
-                <p className={perfilStyles.cargo}>{adminData.cargo}</p>
-                <p className={perfilStyles.email}>{adminData.email}</p>
                 
-                {!isEditing && (
-                  <button 
-                    className={perfilStyles.btnEditar}
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <span className={perfilStyles.btnIcon}>✏️</span> Editar Perfil
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            <div className={perfilStyles.profileBody}>
-              {!isEditing ? (
-                <div className={perfilStyles.infoSection}>
-                  <h3>Información Personal</h3>
-                  <div className={perfilStyles.infoGrid}>
-                    <div className={perfilStyles.infoItem}>
-                      <span className={perfilStyles.infoLabel}>Nombre Completo:</span>
-                      <span>{adminData.nombreCompleto}</span>
-                    </div>
-                    <div className={perfilStyles.infoItem}>
-                      <span className={perfilStyles.infoLabel}>Email:</span>
-                      <span>{adminData.email}</span>
-                    </div>
-                    <div className={perfilStyles.infoItem}>
-                      <span className={perfilStyles.infoLabel}>Dirección:</span>
-                      <span>{adminData.direccion}</span>
-                    </div>
-                    <div className={perfilStyles.infoItem}>
-                      <span className={perfilStyles.infoLabel}>Teléfono:</span>
-                      <span>{adminData.telefono}</span>
-                    </div>
-                    <div className={perfilStyles.infoItem}>
-                      <span className={perfilStyles.infoLabel}>RUT:</span>
-                      <span>{adminData.rut}</span>
-                    </div>
-                    <div className={perfilStyles.infoItem}>
-                      <span className={perfilStyles.infoLabel}>Cargo:</span>
-                      <span>{adminData.cargo}</span>
-                    </div>
-                    <div className={perfilStyles.infoItem}>
-                      <span className={perfilStyles.infoLabel}>Fecha de Registro:</span>
-                      <span>{adminData.fechaRegistro}</span>
-                    </div>
-                    <div className={perfilStyles.infoItem}>
-                      <span className={perfilStyles.infoLabel}>Último Acceso:</span>
-                      <span>{adminData.ultimoAcceso}</span>
+                <div className={styles.infoGrid}>
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>👤</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Nombre Completo:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.nombreCompleto}</p>
                     </div>
                   </div>
                   
-                  <div className={perfilStyles.actions}>
-                    <button 
-                      className={perfilStyles.btnPassword}
-                      onClick={() => setShowPasswordForm(!showPasswordForm)}
-                    >
-                      <span className={perfilStyles.btnIcon}>🔑</span> Cambiar Contraseña
-                    </button>
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>✉️</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Email:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.email}</p>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>📞</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Teléfono:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.telefono}</p>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>📍</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Dirección:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.direccion}</p>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>🪪</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>RUT:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.rut}</p>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>👨‍💼</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Cargo:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.cargo}</p>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <form onSubmit={handleSubmit} className={perfilStyles.form}>
-                  <h3>Editar Información Personal</h3>
+              </div>
+            )}
+            
+            {!isEditing && !changePasswordMode && (
+              <div className={styles.activityContainer}>
+                <div className={styles.cardHeader}>
+                  <h2>Actividad de Cuenta</h2>
+                </div>
+                
+                <div className={styles.infoGrid}>
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>📅</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Fecha de Registro:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.fechaRegistro}</p>
+                    </div>
+                  </div>
                   
-                  <div className={perfilStyles.formGrid}>
-                    <div className={perfilStyles.formGroup}>
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>🕒</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Último Acceso:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.ultimoAcceso}</p>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>🏢</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Comunidad:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.comunidadNombre}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {!isEditing && !changePasswordMode && (
+              <div className={styles.activityContainer}>
+                <div className={styles.cardHeader}>
+                  <h2>Seguridad</h2>
+                </div>
+                <div className={styles.securitySection}>
+                  <p>Cambia tu contraseña periódicamente para mantener tu cuenta segura.</p>
+                  <button 
+                    className={styles.primaryActionButton}
+                    onClick={handleCambiarPassword}
+                  >
+                    <span className={styles.btnIcon}>🔒</span>
+                    Cambiar Contraseña
+                  </button>
+                </div>
+              </div>
+            )}
+              
+            {isEditing && (
+              <div className={styles.activityContainer}>
+                <div className={styles.cardHeader}>
+                  <h2>Editar Información Personal</h2>
+                </div>
+                <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
                       <label htmlFor="nombreCompleto">Nombre Completo</label>
                       <input
-                        type="text"
                         id="nombreCompleto"
-                        name="nombreCompleto"
-                        value={formData.nombreCompleto}
-                        onChange={handleInputChange}
-                        required
+                        type="text"
+                        className={errors.nombreCompleto ? styles.inputError : ''}
+                        {...register('nombreCompleto')}
                       />
+                      {errors.nombreCompleto && <span className={styles.errorText}>{errors.nombreCompleto.message}</span>}
                     </div>
                     
-                    <div className={perfilStyles.formGroup}>
+                    <div className={styles.formGroup}>
                       <label htmlFor="email">Email</label>
                       <input
-                        type="email"
                         id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
+                        type="email"
+                        className={errors.email ? styles.inputError : ''}
+                        {...register('email')}
                       />
-                    </div>
-                    
-                    <div className={perfilStyles.formGroup}>
-                      <label htmlFor="direccion">Dirección</label>
-                      <input
-                        type="text"
-                        id="direccion"
-                        name="direccion"
-                        value={formData.direccion}
-                        onChange={handleInputChange}
-                      />
+                      {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
                     </div>
                   </div>
-
-                  <div className={perfilStyles.formGrid}>
-                    <div className={perfilStyles.formGroup}>
+                  
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
                       <label htmlFor="telefono">Teléfono</label>
                       <input
-                        type="tel"
                         id="telefono"
-                        name="telefono"
-                        value={formData.telefono}
-                        onChange={handleInputChange}
-                        required
+                        type="tel"
+                        className={errors.telefono ? styles.inputError : ''}
+                        {...register('telefono')}
                       />
+                      {errors.telefono && <span className={styles.errorText}>{errors.telefono.message}</span>}
                     </div>
                     
-                    <div className={perfilStyles.formGroup}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="direccion">Dirección</label>
+                      <input
+                        id="direccion"
+                        type="text"
+                        className={errors.direccion ? styles.inputError : ''}
+                        {...register('direccion')}
+                      />
+                      {errors.direccion && <span className={styles.errorText}>{errors.direccion.message}</span>}
+                    </div>
+                  </div>
+                  
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
                       <label htmlFor="cargo">Cargo</label>
                       <input
-                        type="text"
                         id="cargo"
-                        name="cargo"
-                        value={formData.cargo}
+                        type="text"
+                        className={`${styles.readOnly}`}
+                        {...register('cargo')}
                         readOnly
-                        className={perfilStyles.readOnly}
                       />
                     </div>
                     
-                    <div className={perfilStyles.formGroup}>
+                    <div className={styles.formGroup}>
                       <label htmlFor="rut">RUT</label>
                       <input
-                        type="text"
                         id="rut"
-                        name="rut"
-                        value={formData.rut}
+                        type="text"
+                        className={`${styles.readOnly}`}
+                        {...register('rut')}
                         readOnly
-                        className={perfilStyles.readOnly}
                       />
                     </div>
                   </div>
                   
-                  <div className={perfilStyles.formActions}>
-                    <button 
-                      type="submit" 
-                      className={perfilStyles.btnGuardar}
-                    >
-                      <span className={perfilStyles.btnIcon}>💾</span> Guardar Cambios
-                    </button>
+                  <div className={styles.formActions}>
                     <button 
                       type="button" 
-                      className={perfilStyles.btnCancelar}
-                      onClick={() => {
-                        setIsEditing(false);
-                        setFormData(adminData);
-                      }}
+                      className={styles.cancelButton}
+                      onClick={() => setIsEditing(false)}
                     >
-                      <span className={perfilStyles.btnIcon}>❌</span> Cancelar
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit" 
+                      className={styles.saveButton}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
                   </div>
                 </form>
-              )}
-              
-              {showPasswordForm && !isEditing && (
-                <form onSubmit={handlePasswordSubmit} className={perfilStyles.passwordForm}>
-                  <h3>Cambiar Contraseña</h3>
-                  
-                  <div className={perfilStyles.formGroup}>
-                    <label htmlFor="email">Email</label>
+              </div>
+            )}
+            
+            {changePasswordMode && (
+              <div className={styles.activityContainer}>
+                <div className={styles.cardHeader}>
+                  <h2>Cambiar Contraseña</h2>
+                </div>
+                <form onSubmit={handleSubmitPassword(onSubmitPassword)} className={styles.form}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="email-password">Correo Electrónico</label>
                     <input
+                      id="email-password"
                       type="email"
-                      id="email"
-                      name="email"
-                      value={passwordData.email}
-                      onChange={handlePasswordChange}
-                      placeholder="Ingrese su email para verificar su identidad"
-                      required
+                      className={passwordErrors.email ? styles.inputError : ''}
+                      {...registerPassword('email')}
                     />
-                    <small className={perfilStyles.formHelper}>
+                    {passwordErrors.email && <span className={styles.errorText}>{passwordErrors.email.message}</span>}
+                    <small className={styles.formHelper}>
                       Ingrese el email asociado a su cuenta para verificar su identidad
                     </small>
                   </div>
                   
-                  <div className={perfilStyles.formGrid}>
-                    <div className={perfilStyles.formGroup}>
-                      <label htmlFor="newPassword">Nueva Contraseña</label>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="password">Nueva Contraseña</label>
                       <input
+                        id="password"
                         type="password"
-                        id="newPassword"
-                        name="newPassword"
-                        value={passwordData.newPassword}
-                        onChange={handlePasswordChange}
-                        required
+                        className={passwordErrors.password ? styles.inputError : ''}
+                        {...registerPassword('password')}
                       />
+                      {passwordErrors.password && <span className={styles.errorText}>{passwordErrors.password.message}</span>}
                     </div>
                     
-                    <div className={perfilStyles.formGroup}>
-                      <label htmlFor="confirmPassword">Confirmar Contraseña</label>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="confirmPassword">Confirmar Nueva Contraseña</label>
                       <input
-                        type="password"
                         id="confirmPassword"
-                        name="confirmPassword"
-                        value={passwordData.confirmPassword}
-                        onChange={handlePasswordChange}
-                        required
+                        type="password"
+                        className={passwordErrors.confirmPassword ? styles.inputError : ''}
+                        {...registerPassword('confirmPassword')}
                       />
+                      {passwordErrors.confirmPassword && <span className={styles.errorText}>{passwordErrors.confirmPassword.message}</span>}
                     </div>
                   </div>
                   
-                  <div className={perfilStyles.formActions}>
-                    <button 
-                      type="submit" 
-                      className={perfilStyles.btnGuardar}
-                    >
-                      <span className={perfilStyles.btnIcon}>🔐</span> Actualizar Contraseña
-                    </button>
+                  <div className={styles.formActions}>
                     <button 
                       type="button" 
-                      className={perfilStyles.btnCancelar}
-                      onClick={() => {
-                        setShowPasswordForm(false);
-                        setPasswordData({
-                          email: '',
-                          newPassword: '',
-                          confirmPassword: ''
-                        });
-                      }}
+                      className={styles.cancelButton}
+                      onClick={handleCancelPasswordChange}
                     >
-                      <span className={perfilStyles.btnIcon}>❌</span> Cancelar
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit" 
+                      className={styles.saveButton}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Actualizando...' : 'Actualizar Contraseña'}
                     </button>
                   </div>
                 </form>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,5 +1,181 @@
-.estadisticasContainer {
+.dashboardContainer {
+  display: flex;
+  min-height: 100vh;
   width: 100%;
+  background-color: #fff;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.leftPanel {
+  width: 280px;
+  background-color: #4f46e5;
+  background-image: linear-gradient(135deg, #4f46e5 0%, #6474ed 100%);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  padding: 2rem 1.5rem;
+}
+
+.brandingContent {
+  position: relative;
+  z-index: 10;
+  margin-bottom: 2.5rem;
+}
+
+.brandLogo {
+  font-size: 1.75rem;
+  font-weight: bold;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  letter-spacing: 2px;
+  margin-bottom: 0.75rem;
+  color: white;
+}
+
+.brandTitle {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.brandDescription {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 1.5rem;
+}
+
+.decorationCircle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  z-index: 1;
+}
+
+.circle1 {
+  width: 300px;
+  height: 300px;
+  top: -150px;
+  right: -100px;
+}
+
+.circle2 {
+  width: 250px;
+  height: 250px;
+  bottom: -100px;
+  left: -100px;
+}
+
+.dashboardNav {
+  position: relative;
+  z-index: 10;
+  flex-grow: 1;
+}
+
+.navSection {
+  margin-bottom: 2rem;
+}
+
+.navTitle {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.navLink:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navLink.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.navIcon {
+  margin-right: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.navLinkButton {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.navLinkButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navLinkButton .navIcon {
+  margin-right: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 2rem;
+  background-color: #f9fafb;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.dashboardTitle {
+  font-size: 1.75rem;
+  color: #1f2937;
+  font-weight: 700;
+  margin: 0;
+}
+
+.headerBrand {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #4f46e5;
+  letter-spacing: 1px;
 }
 
 .title {
@@ -15,6 +191,14 @@
   margin-bottom: 2rem;
 }
 
+.sectionTitle {
+  font-size: 1.25rem;
+  color: #1f2937;
+  margin: 2rem 0 1rem;
+  font-weight: 600;
+}
+
+/* Estilos para el selector de periodo */
 .periodSelector {
   display: flex;
   gap: 0.5rem;
@@ -25,7 +209,7 @@
   padding: 0.5rem 1.5rem;
   background-color: #f8f9fa;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 500;
   color: #555;
@@ -38,58 +222,105 @@
 }
 
 .activePeriod {
-  background-color: #0070f3;
+  background-color: #4f46e5;
   color: white;
-  border-color: #0070f3;
+  border-color: #4f46e5;
 }
 
-.statsGrid {
+/* Estilos para el contenedor de estadísticas */
+.statsContainer, .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .statCard {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #f3f4f6;
 }
 
 .statCard:hover {
   transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-.statCard h3 {
-  font-size: 1.1rem;
-  color: #555;
-  margin-bottom: 0.75rem;
+.statIconContainer {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
 }
 
-.statValue {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #2c7be5;
+.statIcon {
+  font-size: 24px;
 }
 
-.chartSection {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2.5rem;
+.statContent {
+  flex: 1;
 }
 
-.sectionTitle {
-  font-size: 1.3rem;
-  color: #333;
+.statContent h3 {
+  margin: 0 0 5px 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.statNumber, .statValue {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #4f46e5;
+  margin: 0;
+}
+
+/* Estilos para Chart.js */
+.chartContainer {
+  height: 300px;
+  width: 100%;
+  position: relative;
   margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #eee;
 }
 
+.chartsRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.chartCard {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chartCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.chartSubtitle {
+  font-size: 1rem;
+  color: #4b5563;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+/* Estilos para el gráfico de barras (mantener compatibilidad) */
 .barChart {
   display: flex;
   justify-content: space-between;
@@ -114,7 +345,7 @@
 }
 
 .barPuntual {
-  background-color: #2c7be5;
+  background-color: #4f46e5;
 }
 
 .barAtrasado {
@@ -140,8 +371,9 @@
 
 .chartLegend {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 2rem;
+  gap: 1.5rem;
   margin-top: 1rem;
 }
 
@@ -160,20 +392,24 @@
 }
 
 .colorPuntual {
-  background-color: #2c7be5;
+  background-color: #4f46e5;
 }
 
 .colorAtrasado {
   background-color: #e74c3c;
 }
 
-.proximoPagoSection {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+/* Estilos para la sección de actividad */
+.activityContainer {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+  margin-bottom: 2rem;
 }
 
+/* Estilos para la sección de próximo pago */
 .proximoPagoCard {
   display: flex;
   justify-content: space-between;
@@ -208,17 +444,156 @@
 
 .pagarButton {
   padding: 0.75rem 1.5rem;
-  background-color: #0070f3;
+  background-color: #4f46e5;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.3s ease;
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
 }
 
 .pagarButton:hover {
-  background-color: #0060df;
+  background-color: #4338ca;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(79, 70, 229, 0.3);
+}
+
+/* Estilos para el botón principal de acción */
+.actionContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.primaryActionButton {
+  background-color: #4f46e5;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+}
+
+.btnIcon {
+  font-size: 18px;
+}
+
+.primaryActionButton:hover {
+  background-color: #4338ca;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(79, 70, 229, 0.3);
+}
+
+.primaryActionButton:active {
+  transform: translateY(0);
+}
+
+/* Estilos para iconos y decoraciones */
+.favicon {
+  display: inline-block;
+  margin-right: 5px;
+  width: 24px;
+  height: 24px;
+  animation: pulse 3s infinite ease-in-out;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.faviconLarge {
+  width: 60px;
+  height: 60px;
+  display: block;
+  margin: 0 auto 0.5rem;
+  animation: float 4s infinite ease-in-out;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.15));
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.faviconFooter {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  margin-top: auto;
+  padding-top: 2rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.faviconFooter p {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.faviconSmall {
+  display: inline-block;
+  margin-right: 8px;
+  width: 18px;
+  height: 18px;
+  animation: spinSlow 10s infinite linear;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes spinSlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.contentFooter {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.footerLogo {
+  font-weight: 600;
+  color: #4f46e5;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contentFooter p {
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .statsContainer, .statsGrid, .quickAccessGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .chartsRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .statsContainer, .statsGrid, .quickAccessGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -243,5 +618,106 @@
   
   .pagarButton {
     width: 100%;
+  }
+  
+  .chartContainer {
+    height: 250px;
+  }
+  
+  .chartsRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .chartCard {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Manejo específico para dispositivos móviles */
+@media (max-width: 576px) {
+  .leftPanel {
+    transform: translateX(-100%);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 85%;
+    z-index: 999;
+    transition: transform 0.3s ease;
+  }
+  
+  .leftPanel.showMenu {
+    transform: translateX(0);
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .mainContent {
+    padding: 1rem;
+    padding-top: 60px;
+  }
+  
+  .statsContainer, .statsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actionContainer {
+    justify-content: center;
+  }
+  
+  .chartContainer {
+    height: 220px;
+  }
+}
+
+/* Ajustes adicionales para dispositivos muy pequeños */
+@media (max-width: 430px) {
+  .statCard {
+    padding: 1rem;
+  }
+  
+  .activityContainer {
+    padding: 1rem;
+  }
+  
+  .statsContainer, 
+  .statsGrid {
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .periodSelector {
+    flex-wrap: wrap;
+  }
+  
+  .periodButton {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+  }
+  
+  .sectionTitle {
+    font-size: 1.1rem;
+    margin: 1rem 0 0.75rem;
+  }
+  
+  .header {
+    margin-bottom: 1rem;
+  }
+  
+  .chartContainer {
+    height: 200px;
+  }
+  
+  .chartLegend {
+    gap: 1rem;
+  }
+  
+  .legendItem {
+    font-size: 0.8rem;
   }
 }
