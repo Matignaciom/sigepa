@@ -489,7 +489,7 @@ export const Dashboard = () => {
           <div className={styles.activityContainer}>
             {actividades.length > 0 ? (
               actividades.map((actividad, index) => (
-                <div className={styles.activityItem} key={actividad.id || index}>
+                <div className={styles.activityItem} key={`actividad-${actividad.id || 0}-${index}`}>
                   <div className={styles.activityIcon}>{actividad.icono}</div>
                   <div className={styles.activityContent}>
                     <p className={styles.activityText}>{actividad.titulo}</p>
@@ -520,7 +520,7 @@ export const Dashboard = () => {
           <div className={styles.activityContainer}>
             {parcelas.length > 0 ? (
               parcelas.map((parcela, index) => (
-                <div className={styles.activityItem} key={parcela.id || index}>
+                <div className={styles.activityItem} key={`parcela-${parcela.id || 0}-${index}`}>
                   <div className={styles.activityIcon}>🏞️</div>
                   <div className={styles.activityContent}>
                     <p className={styles.activityText}>{parcela.nombre}</p>
