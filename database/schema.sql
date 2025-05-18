@@ -120,13 +120,27 @@ CREATE TABLE IF NOT EXISTS `Aviso` (
 CREATE TABLE IF NOT EXISTS `Contrato` (
   `idContrato` INT NOT NULL AUTO_INCREMENT,
   `idComunidad` INT NOT NULL,
+  `idParcela` INT NULL,
+  `idPropietario` INT NULL,
+  `fechaInicio` DATE NULL,
+  `fechaFin` DATE NULL,
   `pdf_ruta` VARCHAR(255) NOT NULL,
   `estado` ENUM('Vigente','Expirado') DEFAULT 'Vigente',
   PRIMARY KEY (`idContrato`),
   INDEX `fk_Contrato_Comunidad1_idx` (`idComunidad` ASC),
+  INDEX `fk_Contrato_Parcela1_idx` (`idParcela` ASC),
+  INDEX `fk_Contrato_Usuario1_idx` (`idPropietario` ASC),
   CONSTRAINT `fk_Contrato_Comunidad1`
     FOREIGN KEY (`idComunidad`)
-    REFERENCES `Comunidad` (`idComunidad`)
+    REFERENCES `Comunidad` (`idComunidad`),
+  CONSTRAINT `fk_Contrato_Parcela1`
+    FOREIGN KEY (`idParcela`)
+    REFERENCES `Parcela` (`idParcela`)
+    ON DELETE SET NULL,
+  CONSTRAINT `fk_Contrato_Usuario1`
+    FOREIGN KEY (`idPropietario`)
+    REFERENCES `Usuario` (`idUsuario`)
+    ON DELETE SET NULL
 ) ENGINE = InnoDB;
 
 -- -----------------------------------------------------

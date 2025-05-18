@@ -350,14 +350,14 @@ export const PerfilAdmin = () => {
         </header>
         
         {/* Contenido del perfil */}
-        <div className={perfilStyles.container} style={{ maxWidth: '1300px', margin: '0 auto' }}>
+        <div className={perfilStyles.profileSection}>
           {message && (
             <div className={`${perfilStyles.message} ${perfilStyles[message.type]}`}>
               {message.text}
             </div>
           )}
           
-          <div className={perfilStyles.profileContainer}>
+          <div className={perfilStyles.profileCard}>
             <div className={perfilStyles.profileHeader}>
               <div className={perfilStyles.avatarContainer}>
                 <div className={perfilStyles.avatar}>
@@ -374,16 +374,8 @@ export const PerfilAdmin = () => {
                   <button 
                     className={perfilStyles.btnEditar}
                     onClick={() => setIsEditing(true)}
-                    style={{
-                      marginTop: '15px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 20px',
-                      fontWeight: 'bold'
-                    }}
                   >
-                    <span style={{ fontSize: '1.2rem' }}>✏️</span> Editar Perfil
+                    <span className={perfilStyles.btnIcon}>✏️</span> Editar Perfil
                   </button>
                 )}
               </div>
@@ -432,15 +424,8 @@ export const PerfilAdmin = () => {
                     <button 
                       className={perfilStyles.btnPassword}
                       onClick={() => setShowPasswordForm(!showPasswordForm)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '12px 24px',
-                        fontWeight: 'bold'
-                      }}
                     >
-                      <span style={{ fontSize: '1.2rem' }}>🔑</span> Cambiar Contraseña
+                      <span className={perfilStyles.btnIcon}>🔑</span> Cambiar Contraseña
                     </button>
                   </div>
                 </div>
@@ -527,13 +512,8 @@ export const PerfilAdmin = () => {
                     <button 
                       type="submit" 
                       className={perfilStyles.btnGuardar}
-                      style={{
-                        padding: '12px 24px',
-                        fontWeight: 'bold',
-                        fontSize: '1rem'
-                      }}
                     >
-                      <span style={{ marginRight: '8px', fontSize: '1.2rem' }}>💾</span> Guardar Cambios
+                      <span className={perfilStyles.btnIcon}>💾</span> Guardar Cambios
                     </button>
                     <button 
                       type="button" 
@@ -542,13 +522,8 @@ export const PerfilAdmin = () => {
                         setIsEditing(false);
                         setFormData(adminData);
                       }}
-                      style={{
-                        padding: '12px 24px',
-                        fontWeight: 'bold',
-                        fontSize: '1rem'
-                      }}
                     >
-                      <span style={{ marginRight: '8px', fontSize: '1.2rem' }}>❌</span> Cancelar
+                      <span className={perfilStyles.btnIcon}>❌</span> Cancelar
                     </button>
                   </div>
                 </form>
@@ -569,46 +544,43 @@ export const PerfilAdmin = () => {
                       placeholder="Ingrese su email para verificar su identidad"
                       required
                     />
-                    <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                    <small className={perfilStyles.formHelper}>
                       Ingrese el email asociado a su cuenta para verificar su identidad
                     </small>
                   </div>
                   
-                  <div className={perfilStyles.formGroup}>
-                    <label htmlFor="newPassword">Nueva Contraseña</label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      name="newPassword"
-                      value={passwordData.newPassword}
-                      onChange={handlePasswordChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className={perfilStyles.formGroup}>
-                    <label htmlFor="confirmPassword">Confirmar Contraseña</label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      value={passwordData.confirmPassword}
-                      onChange={handlePasswordChange}
-                      required
-                    />
+                  <div className={perfilStyles.formGrid}>
+                    <div className={perfilStyles.formGroup}>
+                      <label htmlFor="newPassword">Nueva Contraseña</label>
+                      <input
+                        type="password"
+                        id="newPassword"
+                        name="newPassword"
+                        value={passwordData.newPassword}
+                        onChange={handlePasswordChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div className={perfilStyles.formGroup}>
+                      <label htmlFor="confirmPassword">Confirmar Contraseña</label>
+                      <input
+                        type="password"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={passwordData.confirmPassword}
+                        onChange={handlePasswordChange}
+                        required
+                      />
+                    </div>
                   </div>
                   
                   <div className={perfilStyles.formActions}>
                     <button 
                       type="submit" 
                       className={perfilStyles.btnGuardar}
-                      style={{
-                        padding: '12px 24px',
-                        fontWeight: 'bold',
-                        fontSize: '1rem'
-                      }}
                     >
-                      <span style={{ marginRight: '8px', fontSize: '1.2rem' }}>🔐</span> Actualizar Contraseña
+                      <span className={perfilStyles.btnIcon}>🔐</span> Actualizar Contraseña
                     </button>
                     <button 
                       type="button" 
@@ -621,13 +593,8 @@ export const PerfilAdmin = () => {
                           confirmPassword: ''
                         });
                       }}
-                      style={{
-                        padding: '12px 24px',
-                        fontWeight: 'bold',
-                        fontSize: '1rem'
-                      }}
                     >
-                      <span style={{ marginRight: '8px', fontSize: '1.2rem' }}>❌</span> Cancelar
+                      <span className={perfilStyles.btnIcon}>❌</span> Cancelar
                     </button>
                   </div>
                 </form>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Mapa.module.css';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
@@ -52,7 +52,7 @@ const markerIcons = {
     url: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
   },
   'Pendiente': {
-    url: 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png'
+    url: 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png'
   },
   'Atrasado': {
     url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
@@ -71,13 +71,19 @@ export const Mapa = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapLoadError, setMapLoadError] = useState(false);
   const [mapInfoWindow, setMapInfoWindow] = useState<Parcela | null>(null);
+  const mapLoadTimeoutRef = useRef<number | null>(null);
   
   const currentYear = new Date().getFullYear();
+
+  // Añadimos un estado para controlar si estamos en un dispositivo con ancho de 418px
+  const [isExactMobile, setIsExactMobile] = useState(false);
 
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth <= 576);
+      setIsExactMobile(window.innerWidth <= 418);
     };
 
     // Comprobar inicialmente
@@ -291,6 +297,23 @@ export const Mapa = () => {
     cargarParcelas();
   }, []);
 
+  useEffect(() => {
+    // Establecer un timeout para detectar si el mapa no carga
+    mapLoadTimeoutRef.current = window.setTimeout(() => {
+      if (!mapLoaded) {
+        console.log('Mapa no cargado después de 10 segundos, mostrando alternativa');
+        setMapLoadError(true);
+        setIsLoading(false);
+      }
+    }, 10000); // 10 segundos de timeout
+
+    return () => {
+      if (mapLoadTimeoutRef.current) {
+        clearTimeout(mapLoadTimeoutRef.current);
+      }
+    };
+  }, [mapLoaded]);
+
   const handleParcelaClick = (parcela: Parcela) => {
     setParcelaSeleccionada(parcela);
   };
@@ -348,9 +371,21 @@ export const Mapa = () => {
     return true;
   });
 
-  // Manejador para cuando se carga el mapa
-  const handleMapLoad = () => {
+  // Función más robusta para cargar el mapa
+  const handleMapLoad = (map: google.maps.Map) => {
+    console.log('Google Maps cargado correctamente');
+    // Limpiar el timeout ya que el mapa cargó correctamente
+    if (mapLoadTimeoutRef.current) {
+      clearTimeout(mapLoadTimeoutRef.current);
+    }
     setMapLoaded(true);
+    setIsLoading(false);
+  };
+
+  const handleMapLoadError = () => {
+    console.error('Error al cargar Google Maps');
+    setMapLoadError(true);
+    setIsLoading(false);
   };
 
   // Función para formatear dinero chileno
@@ -398,20 +433,55 @@ export const Mapa = () => {
         <>
           <button 
             onClick={toggleMenu}
-            className={styles.menuToggleButton}
+            style={{
+              position: 'fixed',
+              top: '10px',
+              right: '10px',
+              width: '40px',
+              height: '40px',
+              backgroundColor: '#4f46e5',
+              border: 'none',
+              borderRadius: '5px',
+              zIndex: 1002,
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-around',
+              alignItems: 'center',
+              padding: '8px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            }}
           >
             <span
               style={{
+                display: 'block',
+                width: '24px',
+                height: '3px',
+                backgroundColor: 'white',
+                borderRadius: '3px',
+                transition: 'all 0.3s',
                 transform: menuOpen ? 'translateY(8px) rotate(45deg)' : 'none'
               }}
             ></span>
             <span
               style={{
+                display: 'block',
+                width: '24px',
+                height: '3px',
+                backgroundColor: 'white',
+                borderRadius: '3px',
+                transition: 'all 0.3s',
                 opacity: menuOpen ? 0 : 1
               }}
             ></span>
             <span
               style={{
+                display: 'block',
+                width: '24px',
+                height: '3px',
+                backgroundColor: 'white',
+                borderRadius: '3px',
+                transition: 'all 0.3s',
                 transform: menuOpen ? 'translateY(-8px) rotate(-45deg)' : 'none'
               }}
             ></span>
@@ -420,7 +490,15 @@ export const Mapa = () => {
           {/* Overlay para cerrar el menú al hacer clic fuera */}
           {menuOpen && (
             <div 
-              className={styles.menuOverlay}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                zIndex: 998
+              }}
               onClick={toggleMenu}
             />
           )}
@@ -430,7 +508,16 @@ export const Mapa = () => {
       <div 
         className={`${styles.leftPanel} ${menuOpen ? styles.showMenu : ''}`}
         style={isMobile ? {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '85%',
+          height: '100%',
+          zIndex: 999,
           transform: menuOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.3s ease',
+          overflowY: 'auto',
+          boxShadow: menuOpen ? '5px 0 15px rgba(0, 0, 0, 0.1)' : 'none'
         } : {}}
       >
         <div className={styles.brandingContent}>
@@ -561,7 +648,7 @@ export const Mapa = () => {
       
       <div 
         className={styles.mainContent}
-        style={isMobile ? { paddingTop: '60px' } : {}}
+        style={isMobile ? { padding: '1rem', paddingTop: '60px' } : {}}
       >
         <header className={styles.header}>
           <h2 className={styles.dashboardTitle}>Mapa Geoespacial</h2>
@@ -570,55 +657,110 @@ export const Mapa = () => {
           </div>
         </header>
         
-        <div className={styles.mapControls}>
-          <div className={styles.filterContainer}>
-            <label htmlFor="estado-filter">Filtrar por estado:</label>
-            <select 
-              id="estado-filter" 
-              className={styles.filterSelect}
-              value={filtroEstado}
-              onChange={handleFiltroEstadoChange}
-            >
-              <option value="todos">Todos</option>
-              <option value="Al día">Al día</option>
-              <option value="Pendiente">Pendiente</option>
-              <option value="Atrasado">Atrasado</option>
-            </select>
+        {/* Versión móvil optimizada para 418px */}
+        {isExactMobile ? (
+          <div className={`${styles.mapControls} ${styles.mapControlsMobile}`}>
+            <div className={styles.filterControlsRow}>
+              <div className={styles.filterContainer}>
+                <label htmlFor="estado-filter">Estado:</label>
+                <select 
+                  id="estado-filter" 
+                  className={styles.filterSelect}
+                  value={filtroEstado}
+                  onChange={handleFiltroEstadoChange}
+                >
+                  <option value="todos">Todos</option>
+                  <option value="Al día">Al día</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Atrasado">Atrasado</option>
+                </select>
+              </div>
+              
+              <div className={styles.filterContainer}>
+                <label htmlFor="comunidad-filter">Comunidad:</label>
+                <select 
+                  id="comunidad-filter" 
+                  className={styles.filterSelect}
+                  value={filtroComunidad === 'todos' ? 'todos' : filtroComunidad}
+                  onChange={handleFiltroComunidadChange}
+                >
+                  <option value="todos">Todas</option>
+                  {comunidades.map(comunidad => (
+                    <option key={comunidad.idComunidad} value={comunidad.idComunidad}>
+                      {comunidad.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className={styles.searchContainer}>
+              <input 
+                type="text" 
+                placeholder="Buscar parcela..." 
+                className={styles.searchInput} 
+                value={busqueda}
+                onChange={handleBusquedaChange}
+              />
+              <button 
+                className={styles.searchButton}
+                onClick={handleBuscar}
+              >
+                Buscar
+              </button>
+            </div>
           </div>
-          
-          <div className={styles.filterContainer}>
-            <label htmlFor="comunidad-filter">Comunidad:</label>
-            <select 
-              id="comunidad-filter" 
-              className={styles.filterSelect}
-              value={filtroComunidad === 'todos' ? 'todos' : filtroComunidad}
-              onChange={handleFiltroComunidadChange}
-            >
-              <option value="todos">Todas</option>
-              {comunidades.map(comunidad => (
-                <option key={comunidad.idComunidad} value={comunidad.idComunidad}>
-                  {comunidad.nombre}
-                </option>
-              ))}
-            </select>
+        ) : (
+          <div className={styles.mapControls}>
+            <div className={styles.filterContainer}>
+              <label htmlFor="estado-filter">Filtrar por estado:</label>
+              <select 
+                id="estado-filter" 
+                className={styles.filterSelect}
+                value={filtroEstado}
+                onChange={handleFiltroEstadoChange}
+              >
+                <option value="todos">Todos</option>
+                <option value="Al día">Al día</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Atrasado">Atrasado</option>
+              </select>
+            </div>
+            
+            <div className={styles.filterContainer}>
+              <label htmlFor="comunidad-filter">Comunidad:</label>
+              <select 
+                id="comunidad-filter" 
+                className={styles.filterSelect}
+                value={filtroComunidad === 'todos' ? 'todos' : filtroComunidad}
+                onChange={handleFiltroComunidadChange}
+              >
+                <option value="todos">Todas</option>
+                {comunidades.map(comunidad => (
+                  <option key={comunidad.idComunidad} value={comunidad.idComunidad}>
+                    {comunidad.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className={styles.searchContainer}>
+              <input 
+                type="text" 
+                placeholder="Buscar parcela..." 
+                className={styles.searchInput} 
+                value={busqueda}
+                onChange={handleBusquedaChange}
+              />
+              <button 
+                className={styles.searchButton}
+                onClick={handleBuscar}
+              >
+                Buscar
+              </button>
+            </div>
           </div>
-          
-          <div className={styles.searchContainer}>
-            <input 
-              type="text" 
-              placeholder="Buscar parcela..." 
-              className={styles.searchInput} 
-              value={busqueda}
-              onChange={handleBusquedaChange}
-            />
-            <button 
-              className={styles.searchButton}
-              onClick={handleBuscar}
-            >
-              Buscar
-            </button>
-          </div>
-        </div>
+        )}
 
         <div className={styles.contentCard}>
           <div className={styles.mapInfoSection}>
@@ -664,92 +806,109 @@ export const Mapa = () => {
           </div>
           
           <div className={styles.map}>
-            {/* Implementación con Google Maps */}
-            <LoadScript
-              googleMapsApiKey="AIzaSyA7BnbM1NEQv3C-7Jj8S9mYL7BQ7JZ--G8"
-              onLoad={() => console.log('Google Maps cargado correctamente')}
-            >
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={center}
-                zoom={12}
-                onLoad={handleMapLoad}
+            {!mapLoadError ? (
+              <LoadScript
+                googleMapsApiKey="AIzaSyA7BnbM1NEQv3C-7Jj8S9mYL7BQ7JZ--G8"
+                onLoad={() => console.log('LoadScript cargado correctamente')}
+                onError={handleMapLoadError}
+                loadingElement={<div className={styles.mapLoadingOverlay}>
+                  <div className={styles.spinner}></div>
+                  <p>Cargando mapa de parcelas...</p>
+                </div>}
               >
-                {mapLoaded && parcelasFiltradas.map((parcela) => (
-                  <Marker
-                    key={parcela.idParcela}
-                    position={{ 
-                      lat: parcela.ubicacion.lat, 
-                      lng: parcela.ubicacion.lng
-                    }}
-                    onClick={() => setMapInfoWindow(parcela)}
-                    icon={markerIcons[parcela.estado]}
-                    title={parcela.nombre}
-                  />
-                ))}
-                
-                {mapInfoWindow && (
-                  <InfoWindow
-                    position={{ 
-                      lat: mapInfoWindow.ubicacion.lat, 
-                      lng: mapInfoWindow.ubicacion.lng
-                    }}
-                    onCloseClick={() => setMapInfoWindow(null)}
-                  >
-                    <div>
-                      <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>{mapInfoWindow.nombre}</h3>
-                      <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}>
-                        <strong>Estado:</strong> {mapInfoWindow.estado}
-                      </p>
-                      <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}>
-                        <strong>Área:</strong> {mapInfoWindow.area} hectáreas
-                      </p>
-                      <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}>
-                        <strong>Comunidad:</strong> {mapInfoWindow.comunidad.nombre}
-                      </p>
-                      <p style={{ margin: '0 0 10px 0', fontSize: '14px' }}>
-                        <strong>Propietario:</strong> {mapInfoWindow.propietario ? mapInfoWindow.propietario.nombreCompleto : 'No asignado'}
-                      </p>
-                      <button 
-                        onClick={() => {
-                          setParcelaSeleccionada(mapInfoWindow);
-                          setMapInfoWindow(null);
-                        }}
-                        style={{
-                          backgroundColor: '#4f46e5',
-                          color: 'white',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '14px'
-                        }}
-                      >
-                        Ver detalles completos
-                      </button>
-                    </div>
-                  </InfoWindow>
-                )}
-              </GoogleMap>
-            </LoadScript>
-            
-            {/* Vista de cuadrícula como respaldo */}
-            {!mapLoaded && (
-              <div className={styles.parcelasGrid}>
-                {parcelasFiltradas.map((parcela) => (
-                  <div 
-                    key={parcela.idParcela}
-                    className={`${styles.parcelaItem} ${styles[`color${parcela.estado.replace(/\s+/g, '')}`]}`}
-                    onClick={() => handleParcelaClick(parcela)}
-                  >
-                    <span className={styles.parcelaNumero}>{parcela.nombre}</span>
-                    {parcela.propietario && (
-                      <div className={styles.parcelaInfo}>
-                        <span className={styles.parcelaIcon}>👤</span>
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={center}
+                  zoom={12}
+                  onLoad={handleMapLoad}
+                >
+                  {parcelasFiltradas.map((parcela) => (
+                    <Marker
+                      key={parcela.idParcela}
+                      position={{ 
+                        lat: parcela.ubicacion.lat, 
+                        lng: parcela.ubicacion.lng
+                      }}
+                      onClick={() => setMapInfoWindow(parcela)}
+                      icon={markerIcons[parcela.estado]}
+                      title={parcela.nombre}
+                    />
+                  ))}
+                  
+                  {mapInfoWindow && (
+                    <InfoWindow
+                      position={{ 
+                        lat: mapInfoWindow.ubicacion.lat, 
+                        lng: mapInfoWindow.ubicacion.lng
+                      }}
+                      onCloseClick={() => setMapInfoWindow(null)}
+                    >
+                      <div className={styles.infoWindowContent}>
+                        <h3 className={styles.infoWindowTitle}>{mapInfoWindow.nombre}</h3>
+                        <div className={styles.infoWindowDetail}>
+                          <strong>Estado:</strong> {mapInfoWindow.estado}
+                        </div>
+                        <div className={styles.infoWindowDetail}>
+                          <strong>Área:</strong> {mapInfoWindow.area} hectáreas
+                        </div>
+                        <div className={styles.infoWindowDetail}>
+                          <strong>Comunidad:</strong> {mapInfoWindow.comunidad.nombre}
+                        </div>
+                        <div className={styles.infoWindowDetail}>
+                          <strong>Propietario:</strong> {mapInfoWindow.propietario ? mapInfoWindow.propietario.nombreCompleto : 'No asignado'}
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setParcelaSeleccionada(mapInfoWindow);
+                            setMapInfoWindow(null);
+                          }}
+                          className={styles.infoWindowButton}
+                        >
+                          Ver detalles completos
+                        </button>
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </InfoWindow>
+                  )}
+                </GoogleMap>
+              </LoadScript>
+            ) : (
+              <div className={styles.mapErrorFallback}>
+                <div className={styles.mapErrorIcon}>🗺️</div>
+                <h3>No se pudo cargar el mapa</h3>
+                <p>Se muestra información de las parcelas en formato de lista</p>
+                <div className={styles.parcelasList}>
+                  {parcelasFiltradas.map(parcela => (
+                    <div 
+                      key={parcela.idParcela} 
+                      className={`${styles.parcelaListItem} ${
+                        parcela.estado === 'Al día' ? styles.estadoAldia :
+                        parcela.estado === 'Pendiente' ? styles.estadoPendiente :
+                        styles.estadoAtrasado
+                      }`}
+                      onClick={() => setParcelaSeleccionada(parcela)}
+                    >
+                      <div className={styles.parcelaListContent}>
+                        <h4>{parcela.nombre}</h4>
+                        <p>{parcela.direccion}</p>
+                        <span className={`${styles.parcelaListBadge} ${
+                          parcela.estado === 'Al día' ? styles.badgeAldia :
+                          parcela.estado === 'Pendiente' ? styles.badgePendiente :
+                          styles.badgeAtrasado
+                        }`}>
+                          {parcela.estado}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Vista de respaldo durante la carga */}
+            {isLoading && (
+              <div className={styles.mapLoadingOverlay}>
+                <div className={styles.spinner}></div>
+                <p>Cargando mapa de parcelas...</p>
               </div>
             )}
           </div>
@@ -824,31 +983,64 @@ export const Mapa = () => {
                   </span>
                 </p>
                 
+                <div className={styles.detailSectionTitle}>Acciones de Gestión</div>
                 <div className={styles.detailActions}>
-                  <button className={styles.actionButton}>
+                  <Link to="/admin/contratos" className={`${styles.actionButton} ${styles.contractButton}`}>
                     <span className={styles.actionIcon}>📄</span>
                     Ver Contrato
-                  </button>
-                  <button className={styles.actionButton}>
+                    <span className={styles.actionTooltip}>
+                      Consulta el contrato asociado a esta parcela según la tabla Contrato en la base de datos
+                    </span>
+                  </Link>
+                  <Link to={`/admin/parcelas/editar/${parcelaSeleccionada.idParcela}`} className={`${styles.actionButton} ${styles.editButton}`}>
                     <span className={styles.actionIcon}>✏️</span>
                     Editar Parcela
-                  </button>
-                  <button className={styles.actionButton}>
+                    <span className={styles.actionTooltip}>
+                      Modifica información como nombre, dirección, valor catastral y otros datos de la parcela
+                    </span>
+                  </Link>
+                  <Link to={`/admin/parcelas/gastos/${parcelaSeleccionada.idParcela}`} className={`${styles.actionButton} ${styles.expenseButton}`}>
                     <span className={styles.actionIcon}>💰</span>
                     Ver Gastos
-                  </button>
+                    <span className={styles.actionTooltip}>
+                      Consulta cuotas ordinarias, extraordinarias y otros gastos asignados a esta parcela
+                    </span>
+                  </Link>
                   {!parcelaSeleccionada.propietario && (
-                    <button className={`${styles.actionButton} ${styles.assignButton}`}>
+                    <Link to="/admin/usuarios" className={`${styles.actionButton} ${styles.assignButton}`}
+                      onClick={() => {
+                        // Aquí se podría guardar en localStorage o contexto la parcela a asignar
+                        localStorage.setItem('parcelaParaAsignar', JSON.stringify({
+                          id: parcelaSeleccionada.idParcela,
+                          nombre: parcelaSeleccionada.nombre
+                        }));
+                      }}
+                    >
                       <span className={styles.actionIcon}>👤</span>
                       Asignar Propietario
-                    </button>
+                      <span className={styles.actionTooltip}>
+                        Vincula un usuario copropietario existente a esta parcela
+                      </span>
+                    </Link>
                   )}
+                </div>
+                
+                <div className={styles.detailSectionDivider}></div>
+                
+                <div className={styles.detailSectionTitle}>Historial de Pagos</div>
+                <div className={styles.detailHistorySection}>
+                  <div className={styles.historyEmptyState}>
+                    <div className={styles.emptyStateIcon}>📋</div>
+                    <p>Consulta el historial de pagos realizados por esta parcela</p>
+                    <button className={styles.secondaryButton}>Ver Historial Completo</button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
+        {/* Footer */}
         <footer className={styles.contentFooter}>
           <div className={styles.footerLogo}>
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.faviconSmall} /> SIGEPA

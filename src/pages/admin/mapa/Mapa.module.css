@@ -10,14 +10,12 @@
 
 .leftPanel {
   width: 280px;
-  min-width: 280px;
   background-color: #4f46e5;
   background-image: linear-gradient(135deg, #4f46e5 0%, #6474ed 100%);
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   color: white;
   padding: 2rem 1.5rem;
 }
@@ -154,12 +152,10 @@
 
 .mainContent {
   flex: 1;
-  width: calc(100% - 280px);
   padding: 2rem;
   background-color: #f9fafb;
   overflow-y: auto;
   overflow-x: hidden;
-  box-sizing: border-box;
 }
 
 .header {
@@ -167,7 +163,6 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  width: 100%;
 }
 
 .dashboardTitle {
@@ -184,7 +179,7 @@
   letter-spacing: 1px;
 }
 
-/* Estilos específicos para el mapa */
+/* Estilos mejorados para controles de mapa */
 .mapControls {
   display: flex;
   justify-content: space-between;
@@ -193,6 +188,11 @@
   flex-wrap: wrap;
   gap: 1rem;
   width: 100%;
+  background-color: #f9fafb;
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .filterContainer, .searchContainer {
@@ -204,27 +204,57 @@
 .filterContainer label {
   color: #1f2937;
   font-weight: 500;
+  margin-right: 0.5rem;
 }
 
 .filterSelect {
-  padding: 0.5rem;
-  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
   border-radius: 8px;
   background-color: white;
   color: #1f2937;
   font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  min-width: 150px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+
+.filterSelect:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
 .searchInput {
-  padding: 0.5rem 1rem;
-  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
   border-radius: 8px;
   width: 220px;
   font-size: 0.95rem;
+  color: #1f2937;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.searchInput:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.searchInput::placeholder {
+  color: #9ca3af;
 }
 
 .searchButton {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
   background-color: #4f46e5;
   color: white;
   border: none;
@@ -285,13 +315,13 @@
   border-radius: 6px;
 }
 
-/* Nuevos colores para los estados */
+/* Nuevos colores para los estados con mejor contraste */
 .colorAlDia {
-  background-color: #10b981;
+  background-color: #059669;
 }
 
 .colorPendiente {
-  background-color: #f59e0b;
+  background-color: #d97706;
 }
 
 .colorAtrasado {
@@ -330,70 +360,102 @@
   min-height: 500px;
   width: 100%;
   box-sizing: border-box;
+  position: relative;
 }
 
 .parcelasGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  width: 100%;
+  display: none;
 }
 
 .parcelaItem {
   aspect-ratio: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .parcelaItem:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
   z-index: 1;
+}
+
+.parcelaContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.parcelaContent::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6));
+  z-index: -1;
 }
 
 .parcelaNumero {
   font-weight: 700;
-  color: white;
-  font-size: 1.25rem;
+  color: #ffffff;
+  font-size: 1.1rem;
   text-align: center;
-  padding: 0 10px;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.parcelaEstado {
+  font-size: 0.85rem;
+  color: #ffffff;
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background-color: rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .parcelaInfo {
   position: absolute;
   top: 8px;
   right: 8px;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: #ffffff;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 2;
 }
 
 .parcelaIcon {
   font-size: 14px;
+  color: #4f46e5;
 }
 
-/* Colores para los estados en parcelaItem */
+/* Colores para parcelas en la cuadrícula */
 .colorAldia {
-  background-color: #10b981;
-}
-
-.colorPendiente {
-  background-color: #f59e0b;
-}
-
-.colorAtrasado {
-  background-color: #ef4444;
+  background-color: #059669;
 }
 
 /* Detalle de parcela */
@@ -457,12 +519,13 @@
   color: white;
 }
 
+/* Colores para badges en items */
 .badgeAldia {
-  background-color: #10b981;
+  background-color: #059669;
 }
 
 .badgePendiente {
-  background-color: #f59e0b;
+  background-color: #d97706;
 }
 
 .badgeAtrasado {
@@ -511,6 +574,9 @@
   align-items: center;
   gap: 0.5rem;
   box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+  text-decoration: none;
+  text-align: center;
+  justify-content: center;
 }
 
 .actionButton:hover {
@@ -670,45 +736,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Menu móvil */
-.menuToggleButton {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  width: 40px;
-  height: 40px;
-  background-color: #4f46e5;
-  border: none;
-  border-radius: 5px;
-  z-index: 1002;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  align-items: center;
-  padding: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.menuToggleButton span {
-  display: block;
-  width: 24px;
-  height: 3px;
-  background-color: white;
-  border-radius: 3px;
-  transition: all 0.3s;
-}
-
-.menuOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0,0,0,0.5);
-  z-index: 998;
-}
-
+/* Clases para el menú móvil */
 .showMenu {
   transform: translateX(0) !important;
 }
@@ -733,6 +761,147 @@
     width: 48%;
     margin-bottom: 1rem;
   }
+}
+
+@media (max-width: 900px) {
+  .adminContainer {
+    flex-direction: column;
+  }
+  
+  .leftPanel {
+    width: 100%;
+    padding: 1.5rem;
+  }
+  
+  .brandingContent {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .adminNav {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .navSection {
+    margin-bottom: 0;
+    width: 48%;
+  }
+  
+  .mainContent {
+    padding: 1.5rem;
+  }
+}
+
+/* Estilos para versión móvil optimizada de mapControls */
+.mapControlsMobile {
+  flex-direction: column;
+  padding: 0.75rem;
+}
+
+.filterControlsRow {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.mapControlsMobile .filterContainer {
+  flex: 1;
+}
+
+.mapControlsMobile .filterContainer label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.mapControlsMobile .filterSelect {
+  min-width: auto;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  background-position: right 0.5rem center;
+}
+
+.mapControlsMobile .searchContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mapControlsMobile .searchInput {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.mapControlsMobile .searchButton {
+  width: 100%;
+  padding: 0.5rem;
+}
+
+/* Mejoras específicas para pantallas de 418px y similares */
+@media (max-width: 418px) {
+  .mainContent {
+    padding: 0.5rem !important;
+    padding-top: 60px !important;
+  }
+  
+  .header {
+    margin-bottom: 0.75rem;
+  }
+  
+  .dashboardTitle {
+    font-size: 1.2rem;
+  }
+  
+  .headerBrand {
+    font-size: 0.85rem;
+  }
+  
+  /* Ajustes refinados para mapControls */
+  .mapControls {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  .filterContainer, .searchContainer {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .filterContainer label {
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+  
+  .filterSelect, .searchInput {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    min-width: auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .searchButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Resto de estilos para 418px que se mantienen igual */
+  .contentCard {
+    padding: 0.75rem;
+  }
+  
+  /* ... rest of existing 418px styles ... */
 }
 
 @media (max-width: 768px) {
@@ -764,6 +933,27 @@
   
   .statItem {
     width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .adminNav {
+    flex-direction: column;
+  }
+  
+  .navSection {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .mapControls {
+    margin-bottom: 0.75rem;
   }
 }
 
@@ -836,5 +1026,692 @@
   
   .detailRow {
     flex-direction: column;
+  }
+  
+  .actionTooltip {
+    display: none;
+  }
+}
+
+/* Esta regla se aplica cuando el dispositivo está en modo landscape con poca altura */
+@media (max-height: 500px) and (orientation: landscape) {
+  .leftPanel {
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  
+  .brandDescription {
+    display: none;
+  }
+  
+  .faviconFooter {
+    display: none;
+  }
+  
+  .navTitle {
+    margin-bottom: 0.5rem;
+  }
+  
+  .navLink, .navLinkButton {
+    padding: 8px 12px;
+    margin-bottom: 4px;
+  }
+  
+  .navSection {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Ajustes específicos para móviles de 418px */
+@media (max-width: 430px) {
+  .mainContent {
+    padding: 0.75rem;
+    padding-top: 55px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .leftPanel {
+    width: 80%;
+  }
+  
+  .headerBrand {
+    font-size: 0.9rem;
+  }
+  
+  .dashboardTitle {
+    font-size: 1.3rem;
+  }
+  
+  .contentCard {
+    padding: 1rem;
+  }
+  
+  .map {
+    padding: 0.75rem;
+    min-height: 350px;
+  }
+  
+  .mapControls {
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  
+  .filterContainer label {
+    font-size: 0.9rem;
+  }
+  
+  .header {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Ajuste adicional para los elementos dentro del panel lateral en dispositivos angostos */
+@media (max-width: 430px) {
+  .navLink, .navLinkButton {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+  
+  .navTitle {
+    font-size: 0.8rem;
+  }
+  
+  .brandLogo {
+    font-size: 1.2rem;
+  }
+  
+  .brandTitle {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .brandDescription {
+    font-size: 0.8rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Prevención global de desbordamiento horizontal */
+html, body {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Estilos para los detalles mejorados de parcelas */
+.detailSectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 1.5rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detailSectionDivider {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 1.5rem 0;
+  width: 100%;
+}
+
+.detailHistorySection {
+  background-color: #f9fafb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.historyEmptyState {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.emptyStateIcon {
+  font-size: 2.5rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.historyEmptyState p {
+  color: #6b7280;
+  margin-bottom: 1.25rem;
+}
+
+.secondaryButton {
+  background-color: white;
+  color: #4f46e5;
+  border: 1px solid #4f46e5;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.secondaryButton:hover {
+  background-color: #f5f3ff;
+  transform: translateY(-2px);
+}
+
+/* Estilos para los botones específicos */
+.contractButton {
+  background-color: #3b82f6;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+  position: relative;
+}
+
+.contractButton:hover {
+  background-color: #2563eb;
+  box-shadow: 0 6px 10px rgba(59, 130, 246, 0.3);
+}
+
+.editButton {
+  background-color: #4f46e5;
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+  position: relative;
+}
+
+.editButton:hover {
+  background-color: #4338ca;
+  box-shadow: 0 6px 10px rgba(79, 70, 229, 0.3);
+}
+
+.expenseButton {
+  background-color: #8b5cf6;
+  box-shadow: 0 4px 6px rgba(139, 92, 246, 0.2);
+  position: relative;
+}
+
+.expenseButton:hover {
+  background-color: #7c3aed;
+  box-shadow: 0 6px 10px rgba(139, 92, 246, 0.3);
+}
+
+.actionTooltip {
+  position: absolute;
+  top: -70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1f2937;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  max-width: 200px;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  z-index: 100;
+}
+
+.actionTooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -8px;
+  border-width: 8px;
+  border-style: solid;
+  border-color: #1f2937 transparent transparent transparent;
+}
+
+.contractButton:hover .actionTooltip,
+.editButton:hover .actionTooltip,
+.expenseButton:hover .actionTooltip,
+.assignButton:hover .actionTooltip {
+  opacity: 1;
+  visibility: visible;
+  top: -80px;
+}
+
+@media (max-width: 576px) {
+  .actionTooltip {
+    display: none;
+  }
+}
+
+/* Estilos para InfoWindow de Google Maps */
+.infoWindowContent {
+  padding: 5px;
+  max-width: 280px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.infoWindowTitle {
+  margin: 0 0 10px 0;
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 700;
+  border-bottom: 2px solid #4f46e5;
+  padding-bottom: 5px;
+}
+
+.infoWindowDetail {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.infoWindowDetail strong {
+  color: #4f46e5;
+  font-weight: 600;
+  margin-right: 5px;
+}
+
+.infoWindowButton {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 5px;
+  font-weight: 500;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.infoWindowButton:hover {
+  background-color: #4338ca;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Pantalla de carga del mapa */
+.mapLoadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  z-index: 5;
+}
+
+.mapLoadingOverlay p {
+  margin-top: 1rem;
+  color: #4f46e5;
+  font-weight: 500;
+}
+
+/* Vista alternativa cuando el mapa no carga */
+.mapErrorFallback {
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  height: 500px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mapErrorIcon {
+  font-size: 3rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.mapErrorFallback h3 {
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.mapErrorFallback p {
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+}
+
+.parcelasList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+.parcelaListItem {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-left: 4px solid;
+}
+
+.parcelaListItem:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.parcelaListBadge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+  background-color: #6b7280;
+}
+
+.estadoAldia {
+  border-left-color: #059669;
+}
+
+.estadoPendiente {
+  border-left-color: #d97706;
+}
+
+.estadoAtrasado {
+  border-left-color: #ef4444;
+}
+
+/* Badges para la vista alternativa */
+.badgeAldia {
+  background-color: #059669;
+}
+
+.badgePendiente {
+  background-color: #d97706;
+}
+
+.badgeAtrasado {
+  background-color: #ef4444;
+}
+
+.parcelaListContent h4 {
+  margin: 0 0 0.5rem 0;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.parcelaListContent p {
+  margin: 0 0 0.5rem 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Mejoras específicas para pantallas de 418px y similares */
+@media (max-width: 418px) {
+  .mainContent {
+    padding: 0.5rem !important;
+    padding-top: 60px !important;
+  }
+  
+  .header {
+    margin-bottom: 0.75rem;
+  }
+  
+  .dashboardTitle {
+    font-size: 1.2rem;
+  }
+  
+  .headerBrand {
+    font-size: 0.85rem;
+  }
+  
+  .mapControls {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  .filterContainer, .searchContainer {
+    width: 100%;
+  }
+  
+  .filterContainer label {
+    font-size: 0.8rem;
+  }
+  
+  .filterSelect, .searchInput {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .searchButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+  
+  .contentCard {
+    padding: 0.75rem;
+  }
+  
+  .mapInfoSection {
+    margin-bottom: 0.75rem;
+  }
+  
+  .mapLegend {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .mapStats {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .statItem {
+    width: 48%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .statLabel {
+    font-size: 0.75rem;
+  }
+  
+  .statValue {
+    font-size: 1.2rem;
+  }
+  
+  .map {
+    padding: 0.5rem;
+    min-height: 400px;
+  }
+  
+  .parcelasList {
+    grid-template-columns: 1fr;
+  }
+  
+  .parcelaDetailOverlay {
+    align-items: flex-end;
+  }
+  
+  .parcelaDetail {
+    width: 100%;
+    max-width: 100%;
+    height: 90vh;
+    border-radius: 16px 16px 0 0;
+    padding: 1rem;
+  }
+  
+  .closeButton {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+  
+  .detailTitle {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    padding-right: 1.5rem;
+  }
+  
+  .detailRow {
+    margin-bottom: 0.5rem;
+  }
+  
+  .detailLabel {
+    width: 100%;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+  }
+  
+  .detailValue {
+    font-size: 0.9rem;
+  }
+  
+  .detailActions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .actionButton {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .detailSectionTitle {
+    font-size: 1rem;
+    margin: 1.25rem 0 0.75rem;
+  }
+  
+  .detailHistorySection {
+    padding: 1rem;
+  }
+  
+  .infoWindowContent {
+    max-width: 220px;
+  }
+  
+  .infoWindowTitle {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  
+  .infoWindowDetail {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  
+  .mapErrorFallback {
+    padding: 1rem;
+    height: auto;
+    min-height: 400px;
+  }
+  
+  .mapErrorIcon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Regla específica para dispositivos de 418px y rangos similares */
+@media (width >= 412px) and (width <= 428px) {
+  /* Prevención de desbordamiento horizontal específica */
+  .mapControls, .filterContainer, .searchContainer, 
+  .searchInput, .searchButton, .filterSelect {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .mapControls {
+    padding: 0.6rem;
+  }
+  
+  .searchContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .searchInput {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 6px;
+    height: 42px;
+  }
+  
+  .searchButton {
+    width: 100%;
+    box-sizing: border-box;
+    height: 42px;
+  }
+  
+  /* Ajustes específicos para estas dimensiones */
+  .filterSelect {
+    font-size: 0.85rem;
+    padding-right: 2rem;
+    background-position: right 0.5rem center;
+  }
+  
+  .filterContainer label {
+    font-size: 0.75rem;
+  }
+}
+
+.mapControlsMobile .searchContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mapControlsMobile .searchInput {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.mapControlsMobile .searchButton {
+  width: 100%;
+  padding: 0.75rem;
+  height: 42px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Regla específica para sólo dispositivos de 418px */
+@media (width: 418px) {
+  /* Prevención de desbordamiento horizontal específica */
+  .mapControls, .filterContainer, .searchContainer, 
+  .searchInput, .searchButton, .filterSelect {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .mapControls {
+    padding: 0.6rem;
+  }
+  
+  .searchContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .searchInput {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 6px;
+  }
+  
+  .searchButton {
+    width: 100%;
+    box-sizing: border-box;
   }
 }

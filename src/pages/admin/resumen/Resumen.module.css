@@ -1,107 +1,796 @@
-.container {
-  padding: 2rem;
-}
-
-.title {
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  color: var(--color-primary);
-}
-
-.loading {
+.adminContainer {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  font-size: 1.2rem;
-  color: var(--color-text-secondary);
+  min-height: 100vh;
+  width: 100%;
+  background-color: #fff;
+  position: relative;
+  overflow-x: hidden;
 }
 
-.estadisticasGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-}
-
-.card h3 {
-  font-size: 1.1rem;
-  color: var(--color-text-secondary);
-  margin-bottom: 1rem;
-}
-
-.numero {
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--color-primary);
-  margin-bottom: 0.5rem;
-}
-
-.porcentaje {
-  font-size: 1rem;
-  color: var(--color-success);
-}
-
-.seccionAdicional {
-  background-color: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-top: 2rem;
-}
-
-.seccionAdicional h2 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: var(--color-primary);
-}
-
-.actividadList {
+.leftPanel {
+  width: 280px;
+  background-color: #4f46e5;
+  background-image: linear-gradient(135deg, #4f46e5 0%, #6474ed 100%);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  padding: 2rem 1.5rem;
 }
 
-.actividadItem {
+.brandingContent {
+  position: relative;
+  z-index: 10;
+  margin-bottom: 2.5rem;
+}
+
+.brandLogo {
+  font-size: 1.75rem;
+  font-weight: bold;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  letter-spacing: 2px;
+  margin-bottom: 0.75rem;
+  color: white;
+}
+
+.brandTitle {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.brandDescription {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 1.5rem;
+}
+
+.decorationCircle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  z-index: 1;
+}
+
+.circle1 {
+  width: 300px;
+  height: 300px;
+  top: -150px;
+  right: -100px;
+}
+
+.circle2 {
+  width: 250px;
+  height: 250px;
+  bottom: -100px;
+  left: -100px;
+}
+
+.adminNav {
+  position: relative;
+  z-index: 10;
+  flex-grow: 1;
+}
+
+.navSection {
+  margin-bottom: 2rem;
+}
+
+.navTitle {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navLink {
   display: flex;
   align-items: center;
-  padding: 0.75rem;
-  border-bottom: 1px solid #eee;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  font-weight: 500;
 }
 
-.actividadFecha {
-  min-width: 100px;
+.navLink:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navLink.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.navIcon {
+  margin-right: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.navLinkButton {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.navLinkButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navLinkButton .navIcon {
+  margin-right: 0.75rem;
+  font-size: 1.25rem;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 2rem;
+  background-color: #f9fafb;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.dashboardTitle {
+  font-size: 1.75rem;
+  color: #1f2937;
+  font-weight: 700;
+  margin: 0;
+}
+
+.headerBrand {
+  font-size: 1.25rem;
   font-weight: bold;
-  color: var(--color-text-secondary);
+  color: #4f46e5;
+  letter-spacing: 1px;
 }
 
-.actividadDescripcion {
+.sectionTitle {
+  font-size: 1.25rem;
+  color: #1f2937;
+  margin: 2rem 0 1rem;
+  font-weight: 600;
+}
+
+/* Estilos para el contenedor de estadísticas */
+.statsContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #f3f4f6;
+}
+
+.statCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.statIconContainer {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+}
+
+.statIcon {
+  font-size: 24px;
+}
+
+.statContent {
   flex: 1;
 }
 
-@media (max-width: 768px) {
-  .estadisticasGrid {
+.statContent h3 {
+  margin: 0 0 5px 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.statNumber {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #4f46e5;
+  margin: 0;
+}
+
+.statDetail {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 5px 0 0 0;
+}
+
+.alertHighlight {
+  color: #f59e0b;
+}
+
+/* Estilos para las tarjetas de acceso rápido */
+.quickAccessGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.quickAccessCard {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  color: #1f2937;
+  border-left: 4px solid;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.quickAccessCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.cardIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.quickAccessCard h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.quickAccessCard p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-top: auto;
+  line-height: 1.4;
+}
+
+/* Estilos para la actividad reciente */
+.activityContainer {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+}
+
+.activityItem {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s ease;
+}
+
+.activityItem:hover {
+  background-color: #f9fafb;
+}
+
+.activityItem:last-child {
+  border-bottom: none;
+}
+
+.activityIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  font-size: 18px;
+}
+
+.activityContent {
+  flex: 1;
+}
+
+.activityText {
+  margin: 0;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.activityText strong {
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.activityTime {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Estilos para el botón de crear notificación */
+.actionContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.createNotificationButton {
+  background-color: #4f46e5;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+}
+
+.btnIcon {
+  font-size: 18px;
+}
+
+.createNotificationButton:hover {
+  background-color: #4338ca;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(79, 70, 229, 0.3);
+}
+
+.createNotificationButton:active {
+  transform: translateY(0);
+}
+
+/* Estilos para estados de carga y error */
+.loadingContainer, .errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  background-color: #f9fafb;
+}
+
+.spinner {
+  border: 4px solid rgba(79, 70, 229, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #4f46e5;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorMessage {
+  color: #dc2626;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.retryButton {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+}
+
+.retryButton:hover {
+  background-color: #4338ca;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(79, 70, 229, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .statsContainer, .quickAccessGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .adminContainer {
+    flex-direction: column;
+  }
+  
+  .leftPanel {
+    width: 100%;
+    padding: 1.5rem;
+  }
+  
+  .brandingContent {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .adminNav {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .navSection {
+    margin-bottom: 0;
+    width: 48%;
+  }
+  
+  .mainContent {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .adminNav {
+    flex-direction: column;
+  }
+  
+  .navSection {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .actionContainer {
+    justify-content: center;
+  }
+}
+
+.favicon {
+  display: inline-block;
+  margin-right: 5px;
+  width: 24px;
+  height: 24px;
+  animation: pulse 3s infinite ease-in-out;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.faviconLarge {
+  width: 60px;
+  height: 60px;
+  display: block;
+  margin: 0 auto 0.5rem;
+  animation: float 4s infinite ease-in-out;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.15));
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.faviconFooter {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  margin-top: auto;
+  padding-top: 2rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.faviconFooter p {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.faviconSmall {
+  display: inline-block;
+  margin-right: 8px;
+  width: 18px;
+  height: 18px;
+  animation: spinSlow 10s infinite linear;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes spinSlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.contentFooter {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.footerLogo {
+  font-weight: 600;
+  color: #4f46e5;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contentFooter p {
+  margin: 0;
+}
+
+.sectionTitle .faviconSmall {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.showMenu {
+  transform: translateX(0) !important;
+}
+
+/* Ajustes para pantallas móviles */
+@media (max-width: 576px) {
+  .menuToggle {
+    display: flex !important;
+    position: fixed !important;
+    top: 8px !important;
+    right: 8px !important;
+    width: 36px !important;
+    height: 36px !important;
+    background-color: #4f46e5 !important;
+    border: none !important;
+    border-radius: 5px !important;
+    z-index: 1100 !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    padding: 5px !important;
+    flex-direction: column !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+  }
+}
+
+.menuToggle span {
+  display: block !important;
+  width: 20px !important;
+  height: 2px !important;
+  background-color: white !important;
+  border-radius: 3px !important;
+  transition: all 0.3s ease !important;
+}
+
+.menuToggle.menuOpen span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg) !important;
+}
+
+.menuToggle.menuOpen span:nth-child(2) {
+  opacity: 0 !important;
+}
+
+.menuToggle.menuOpen span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg) !important;
+}
+
+/* Prevención global de desbordamiento horizontal */
+html, body {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Mejoras para pantallas pequeñas pero no tan pequeñas (landscape) */
+@media (min-width: 577px) and (max-width: 850px) {
+  .statsContainer {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .quickAccessGrid {
     grid-template-columns: 1fr;
   }
   
-  .actividadItem {
-    flex-direction: column;
-    align-items: flex-start;
+  .activityItem {
+    padding: 10px 0;
   }
   
-  .actividadFecha {
+  .header {
+    margin-bottom: 1.5rem;
+  }
+  
+  .dashboardTitle {
+    font-size: 1.5rem;
+  }
+}
+
+/* Esta regla se aplica cuando el dispositivo está en modo landscape con poca altura */
+@media (max-height: 500px) and (orientation: landscape) {
+  .leftPanel {
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  
+  .brandDescription {
+    display: none;
+  }
+  
+  .faviconFooter {
+    display: none;
+  }
+  
+  .navTitle {
     margin-bottom: 0.5rem;
+  }
+  
+  .navLink, .navLinkButton {
+    padding: 8px 12px;
+    margin-bottom: 4px;
+  }
+  
+  .navSection {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Ajustes específicos para móviles de 418px */
+@media (max-width: 430px) {
+  .menuToggle {
+    display: flex !important;
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .menuToggle span {
+    width: 18px;
+    height: 2px;
+  }
+  
+  .mainContent {
+    padding: 0.75rem;
+    padding-top: 55px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .leftPanel {
+    width: 80%;
+  }
+  
+  .headerBrand {
+    font-size: 0.9rem;
+  }
+  
+  .dashboardTitle {
+    font-size: 1.3rem;
+  }
+  
+  .statCard {
+    padding: 1rem;
+  }
+  
+  .quickAccessCard {
+    padding: 1rem;
+  }
+  
+  .cardIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+  
+  .activityContainer {
+    padding: 1rem;
+  }
+  
+  .statsContainer, 
+  .quickAccessGrid {
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .sectionTitle {
+    font-size: 1.1rem;
+    margin: 1rem 0 0.75rem;
+  }
+  
+  .header {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Ajuste adicional para los elementos dentro del panel lateral en dispositivos angostos */
+@media (max-width: 430px) {
+  .navLink, .navLinkButton {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+  
+  .navTitle {
+    font-size: 0.8rem;
+  }
+  
+  .brandLogo {
+    font-size: 1.2rem;
+  }
+  
+  .brandTitle {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .brandDescription {
+    font-size: 0.8rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
   }
 }

@@ -813,3 +813,301 @@ html, body {
     margin-bottom: 1rem;
   }
 }
+
+/* Nuevos estilos para Admin.tsx */
+
+/* Estilos para headerInfo */
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.communityName {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+/* Estilos para el banner de alertas */
+.alertBanner {
+  display: flex;
+  align-items: center;
+  background-color: #fff7ed;
+  border: 1px solid #fdba74;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.alertIcon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+}
+
+.alertContent {
+  flex: 1;
+}
+
+.alertContent h3 {
+  margin: 0 0 0.5rem 0;
+  color: #b45309;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.alertContent p {
+  margin: 0;
+  color: #78350f;
+  font-size: 0.95rem;
+}
+
+.alertContent strong {
+  font-weight: 600;
+}
+
+.alertLink {
+  display: inline-block;
+  margin-left: 1rem;
+  color: #b45309;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.alertLink:hover {
+  color: #78350f;
+  text-decoration: underline;
+}
+
+/* Estilos para los párrafos de detalles en las tarjetas de actividad */
+.activityParcel {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 400;
+}
+
+/* Enlace para ver todas las actividades */
+.viewAllActivity {
+  text-align: center;
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.viewAllActivity a {
+  color: #4f46e5;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.viewAllActivity a:hover {
+  color: #4338ca;
+  text-decoration: underline;
+}
+
+/* Estilos para los botones de acción */
+.actionContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: flex-start;
+}
+
+.actionButton {
+  background-color: #ffffff;
+  color: #4f46e5;
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.actionButton:hover {
+  background-color: #f9fafb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-color: #d1d5db;
+}
+
+/* Modificaciones para mejorar la responsividad */
+@media (max-width: 576px) {
+  .statsContainer {
+    grid-template-columns: 1fr;
+  }
+  
+  .quickAccessGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .actionContainer {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+  
+  .actionButton, .createNotificationButton {
+    width: 100%;
+    justify-content: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+  }
+  
+  .headerInfo {
+    align-items: flex-start;
+    text-align: left;
+    margin-top: 0.5rem;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .activityParcel {
+    display: block;
+    margin-top: 0.25rem;
+  }
+}
+
+/* Mejoras específicas para dispositivos muy pequeños (418px) */
+@media (max-width: 430px) {
+  .statCard {
+    padding: 0.75rem;
+  }
+  
+  .statIconContainer {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+  
+  .statIcon {
+    font-size: 1.25rem;
+  }
+  
+  .statNumber {
+    font-size: 1.5rem;
+  }
+  
+  .statDetail {
+    font-size: 0.75rem;
+  }
+  
+  .cardIcon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    font-size: 1.25rem;
+  }
+  
+  .quickAccessCard h3 {
+    font-size: 1rem;
+  }
+  
+  .quickAccessCard p {
+    font-size: 0.8rem;
+  }
+  
+  .alertBanner {
+    padding: 0.75rem;
+  }
+  
+  .alertIcon {
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+  }
+  
+  .alertContent h3 {
+    font-size: 1rem;
+  }
+  
+  .alertContent p {
+    font-size: 0.85rem;
+  }
+  
+  .sectionTitle {
+    font-size: 1.1rem;
+  }
+  
+  .activityItem {
+    padding: 0.75rem 0;
+  }
+  
+  .activityIcon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+  
+  .activityText, .activityTime {
+    font-size: 0.85rem;
+  }
+  
+  .dashboardTitle {
+    font-size: 1.5rem;
+  }
+  
+  .communityName {
+    font-size: 0.9rem;
+  }
+  
+  /* Ajustes adicionales específicos para los botones en 418px */
+  .actionContainer {
+    margin-top: 1.5rem;
+    padding: 0 0.25rem;
+    gap: 0.5rem;
+  }
+  
+  .actionButton, .createNotificationButton {
+    font-size: 0.85rem;
+    padding: 0.6rem 0.5rem;
+  }
+  
+  .btnIcon {
+    font-size: 1rem;
+  }
+  
+  .createNotificationButton {
+    margin-right: 0;
+  }
+  
+  .mainContent {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
+/* Mejoras para el menú móvil en pantallas pequeñas */
+@media (max-width: 576px) {
+  .showMenu {
+    transform: translateX(0) !important;
+  }
+  
+  .leftPanel {
+    width: 85% !important;
+  }
+}
+
+/* Mejora para el contenedor principal en pantallas pequeñas */
+@media (max-width: 430px) {
+  .mainContent {
+    padding: 0.75rem;
+    padding-top: 55px;
+  }
+}

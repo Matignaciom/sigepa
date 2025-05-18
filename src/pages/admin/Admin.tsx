@@ -3,15 +3,41 @@ import { Link } from 'react-router-dom';
 import styles from './Admin.module.css';
 
 interface ResumenData {
+  // Información general
   totalUsuarios: number;
   totalParcelas: number;
   parcelasActivas: number;
+  
+  // Información de pagos
   pagosPendientes: number;
+  pagosPagados: number;
+  montoRecaudadoMes: number;
+  
+  // Información de comunidad
+  nombreComunidad: string;
+  totalCopropietarios: number;
+
+  // Información de contratos
+  contratosVigentes: number;
+  contratosProximosVencer: number;
+  
+  // Alertas y avisos
   alertasActivas: number;
+  avisosRecientes: number;
+}
+
+interface ActividadReciente {
+  id: number;
+  tipo: 'pago' | 'documento' | 'notificacion' | 'otro';
+  descripcion: string;
+  fecha: string;
+  usuario: string;
+  parcelaId?: number;
 }
 
 export const Admin = () => {
   const [resumenData, setResumenData] = useState<ResumenData | null>(null);
+  const [actividadesRecientes, setActividadesRecientes] = useState<ActividadReciente[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -43,15 +69,75 @@ export const Admin = () => {
         // En un entorno real, esto sería una llamada a la API
         // const response = await adminService.getDashboardSummary();
         
-        // Datos simulados para desarrollo
+        // Datos simulados para desarrollo basados en el esquema SQL
         setTimeout(() => {
           setResumenData({
-            totalUsuarios: 45,
-            totalParcelas: 60,
-            parcelasActivas: 52,
-            pagosPendientes: 18,
-            alertasActivas: 7
+            // Información general
+            totalUsuarios: 105,
+            totalParcelas: 120,
+            parcelasActivas: 105,
+            
+            // Información de pagos
+            pagosPendientes: 35,
+            pagosPagados: 82,
+            montoRecaudadoMes: 4500000,
+            
+            // Información de comunidad
+            nombreComunidad: "Comunidad Las Flores",
+            totalCopropietarios: 100,
+            
+            // Información de contratos
+            contratosVigentes: 115,
+            contratosProximosVencer: 8,
+            
+            // Alertas y avisos
+            alertasActivas: 12,
+            avisosRecientes: 5
           });
+
+          // Datos simulados de actividades recientes basados en el esquema de Actividad
+          setActividadesRecientes([
+            {
+              id: 1,
+              tipo: 'pago',
+              descripcion: 'Realizó un pago de cuota mensual',
+              fecha: 'Hace 2 horas',
+              usuario: 'María González',
+              parcelaId: 23
+            },
+            {
+              id: 2,
+              tipo: 'documento',
+              descripcion: 'Subió un nuevo contrato',
+              fecha: 'Hace 5 horas',
+              usuario: 'Admin Sistema',
+              parcelaId: 12
+            },
+            {
+              id: 3,
+              tipo: 'notificacion',
+              descripcion: 'Generó alerta por pago vencido',
+              fecha: 'Hace 1 día',
+              usuario: 'Sistema',
+              parcelaId: 45
+            },
+            {
+              id: 4,
+              tipo: 'otro',
+              descripcion: 'Registró un nuevo copropietario',
+              fecha: 'Hace 2 días',
+              usuario: 'Admin Sistema'
+            },
+            {
+              id: 5,
+              tipo: 'pago',
+              descripcion: 'Marcó como atrasado el pago de cuota',
+              fecha: 'Hace 3 días',
+              usuario: 'Sistema',
+              parcelaId: 17
+            }
+          ]);
+          
           setIsLoading(false);
         }, 800);
       } catch (err) {
@@ -74,6 +160,11 @@ export const Admin = () => {
     // Aquí iría la lógica para cerrar sesión
     localStorage.removeItem('user');
     window.location.href = '/login';
+  };
+
+  // Formatear números
+  const formatearNumero = (numero: number) => {
+    return numero.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   // Tarjetas de acceso rápido para el panel de administrador
@@ -105,6 +196,24 @@ export const Admin = () => {
       icon: '🔔',
       link: '/admin/alertas',
       color: '#f59e0b'
+    },
+  ];
+
+  // Tarjetas de acceso secundario
+  const secondaryAccessCards = [
+    {
+      title: 'Resumen Detallado',
+      description: 'Visualiza estadísticas detalladas del sistema',
+      icon: '📊',
+      link: '/admin/resumen',
+      color: '#10b981'
+    },
+    {
+      title: 'Notificaciones',
+      description: 'Gestiona notificaciones y comunicaciones',
+      icon: '✉️',
+      link: '/admin/notificaciones',
+      color: '#047857'
     },
   ];
 
@@ -231,7 +340,7 @@ export const Admin = () => {
           </div>
           <h1 className={styles.brandTitle}>Panel de Administración</h1>
           <p className={styles.brandDescription}>
-            Administración integral de parcelas, usuarios y pagos para mantener la eficiencia operativa del sistema.
+            Administración integral de parcelas, usuarios y pagos para {resumenData?.nombreComunidad}.
           </p>
         </div>
         <nav className={styles.adminNav}>
@@ -356,9 +465,14 @@ export const Admin = () => {
         style={isMobile ? { padding: '1rem', paddingTop: '60px' } : {}}
       >
         <header className={styles.header}>
-          <h2 className={styles.dashboardTitle}>Dashboard</h2>
-          <div className={styles.headerBrand}>
-            <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
+          <h2 className={styles.dashboardTitle}>Panel de Administración</h2>
+          <div className={styles.headerInfo}>
+            <span className={styles.communityName}>
+              {resumenData?.nombreComunidad}
+            </span>
+            <div className={styles.headerBrand}>
+              <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
+            </div>
           </div>
         </header>
         
@@ -369,8 +483,11 @@ export const Admin = () => {
               <span className={styles.statIcon}>👥</span>
             </div>
             <div className={styles.statContent}>
-              <h3>Usuarios</h3>
-              <p className={styles.statNumber}>{resumenData?.totalUsuarios}</p>
+              <h3>Usuarios Totales</h3>
+              <p className={styles.statNumber}>{formatearNumero(resumenData?.totalUsuarios || 0)}</p>
+              <p className={styles.statDetail}>
+                {formatearNumero(resumenData?.totalCopropietarios || 0)} copropietarios
+              </p>
             </div>
           </div>
           
@@ -380,9 +497,9 @@ export const Admin = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Parcelas</h3>
-              <p className={styles.statNumber}>{resumenData?.totalParcelas}</p>
+              <p className={styles.statNumber}>{formatearNumero(resumenData?.totalParcelas || 0)}</p>
               <p className={styles.statDetail}>
-                {resumenData?.parcelasActivas} activas
+                {formatearNumero(resumenData?.parcelasActivas || 0)} activas
               </p>
             </div>
           </div>
@@ -392,19 +509,25 @@ export const Admin = () => {
               <span className={styles.statIcon}>💰</span>
             </div>
             <div className={styles.statContent}>
-              <h3>Pagos Pendientes</h3>
-              <p className={styles.statNumber}>{resumenData?.pagosPendientes}</p>
+              <h3>Pagos</h3>
+              <p className={styles.statNumber}>
+                ${formatearNumero(resumenData?.montoRecaudadoMes || 0)}
+              </p>
+              <p className={styles.statDetail}>
+                {formatearNumero(resumenData?.pagosPendientes || 0)} pendientes
+              </p>
             </div>
           </div>
           
           <div className={styles.statCard}>
             <div className={styles.statIconContainer}>
-              <span className={styles.statIcon}>🔔</span>
+              <span className={styles.statIcon}>📄</span>
             </div>
             <div className={styles.statContent}>
-              <h3>Alertas</h3>
-              <p className={`${styles.statNumber} ${resumenData && resumenData.alertasActivas > 0 ? styles.alertHighlight : ''}`}>
-                {resumenData?.alertasActivas}
+              <h3>Contratos</h3>
+              <p className={styles.statNumber}>{formatearNumero(resumenData?.contratosVigentes || 0)}</p>
+              <p className={styles.statDetail}>
+                {formatearNumero(resumenData?.contratosProximosVencer || 0)} próximos a vencer
               </p>
             </div>
           </div>
@@ -426,6 +549,38 @@ export const Admin = () => {
           </div>
         </section>
 
+        {/* Tarjetas de acceso secundario */}
+        <section>
+          <h2 className={styles.sectionTitle}>Gestión Financiera</h2>
+          <div className={styles.quickAccessGrid}>
+            {secondaryAccessCards.map((card, index) => (
+              <Link to={card.link} key={index} className={styles.quickAccessCard} style={{ borderColor: card.color }}>
+                <div className={styles.cardIcon} style={{ backgroundColor: card.color }}>
+                  {card.icon}
+                </div>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Alertas activas */}
+        {resumenData && resumenData.alertasActivas > 0 && (
+          <div className={styles.alertBanner}>
+            <div className={styles.alertIcon}>⚠️</div>
+            <div className={styles.alertContent}>
+              <h3>Alertas Activas</h3>
+              <p>
+                Hay <strong>{resumenData.alertasActivas} alertas</strong> que requieren su atención.
+                <Link to="/admin/alertas" className={styles.alertLink}>
+                  Ver alertas
+                </Link>
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Actividad reciente */}
         <section>
           <h2 className={styles.sectionTitle}>
@@ -433,42 +588,49 @@ export const Admin = () => {
             Actividad Reciente
           </h2>
           <div className={styles.activityContainer}>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>📝</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}><strong>Juan Pérez</strong> actualizó su información de perfil</p>
-                <p className={styles.activityTime}>Hace 2 horas</p>
+            {actividadesRecientes.map(actividad => (
+              <div key={actividad.id} className={styles.activityItem}>
+                <div className={styles.activityIcon}>
+                  {actividad.tipo === 'pago' && '💰'}
+                  {actividad.tipo === 'documento' && '📄'}
+                  {actividad.tipo === 'notificacion' && '🔔'}
+                  {actividad.tipo === 'otro' && '📋'}
+                </div>
+                <div className={styles.activityContent}>
+                  <p className={styles.activityText}>
+                    <strong>{actividad.usuario}</strong> {actividad.descripcion}
+                    {actividad.parcelaId && 
+                      <span className={styles.activityParcel}> (Parcela #{actividad.parcelaId})</span>
+                    }
+                  </p>
+                  <p className={styles.activityTime}>{actividad.fecha}</p>
+                </div>
               </div>
-            </div>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>💰</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}><strong>María González</strong> realizó un pago de cuota mensual</p>
-                <p className={styles.activityTime}>Hace 5 horas</p>
-              </div>
-            </div>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>🔔</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}><strong>Sistema</strong> generó alerta por pago vencido para la parcela #23</p>
-                <p className={styles.activityTime}>Hace 1 día</p>
-              </div>
-            </div>
-            <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>👤</div>
-              <div className={styles.activityContent}>
-                <p className={styles.activityText}><strong>Admin</strong> registró un nuevo copropietario</p>
-                <p className={styles.activityTime}>Hace 2 días</p>
-              </div>
+            ))}
+            
+            <div className={styles.viewAllActivity}>
+              <Link to="/admin/resumen">
+                Ver más información
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* Botón para gestionar notificaciones */}
+        {/* Botones de acción rápida */}
         <div className={styles.actionContainer}>
           <Link to="/admin/notificaciones" className={styles.createNotificationButton}>
             <span className={styles.btnIcon}>✉️</span>
             <span>Gestionar Notificaciones</span>
+          </Link>
+          
+          <Link to="/admin/usuarios" className={styles.actionButton}>
+            <span className={styles.btnIcon}>👤</span>
+            <span>Gestionar Usuarios</span>
+          </Link>
+          
+          <Link to="/admin/contratos" className={styles.actionButton}>
+            <span className={styles.btnIcon}>📄</span>
+            <span>Gestionar Contratos</span>
           </Link>
         </div>
 
