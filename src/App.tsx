@@ -77,17 +77,17 @@ function App() {
               <Dashboard />
             </ProtectedRoute>
           } />
-          <Route path="/parcelas" element={
+          <Route path="/dashboard/parcelas" element={
             <ProtectedRoute requiredRole="copropietario">
               <Parcela />
             </ProtectedRoute>
           } />
-          <Route path="/pagos" element={
+          <Route path="/dashboard/pagos" element={
             <ProtectedRoute requiredRole="copropietario">
               <Pagos />
             </ProtectedRoute>
           } />
-          <Route path="/documentos" element={
+          <Route path="/dashboard/documentos" element={
             <ProtectedRoute requiredRole="copropietario">
               <Historial />
             </ProtectedRoute>
@@ -97,16 +97,18 @@ function App() {
               <Estadisticas />
             </ProtectedRoute>
           } />
-          <Route path="/estadisticas" element={
+          <Route path="/dashboard/perfil" element={
             <ProtectedRoute requiredRole="copropietario">
-              <Estadisticas />
-            </ProtectedRoute>
-          } />
-          <Route path="/perfil" element={
-            <ProtectedRoute>
               <Perfil />
             </ProtectedRoute>
           } />
+          
+          {/* Redirecciones para mantener compatibilidad con rutas antiguas */}
+          <Route path="/parcelas" element={<Navigate to="/dashboard/parcelas" />} />
+          <Route path="/pagos" element={<Navigate to="/dashboard/pagos" />} />
+          <Route path="/documentos" element={<Navigate to="/dashboard/documentos" />} />
+          <Route path="/estadisticas" element={<Navigate to="/dashboard/estadisticas" />} />
+          <Route path="/perfil" element={<Navigate to="/dashboard/perfil" />} />
           
           {/* Rutas de administrador */}
           <Route path="/admin" element={

@@ -57,9 +57,9 @@ export const Dashboard = () => {
           setResumenData({
             estadoCuenta: "Al día",
             proximoPago: {
-              fecha: "15/08/2023",
+              fecha: "15/06/2023",
               monto: "$150.000",
-              concepto: "Cuota Ordinaria Agosto 2023"
+              concepto: "Cuota Ordinaria Junio 2023"
             },
             parcelas: {
               total: 2,
@@ -100,21 +100,21 @@ export const Dashboard = () => {
       title: 'Mis Parcelas',
       description: 'Visualiza tus parcelas y su estado actual',
       icon: '🏞️',
-      link: '/parcelas',
+      link: '/dashboard/parcelas',
       color: '#4f46e5'
     },
     {
       title: 'Pagos y Gastos',
       description: 'Gestiona tus pagos y revisa gastos pendientes',
       icon: '💰',
-      link: '/pagos',
+      link: '/dashboard/pagos',
       color: '#6474ed'
     },
     {
       title: 'Documentos',
       description: 'Accede a comprobantes y contratos',
       icon: '📄',
-      link: '/documentos',
+      link: '/dashboard/documentos',
       color: '#818cf8'
     },
     {
@@ -266,8 +266,8 @@ export const Dashboard = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/parcelas" 
-                  className={`${styles.navLink} ${window.location.pathname === '/parcelas' ? styles.active : ''}`}
+                <Link to="/dashboard/parcelas" 
+                  className={`${styles.navLink} ${window.location.pathname.includes('/dashboard/parcelas') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>🏞️</span>
@@ -281,8 +281,8 @@ export const Dashboard = () => {
             <h3 className={styles.navTitle}>Finanzas</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/pagos" 
-                  className={`${styles.navLink} ${window.location.pathname.startsWith('/pagos') ? styles.active : ''}`}
+                <Link to="/dashboard/pagos" 
+                  className={`${styles.navLink} ${window.location.pathname.includes('/dashboard/pagos') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>💰</span>
@@ -290,8 +290,8 @@ export const Dashboard = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/documentos" 
-                  className={`${styles.navLink} ${window.location.pathname === '/documentos' ? styles.active : ''}`}
+                <Link to="/dashboard/documentos" 
+                  className={`${styles.navLink} ${window.location.pathname.includes('/dashboard/documentos') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>📄</span>
@@ -306,7 +306,7 @@ export const Dashboard = () => {
             <ul className={styles.navList}>
               <li>
                 <Link to="/dashboard/estadisticas" 
-                  className={`${styles.navLink} ${window.location.pathname === '/dashboard/estadisticas' ? styles.active : ''}`}
+                  className={`${styles.navLink} ${window.location.pathname.includes('/dashboard/estadisticas') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>📊</span>
@@ -320,8 +320,8 @@ export const Dashboard = () => {
             <h3 className={styles.navTitle}>Cuenta</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/perfil" 
-                  className={`${styles.navLink} ${window.location.pathname === '/perfil' ? styles.active : ''}`}
+                <Link to="/dashboard/perfil" 
+                  className={`${styles.navLink} ${window.location.pathname.includes('/dashboard/perfil') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
                   <span className={styles.navIcon}>👤</span>
@@ -429,7 +429,7 @@ export const Dashboard = () => {
           </div>
         </section>
 
-        {/* Actividad reciente */}
+        {/* Actividad reciente basada en el schema de la BD */}
         <section>
           <h2 className={styles.sectionTitle}>
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.faviconSmall} />
@@ -453,15 +453,39 @@ export const Dashboard = () => {
             <div className={styles.activityItem}>
               <div className={styles.activityIcon}>📝</div>
               <div className={styles.activityContent}>
-                <p className={styles.activityText}>Actualización de contrato de parcela #12</p>
+                <p className={styles.activityText}>Actualización de contrato de parcela</p>
                 <p className={styles.activityTime}>02/05/2023</p>
               </div>
             </div>
             <div className={styles.activityItem}>
-              <div className={styles.activityIcon}>💰</div>
+              <div className={styles.activityIcon}>🔔</div>
               <div className={styles.activityContent}>
-                <p className={styles.activityText}>Pago de gasto común registrado</p>
-                <p className={styles.activityTime}>10/04/2023 - Cuota Ordinaria Abril - $150.000</p>
+                <p className={styles.activityText}>Nueva notificación recibida</p>
+                <p className={styles.activityTime}>28/04/2023 - Recordatorio de pago</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Información de parcelas */}
+        <section>
+          <h2 className={styles.sectionTitle}>
+            <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.faviconSmall} />
+            Mis Parcelas
+          </h2>
+          <div className={styles.activityContainer}>
+            <div className={styles.activityItem}>
+              <div className={styles.activityIcon}>🏞️</div>
+              <div className={styles.activityContent}>
+                <p className={styles.activityText}>Parcela 1 - Sector Norte</p>
+                <p className={styles.activityTime}>Estado: <span style={{color: '#22c55e', fontWeight: 'bold'}}>Al día</span> - Área: 0.75 hectáreas</p>
+              </div>
+            </div>
+            <div className={styles.activityItem}>
+              <div className={styles.activityIcon}>🏞️</div>
+              <div className={styles.activityContent}>
+                <p className={styles.activityText}>Parcela 2 - Sector Sur</p>
+                <p className={styles.activityTime}>Estado: <span style={{color: '#22c55e', fontWeight: 'bold'}}>Al día</span> - Área: 1.25 hectáreas</p>
               </div>
             </div>
           </div>
@@ -469,7 +493,7 @@ export const Dashboard = () => {
 
         {/* Botón para realizar pago */}
         <div className={styles.actionContainer}>
-          <Link to="/pagos" className={styles.primaryActionButton}>
+          <Link to="/dashboard/pagos" className={styles.primaryActionButton}>
             <span className={styles.btnIcon}>💰</span>
             <span>Gestionar Pagos</span>
           </Link>
