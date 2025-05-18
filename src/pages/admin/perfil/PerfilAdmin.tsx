@@ -30,8 +30,15 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Esquema de validación para la información de la comunidad
+const comunidadSchema = z.object({
+  nombre: z.string().min(3, 'El nombre de la comunidad es requerido'),
+  fecha_creacion: z.string().optional()
+});
+
 type PerfilAdminFormData = z.infer<typeof perfilAdminSchema>;
 type PasswordFormData = z.infer<typeof passwordSchema>;
+type ComunidadFormData = z.infer<typeof comunidadSchema>;
 
 // Datos de muestra para visualización
 const datosDeMuestra = {
@@ -44,7 +51,18 @@ const datosDeMuestra = {
   fechaRegistro: '01/01/2023',
   ultimoAcceso: '15/06/2023',
   comunidadId: 1,
-  comunidadNombre: 'Parcelación Los Aromos'
+  comunidadNombre: 'Parcelación Los Aromos',
+  comunidad: {
+    id: 1,
+    nombre: 'Parcelación Los Aromos',
+    fecha_creacion: '15/03/2020',
+    total_parcelas: 32,
+    usuarios_registrados: 45,
+    direccion_administrativa: 'Av. Las Parcelas 1250, Santiago',
+    telefono_contacto: '+56 2 2345 6789',
+    email_contacto: 'admin@losaromos.cl',
+    sitio_web: 'www.parcelacionlosaromos.cl'
+  }
 };
 
 export const PerfilAdmin = () => {
@@ -53,11 +71,12 @@ export const PerfilAdmin = () => {
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [changePasswordMode, setChangePasswordMode] = useState(false);
+  const [editingComunidad, setEditingComunidad] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  
+
   const currentYear = new Date().getFullYear();
-  
+
   const {
     register,
     handleSubmit,
@@ -74,7 +93,7 @@ export const PerfilAdmin = () => {
       rut: datosDeMuestra.rut,
     },
   });
-  
+
   const {
     register: registerPassword,
     handleSubmit: handleSubmitPassword,
@@ -86,6 +105,19 @@ export const PerfilAdmin = () => {
       email: datosDeMuestra.email,
       password: '',
       confirmPassword: '',
+    },
+  });
+
+  const {
+    register: registerComunidad,
+    handleSubmit: handleSubmitComunidad,
+    reset: resetComunidad,
+    formState: { errors: comunidadErrors },
+  } = useForm<ComunidadFormData>({
+    resolver: zodResolver(comunidadSchema),
+    defaultValues: {
+      nombre: datosDeMuestra.comunidad.nombre,
+      fecha_creacion: datosDeMuestra.comunidad.fecha_creacion,
     },
   });
 
@@ -200,12 +232,50 @@ export const PerfilAdmin = () => {
       confirmPassword: '',
     });
   };
-  
+
   const handleCancelPasswordChange = () => {
     setChangePasswordMode(false);
     setMessage(null);
   };
-  
+
+  // Función para gestionar la comunidad
+  const onSubmitComunidad = async (data: ComunidadFormData) => {
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      // Simulamos actualización de datos, aquí se llamaría a una API real
+      setTimeout(() => {
+        setMessage({
+          text: 'Información de la comunidad actualizada correctamente',
+          type: 'success',
+        });
+        setEditingComunidad(false);
+        setIsLoading(false);
+      }, 800);
+    } catch (error) {
+      console.error('Error al actualizar la información de la comunidad:', error);
+      setMessage({
+        text: 'Error al actualizar la información de la comunidad',
+        type: 'error',
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditComunidad = () => {
+    setEditingComunidad(true);
+    resetComunidad({
+      nombre: datosDeMuestra.comunidad.nombre,
+      fecha_creacion: datosDeMuestra.comunidad.fecha_creacion,
+    });
+  };
+
+  const handleCancelComunidadEdit = () => {
+    setEditingComunidad(false);
+    setMessage(null);
+  };
+
   // Función para abrir/cerrar el menú en móviles
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -218,7 +288,7 @@ export const PerfilAdmin = () => {
     window.location.href = '/login';
   };
 
-  if (isLoading && !isEditing && !changePasswordMode) {
+  if (isLoading && !isEditing && !changePasswordMode && !editingComunidad) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.spinner}></div>
@@ -232,7 +302,7 @@ export const PerfilAdmin = () => {
       {/* Botón de menú hamburguesa para móviles */}
       {isMobile && (
         <>
-          <button 
+          <button
             onClick={toggleMenu}
             style={{
               position: 'fixed',
@@ -287,10 +357,10 @@ export const PerfilAdmin = () => {
               }}
             ></span>
           </button>
-          
+
           {/* Overlay para cerrar el menú al hacer clic fuera */}
           {menuOpen && (
-            <div 
+            <div
               style={{
                 position: 'fixed',
                 top: 0,
@@ -305,8 +375,8 @@ export const PerfilAdmin = () => {
           )}
         </>
       )}
-      
-      <div 
+
+      <div
         className={`${styles.leftPanel} ${menuOpen ? styles.showMenu : ''}`}
         style={isMobile ? {
           position: 'fixed',
@@ -335,7 +405,7 @@ export const PerfilAdmin = () => {
             <h3 className={styles.navTitle}>Principal</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin" 
+                <Link to="/admin"
                   className={`${styles.navLink} ${window.location.pathname === '/admin' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -344,7 +414,7 @@ export const PerfilAdmin = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/mapa" 
+                <Link to="/admin/mapa"
                   className={`${styles.navLink} ${window.location.pathname.includes('/admin/mapa') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -354,12 +424,21 @@ export const PerfilAdmin = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Gestión</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/contratos" 
+                <Link to="/admin/gastos"
+                  className={`${styles.navLink} ${window.location.pathname === '/admin/gastos' ? styles.active : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className={styles.navIcon}>💰</span>
+                  Gastos
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/contratos"
                   className={`${styles.navLink} ${window.location.pathname.includes('/admin/contratos') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -368,7 +447,7 @@ export const PerfilAdmin = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/alertas" 
+                <Link to="/admin/alertas"
                   className={`${styles.navLink} ${window.location.pathname.includes('/admin/alertas') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -377,7 +456,7 @@ export const PerfilAdmin = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/usuarios" 
+                <Link to="/admin/usuarios"
                   className={`${styles.navLink} ${window.location.pathname.includes('/admin/usuarios') ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -387,12 +466,12 @@ export const PerfilAdmin = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Cuenta</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/perfil" 
+                <Link to="/admin/perfil"
                   className={`${styles.navLink} ${styles.active}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -401,11 +480,11 @@ export const PerfilAdmin = () => {
                 </Link>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => {
                     setMenuOpen(false);
                     handleLogout();
-                  }} 
+                  }}
                   className={styles.navLinkButton}
                 >
                   <span className={styles.navIcon}>🚪</span>
@@ -422,8 +501,8 @@ export const PerfilAdmin = () => {
         <div className={`${styles.decorationCircle} ${styles.circle1}`}></div>
         <div className={`${styles.decorationCircle} ${styles.circle2}`}></div>
       </div>
-      
-      <div 
+
+      <div
         className={styles.mainContent}
         style={isMobile ? { padding: '1rem', paddingTop: '60px' } : {}}
       >
@@ -433,20 +512,20 @@ export const PerfilAdmin = () => {
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
           </div>
         </header>
-        
+
         {message && (
           <div className={`${styles.message} ${styles[message.type]}`}>
             {message.text}
           </div>
         )}
-        
+
         <div className={styles.profileCard}>
           <div className={styles.profileHeader}>
             <div className={styles.avatarContainer}>
               <div className={styles.avatar}>
                 {datosDeMuestra.nombreCompleto.split(' ')[0].charAt(0)}
-                {datosDeMuestra.nombreCompleto.split(' ').length > 1 
-                  ? datosDeMuestra.nombreCompleto.split(' ')[1].charAt(0) 
+                {datosDeMuestra.nombreCompleto.split(' ').length > 1
+                  ? datosDeMuestra.nombreCompleto.split(' ')[1].charAt(0)
                   : ''}
               </div>
             </div>
@@ -454,9 +533,9 @@ export const PerfilAdmin = () => {
               <h2>{datosDeMuestra.nombreCompleto}</h2>
               <p className={styles.cargo}>{datosDeMuestra.cargo}</p>
               <p className={styles.email}>{datosDeMuestra.email}</p>
-              
+
               {!isEditing && !changePasswordMode && (
-                <button 
+                <button
                   className={styles.editButton}
                   onClick={() => setIsEditing(true)}
                 >
@@ -465,14 +544,14 @@ export const PerfilAdmin = () => {
               )}
             </div>
           </div>
-          
+
           <div className={styles.profileContent}>
             {!isEditing && !changePasswordMode && (
               <div className={styles.activityContainer}>
                 <div className={styles.cardHeader}>
                   <h2>Información Personal</h2>
                 </div>
-                
+
                 <div className={styles.infoGrid}>
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>👤</div>
@@ -481,7 +560,7 @@ export const PerfilAdmin = () => {
                       <p className={styles.infoText}>{datosDeMuestra.nombreCompleto}</p>
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>✉️</div>
                     <div className={styles.infoContent}>
@@ -489,7 +568,7 @@ export const PerfilAdmin = () => {
                       <p className={styles.infoText}>{datosDeMuestra.email}</p>
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>📞</div>
                     <div className={styles.infoContent}>
@@ -497,7 +576,7 @@ export const PerfilAdmin = () => {
                       <p className={styles.infoText}>{datosDeMuestra.telefono}</p>
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>📍</div>
                     <div className={styles.infoContent}>
@@ -505,7 +584,7 @@ export const PerfilAdmin = () => {
                       <p className={styles.infoText}>{datosDeMuestra.direccion}</p>
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>🪪</div>
                     <div className={styles.infoContent}>
@@ -513,7 +592,7 @@ export const PerfilAdmin = () => {
                       <p className={styles.infoText}>{datosDeMuestra.rut}</p>
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>👨‍💼</div>
                     <div className={styles.infoContent}>
@@ -524,13 +603,13 @@ export const PerfilAdmin = () => {
                 </div>
               </div>
             )}
-            
+
             {!isEditing && !changePasswordMode && (
               <div className={styles.activityContainer}>
                 <div className={styles.cardHeader}>
                   <h2>Actividad de Cuenta</h2>
                 </div>
-                
+
                 <div className={styles.infoGrid}>
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>📅</div>
@@ -539,7 +618,7 @@ export const PerfilAdmin = () => {
                       <p className={styles.infoText}>{datosDeMuestra.fechaRegistro}</p>
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>🕒</div>
                     <div className={styles.infoContent}>
@@ -547,7 +626,7 @@ export const PerfilAdmin = () => {
                       <p className={styles.infoText}>{datosDeMuestra.ultimoAcceso}</p>
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoIcon}>🏢</div>
                     <div className={styles.infoContent}>
@@ -558,15 +637,96 @@ export const PerfilAdmin = () => {
                 </div>
               </div>
             )}
-            
-            {!isEditing && !changePasswordMode && (
+
+            {!isEditing && !changePasswordMode && !editingComunidad && (
+              <div className={`${styles.activityContainer} ${styles.comunidadSection}`}>
+                <div className={styles.cardHeader}>
+                  <h2>Información de la Comunidad</h2>
+                  <button
+                    className={styles.primaryActionButton}
+                    onClick={handleEditComunidad}
+                  >
+                    <span className={styles.btnIcon}>✏️</span>
+                    Editar Comunidad
+                  </button>
+                </div>
+
+                <div className={styles.infoGrid}>
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>🏘️</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Nombre:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.comunidad.nombre}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>📆</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Fecha de Creación:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.comunidad.fecha_creacion}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>📊</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Total de Parcelas:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.comunidad.total_parcelas}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>👥</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Usuarios Registrados:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.comunidad.usuarios_registrados}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>📍</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Dirección Administrativa:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.comunidad.direccion_administrativa}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>📞</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Teléfono de Contacto:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.comunidad.telefono_contacto}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>📧</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Email de Contacto:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.comunidad.email_contacto}</p>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoItem}>
+                    <div className={styles.infoIcon}>🌐</div>
+                    <div className={styles.infoContent}>
+                      <p className={styles.infoLabel}>Sitio Web:</p>
+                      <p className={styles.infoText}>{datosDeMuestra.comunidad.sitio_web}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!isEditing && !changePasswordMode && !editingComunidad && (
               <div className={styles.activityContainer}>
                 <div className={styles.cardHeader}>
                   <h2>Seguridad</h2>
                 </div>
                 <div className={styles.securitySection}>
                   <p>Cambia tu contraseña periódicamente para mantener tu cuenta segura.</p>
-                  <button 
+                  <button
                     className={styles.primaryActionButton}
                     onClick={handleCambiarPassword}
                   >
@@ -576,7 +736,7 @@ export const PerfilAdmin = () => {
                 </div>
               </div>
             )}
-              
+
             {isEditing && (
               <div className={styles.activityContainer}>
                 <div className={styles.cardHeader}>
@@ -594,7 +754,7 @@ export const PerfilAdmin = () => {
                       />
                       {errors.nombreCompleto && <span className={styles.errorText}>{errors.nombreCompleto.message}</span>}
                     </div>
-                    
+
                     <div className={styles.formGroup}>
                       <label htmlFor="email">Email</label>
                       <input
@@ -606,7 +766,7 @@ export const PerfilAdmin = () => {
                       {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
                     </div>
                   </div>
-                  
+
                   <div className={styles.formRow}>
                     <div className={styles.formGroup}>
                       <label htmlFor="telefono">Teléfono</label>
@@ -618,7 +778,7 @@ export const PerfilAdmin = () => {
                       />
                       {errors.telefono && <span className={styles.errorText}>{errors.telefono.message}</span>}
                     </div>
-                    
+
                     <div className={styles.formGroup}>
                       <label htmlFor="direccion">Dirección</label>
                       <input
@@ -630,7 +790,7 @@ export const PerfilAdmin = () => {
                       {errors.direccion && <span className={styles.errorText}>{errors.direccion.message}</span>}
                     </div>
                   </div>
-                  
+
                   <div className={styles.formRow}>
                     <div className={styles.formGroup}>
                       <label htmlFor="cargo">Cargo</label>
@@ -642,7 +802,7 @@ export const PerfilAdmin = () => {
                         readOnly
                       />
                     </div>
-                    
+
                     <div className={styles.formGroup}>
                       <label htmlFor="rut">RUT</label>
                       <input
@@ -654,17 +814,17 @@ export const PerfilAdmin = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className={styles.formActions}>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className={styles.cancelButton}
                       onClick={() => setIsEditing(false)}
                     >
                       Cancelar
                     </button>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className={styles.saveButton}
                       disabled={isLoading}
                     >
@@ -674,7 +834,100 @@ export const PerfilAdmin = () => {
                 </form>
               </div>
             )}
-            
+
+            {editingComunidad && (
+              <div className={`${styles.activityContainer} ${styles.comunidadSection}`}>
+                <div className={styles.cardHeader}>
+                  <h2>Editar Información de la Comunidad</h2>
+                </div>
+                <form onSubmit={handleSubmitComunidad(onSubmitComunidad)} className={styles.form}>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="nombre">Nombre de la Comunidad</label>
+                      <input
+                        id="nombre"
+                        type="text"
+                        className={comunidadErrors.nombre ? styles.inputError : ''}
+                        {...registerComunidad('nombre')}
+                      />
+                      {comunidadErrors.nombre && <span className={styles.errorText}>{comunidadErrors.nombre.message}</span>}
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="fecha_creacion">Fecha de Creación</label>
+                      <input
+                        id="fecha_creacion"
+                        type="text"
+                        className={`${styles.readOnly}`}
+                        {...registerComunidad('fecha_creacion')}
+                        readOnly
+                      />
+                      <small className={styles.formHelper}>
+                        La fecha de creación no puede ser modificada
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="direccion_administrativa">Dirección Administrativa</label>
+                      <input
+                        id="direccion_administrativa"
+                        type="text"
+                        defaultValue={datosDeMuestra.comunidad.direccion_administrativa}
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="telefono_contacto">Teléfono de Contacto</label>
+                      <input
+                        id="telefono_contacto"
+                        type="tel"
+                        defaultValue={datosDeMuestra.comunidad.telefono_contacto}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="email_contacto">Email de Contacto</label>
+                      <input
+                        id="email_contacto"
+                        type="email"
+                        defaultValue={datosDeMuestra.comunidad.email_contacto}
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label htmlFor="sitio_web">Sitio Web</label>
+                      <input
+                        id="sitio_web"
+                        type="text"
+                        defaultValue={datosDeMuestra.comunidad.sitio_web}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formActions}>
+                    <button
+                      type="button"
+                      className={styles.cancelButton}
+                      onClick={handleCancelComunidadEdit}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className={styles.saveButton}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Guardando...' : 'Guardar Cambios'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
             {changePasswordMode && (
               <div className={styles.activityContainer}>
                 <div className={styles.cardHeader}>
@@ -694,7 +947,7 @@ export const PerfilAdmin = () => {
                       Ingrese el email asociado a su cuenta para verificar su identidad
                     </small>
                   </div>
-                  
+
                   <div className={styles.formRow}>
                     <div className={styles.formGroup}>
                       <label htmlFor="password">Nueva Contraseña</label>
@@ -706,7 +959,7 @@ export const PerfilAdmin = () => {
                       />
                       {passwordErrors.password && <span className={styles.errorText}>{passwordErrors.password.message}</span>}
                     </div>
-                    
+
                     <div className={styles.formGroup}>
                       <label htmlFor="confirmPassword">Confirmar Nueva Contraseña</label>
                       <input
@@ -718,17 +971,17 @@ export const PerfilAdmin = () => {
                       {passwordErrors.confirmPassword && <span className={styles.errorText}>{passwordErrors.confirmPassword.message}</span>}
                     </div>
                   </div>
-                  
+
                   <div className={styles.formActions}>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className={styles.cancelButton}
                       onClick={handleCancelPasswordChange}
                     >
                       Cancelar
                     </button>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className={styles.saveButton}
                       disabled={isLoading}
                     >

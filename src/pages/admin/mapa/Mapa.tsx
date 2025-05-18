@@ -74,7 +74,7 @@ export const Mapa = () => {
   const [mapLoadError, setMapLoadError] = useState(false);
   const [mapInfoWindow, setMapInfoWindow] = useState<Parcela | null>(null);
   const mapLoadTimeoutRef = useRef<number | null>(null);
-  
+
   const currentYear = new Date().getFullYear();
 
   // Añadimos un estado para controlar si estamos en un dispositivo con ancho de 418px
@@ -100,7 +100,7 @@ export const Mapa = () => {
     const cargarComunidades = async () => {
       // En un entorno real, esto sería una llamada a la API
       // const response = await adminService.getComunidades();
-      
+
       // Datos simulados de comunidades
       setTimeout(() => {
         const comunidadesData: Comunidad[] = [
@@ -119,21 +119,21 @@ export const Mapa = () => {
     const cargarParcelas = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // En un entorno real, esto sería una llamada a la API
         // const response = await adminService.getParcelas();
-        
+
         // Datos simulados para desarrollo con la estructura de la base de datos
         setTimeout(() => {
           const parcelasData: Parcela[] = [
-            { 
-              idParcela: 1, 
-              nombre: 'Parcela Arrayán', 
-              direccion: 'Camino El Arrayán 2500, Lo Barnechea', 
+            {
+              idParcela: 1,
+              nombre: 'Parcela Arrayán',
+              direccion: 'Camino El Arrayán 2500, Lo Barnechea',
               ubicacion: { lat: -33.41, lng: -70.62 },
               area: 1.5, // 1.5 hectáreas
-              estado: 'Al día', 
+              estado: 'Al día',
               fechaAdquisicion: '2022-05-15',
               valorCatastral: 65000000,
               propietario: {
@@ -148,13 +148,13 @@ export const Mapa = () => {
               gastosPendientes: 0,
               ultimoPago: '2023-08-15'
             },
-            { 
-              idParcela: 2, 
-              nombre: 'Parcela Los Cipreses', 
-              direccion: 'Camino Los Cipreses 350, Pirque', 
+            {
+              idParcela: 2,
+              nombre: 'Parcela Los Cipreses',
+              direccion: 'Camino Los Cipreses 350, Pirque',
               ubicacion: { lat: -33.42, lng: -70.63 },
               area: 2.2,
-              estado: 'Al día', 
+              estado: 'Al día',
               fechaAdquisicion: '2021-10-23',
               valorCatastral: 85000000,
               propietario: {
@@ -169,13 +169,13 @@ export const Mapa = () => {
               gastosPendientes: 0,
               ultimoPago: '2023-08-10'
             },
-            { 
-              idParcela: 3, 
-              nombre: 'Parcela El Algarrobal', 
-              direccion: 'Camino El Algarrobal Km 5, Colina', 
+            {
+              idParcela: 3,
+              nombre: 'Parcela El Algarrobal',
+              direccion: 'Camino El Algarrobal Km 5, Colina',
               ubicacion: { lat: -33.43, lng: -70.64 },
               area: 1.8,
-              estado: 'Pendiente', 
+              estado: 'Pendiente',
               fechaAdquisicion: '2022-03-07',
               valorCatastral: 58000000,
               propietario: null,
@@ -186,13 +186,13 @@ export const Mapa = () => {
               gastosPendientes: 1,
               ultimoPago: '2023-07-05'
             },
-            { 
-              idParcela: 4, 
-              nombre: 'Parcela Las Encinas', 
-              direccion: 'Camino Las Encinas 780, Calera de Tango', 
+            {
+              idParcela: 4,
+              nombre: 'Parcela Las Encinas',
+              direccion: 'Camino Las Encinas 780, Calera de Tango',
               ubicacion: { lat: -33.44, lng: -70.65 },
               area: 3.2,
-              estado: 'Pendiente', 
+              estado: 'Pendiente',
               fechaAdquisicion: '2020-12-18',
               valorCatastral: 120000000,
               propietario: null,
@@ -203,13 +203,13 @@ export const Mapa = () => {
               gastosPendientes: 2,
               ultimoPago: '2023-06-15'
             },
-            { 
-              idParcela: 5, 
-              nombre: 'Parcela El Quillay', 
-              direccion: 'Camino El Quillay 455, Lampa', 
+            {
+              idParcela: 5,
+              nombre: 'Parcela El Quillay',
+              direccion: 'Camino El Quillay 455, Lampa',
               ubicacion: { lat: -33.45, lng: -70.66 },
               area: 1.9,
-              estado: 'Al día', 
+              estado: 'Al día',
               fechaAdquisicion: '2021-09-30',
               valorCatastral: 72000000,
               propietario: {
@@ -224,13 +224,13 @@ export const Mapa = () => {
               gastosPendientes: 0,
               ultimoPago: '2023-08-12'
             },
-            { 
-              idParcela: 6, 
-              nombre: 'Parcela Los Aromos', 
-              direccion: 'Camino Los Aromos 920, Buin', 
+            {
+              idParcela: 6,
+              nombre: 'Parcela Los Aromos',
+              direccion: 'Camino Los Aromos 920, Buin',
               ubicacion: { lat: -33.46, lng: -70.67 },
               area: 2.5,
-              estado: 'Al día', 
+              estado: 'Al día',
               fechaAdquisicion: '2021-04-15',
               valorCatastral: 95000000,
               propietario: {
@@ -245,13 +245,13 @@ export const Mapa = () => {
               gastosPendientes: 0,
               ultimoPago: '2023-08-03'
             },
-            { 
-              idParcela: 7, 
-              nombre: 'Parcela Los Espinos', 
-              direccion: 'Camino Los Espinos 1200, Padre Hurtado', 
+            {
+              idParcela: 7,
+              nombre: 'Parcela Los Espinos',
+              direccion: 'Camino Los Espinos 1200, Padre Hurtado',
               ubicacion: { lat: -33.47, lng: -70.68 },
               area: 1.7,
-              estado: 'Atrasado', 
+              estado: 'Atrasado',
               fechaAdquisicion: '2022-06-08',
               valorCatastral: 62000000,
               propietario: null,
@@ -262,13 +262,13 @@ export const Mapa = () => {
               gastosPendientes: 3,
               ultimoPago: '2023-05-20'
             },
-            { 
-              idParcela: 8, 
-              nombre: 'Parcela El Canelo', 
-              direccion: 'Camino El Canelo 550, San José de Maipo', 
+            {
+              idParcela: 8,
+              nombre: 'Parcela El Canelo',
+              direccion: 'Camino El Canelo 550, San José de Maipo',
               ubicacion: { lat: -33.48, lng: -70.69 },
               area: 2.8,
-              estado: 'Al día', 
+              estado: 'Al día',
               fechaAdquisicion: '2020-08-22',
               valorCatastral: 105000000,
               propietario: {
@@ -357,17 +357,17 @@ export const Mapa = () => {
     if (filtroEstado !== 'todos' && parcela.estado !== filtroEstado) {
       return false;
     }
-    
+
     // Filtro por comunidad
     if (filtroComunidad !== 'todos' && parcela.comunidad.idComunidad !== filtroComunidad) {
       return false;
     }
-    
+
     // Filtro por búsqueda
     if (busqueda && !parcela.nombre.toLowerCase().includes(busqueda.toLowerCase())) {
       return false;
     }
-    
+
     return true;
   });
 
@@ -390,8 +390,8 @@ export const Mapa = () => {
 
   // Función para formatear dinero chileno
   const formatCLP = (valor: number) => {
-    return new Intl.NumberFormat('es-CL', { 
-      style: 'currency', 
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
       currency: 'CLP',
       maximumFractionDigits: 0
     }).format(valor);
@@ -416,7 +416,7 @@ export const Mapa = () => {
     return (
       <div className={styles.errorContainer}>
         <p className={styles.errorMessage}>{error}</p>
-        <button 
+        <button
           className={styles.retryButton}
           onClick={() => window.location.reload()}
         >
@@ -431,7 +431,7 @@ export const Mapa = () => {
       {/* Botón de menú hamburguesa explícito para móviles */}
       {isMobile && (
         <>
-          <button 
+          <button
             onClick={toggleMenu}
             style={{
               position: 'fixed',
@@ -486,10 +486,10 @@ export const Mapa = () => {
               }}
             ></span>
           </button>
-          
+
           {/* Overlay para cerrar el menú al hacer clic fuera */}
           {menuOpen && (
-            <div 
+            <div
               style={{
                 position: 'fixed',
                 top: 0,
@@ -504,8 +504,8 @@ export const Mapa = () => {
           )}
         </>
       )}
-      
-      <div 
+
+      <div
         className={`${styles.leftPanel} ${menuOpen ? styles.showMenu : ''}`}
         style={isMobile ? {
           position: 'fixed',
@@ -534,7 +534,7 @@ export const Mapa = () => {
             <h3 className={styles.navTitle}>Principal</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin" 
+                <Link to="/admin"
                   className={`${styles.navLink} ${window.location.pathname === '/admin' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -543,7 +543,7 @@ export const Mapa = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/mapa" 
+                <Link to="/admin/mapa"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/mapa' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -552,7 +552,7 @@ export const Mapa = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/resumen" 
+                <Link to="/admin/resumen"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/resumen' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -562,12 +562,21 @@ export const Mapa = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Gestión</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/contratos" 
+                <Link to="/admin/gastos"
+                  className={`${styles.navLink} ${window.location.pathname === '/admin/gastos' ? styles.active : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className={styles.navIcon}>💰</span>
+                  Gastos
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/contratos"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/contratos' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -576,7 +585,7 @@ export const Mapa = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/alertas" 
+                <Link to="/admin/alertas"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/alertas' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -585,7 +594,7 @@ export const Mapa = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/usuarios" 
+                <Link to="/admin/usuarios"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/usuarios' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -595,12 +604,12 @@ export const Mapa = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Comunicación</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/notificaciones" 
+                <Link to="/admin/notificaciones"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/notificaciones' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -610,12 +619,12 @@ export const Mapa = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Cuenta</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/perfil" 
+                <Link to="/admin/perfil"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/perfil' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -624,11 +633,11 @@ export const Mapa = () => {
                 </Link>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => {
                     setMenuOpen(false);
                     handleLogout();
-                  }} 
+                  }}
                   className={styles.navLinkButton}
                 >
                   <span className={styles.navIcon}>🚪</span>
@@ -645,8 +654,8 @@ export const Mapa = () => {
         <div className={`${styles.decorationCircle} ${styles.circle1}`}></div>
         <div className={`${styles.decorationCircle} ${styles.circle2}`}></div>
       </div>
-      
-      <div 
+
+      <div
         className={styles.mainContent}
         style={isMobile ? { padding: '1rem', paddingTop: '60px' } : {}}
       >
@@ -656,15 +665,15 @@ export const Mapa = () => {
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
           </div>
         </header>
-        
+
         {/* Versión móvil optimizada para 418px */}
         {isExactMobile ? (
           <div className={`${styles.mapControls} ${styles.mapControlsMobile}`}>
             <div className={styles.filterControlsRow}>
               <div className={styles.filterContainer}>
                 <label htmlFor="estado-filter">Estado:</label>
-                <select 
-                  id="estado-filter" 
+                <select
+                  id="estado-filter"
                   className={styles.filterSelect}
                   value={filtroEstado}
                   onChange={handleFiltroEstadoChange}
@@ -675,11 +684,11 @@ export const Mapa = () => {
                   <option value="Atrasado">Atrasado</option>
                 </select>
               </div>
-              
+
               <div className={styles.filterContainer}>
                 <label htmlFor="comunidad-filter">Comunidad:</label>
-                <select 
-                  id="comunidad-filter" 
+                <select
+                  id="comunidad-filter"
                   className={styles.filterSelect}
                   value={filtroComunidad === 'todos' ? 'todos' : filtroComunidad}
                   onChange={handleFiltroComunidadChange}
@@ -693,16 +702,16 @@ export const Mapa = () => {
                 </select>
               </div>
             </div>
-            
+
             <div className={styles.searchContainer}>
-              <input 
-                type="text" 
-                placeholder="Buscar parcela..." 
-                className={styles.searchInput} 
+              <input
+                type="text"
+                placeholder="Buscar parcela..."
+                className={styles.searchInput}
                 value={busqueda}
                 onChange={handleBusquedaChange}
               />
-              <button 
+              <button
                 className={styles.searchButton}
                 onClick={handleBuscar}
               >
@@ -714,8 +723,8 @@ export const Mapa = () => {
           <div className={styles.mapControls}>
             <div className={styles.filterContainer}>
               <label htmlFor="estado-filter">Filtrar por estado:</label>
-              <select 
-                id="estado-filter" 
+              <select
+                id="estado-filter"
                 className={styles.filterSelect}
                 value={filtroEstado}
                 onChange={handleFiltroEstadoChange}
@@ -726,11 +735,11 @@ export const Mapa = () => {
                 <option value="Atrasado">Atrasado</option>
               </select>
             </div>
-            
+
             <div className={styles.filterContainer}>
               <label htmlFor="comunidad-filter">Comunidad:</label>
-              <select 
-                id="comunidad-filter" 
+              <select
+                id="comunidad-filter"
                 className={styles.filterSelect}
                 value={filtroComunidad === 'todos' ? 'todos' : filtroComunidad}
                 onChange={handleFiltroComunidadChange}
@@ -743,16 +752,16 @@ export const Mapa = () => {
                 ))}
               </select>
             </div>
-            
+
             <div className={styles.searchContainer}>
-              <input 
-                type="text" 
-                placeholder="Buscar parcela..." 
-                className={styles.searchInput} 
+              <input
+                type="text"
+                placeholder="Buscar parcela..."
+                className={styles.searchInput}
                 value={busqueda}
                 onChange={handleBusquedaChange}
               />
-              <button 
+              <button
                 className={styles.searchButton}
                 onClick={handleBuscar}
               >
@@ -778,7 +787,7 @@ export const Mapa = () => {
                 <span>Atrasado</span>
               </div>
             </div>
-            
+
             <div className={styles.mapStats}>
               <div className={styles.statItem}>
                 <span className={styles.statLabel}>Total parcelas:</span>
@@ -804,7 +813,7 @@ export const Mapa = () => {
               </div>
             </div>
           </div>
-          
+
           <div className={styles.map}>
             {!mapLoadError ? (
               <LoadScript
@@ -825,8 +834,8 @@ export const Mapa = () => {
                   {parcelasFiltradas.map((parcela) => (
                     <Marker
                       key={parcela.idParcela}
-                      position={{ 
-                        lat: parcela.ubicacion.lat, 
+                      position={{
+                        lat: parcela.ubicacion.lat,
                         lng: parcela.ubicacion.lng
                       }}
                       onClick={() => setMapInfoWindow(parcela)}
@@ -834,11 +843,11 @@ export const Mapa = () => {
                       title={parcela.nombre}
                     />
                   ))}
-                  
+
                   {mapInfoWindow && (
                     <InfoWindow
-                      position={{ 
-                        lat: mapInfoWindow.ubicacion.lat, 
+                      position={{
+                        lat: mapInfoWindow.ubicacion.lat,
                         lng: mapInfoWindow.ubicacion.lng
                       }}
                       onCloseClick={() => setMapInfoWindow(null)}
@@ -857,7 +866,7 @@ export const Mapa = () => {
                         <div className={styles.infoWindowDetail}>
                           <strong>Propietario:</strong> {mapInfoWindow.propietario ? mapInfoWindow.propietario.nombreCompleto : 'No asignado'}
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             setParcelaSeleccionada(mapInfoWindow);
                             setMapInfoWindow(null);
@@ -878,23 +887,21 @@ export const Mapa = () => {
                 <p>Se muestra información de las parcelas en formato de lista</p>
                 <div className={styles.parcelasList}>
                   {parcelasFiltradas.map(parcela => (
-                    <div 
-                      key={parcela.idParcela} 
-                      className={`${styles.parcelaListItem} ${
-                        parcela.estado === 'Al día' ? styles.estadoAldia :
-                        parcela.estado === 'Pendiente' ? styles.estadoPendiente :
-                        styles.estadoAtrasado
-                      }`}
+                    <div
+                      key={parcela.idParcela}
+                      className={`${styles.parcelaListItem} ${parcela.estado === 'Al día' ? styles.estadoAldia :
+                          parcela.estado === 'Pendiente' ? styles.estadoPendiente :
+                            styles.estadoAtrasado
+                        }`}
                       onClick={() => setParcelaSeleccionada(parcela)}
                     >
                       <div className={styles.parcelaListContent}>
                         <h4>{parcela.nombre}</h4>
                         <p>{parcela.direccion}</p>
-                        <span className={`${styles.parcelaListBadge} ${
-                          parcela.estado === 'Al día' ? styles.badgeAldia :
-                          parcela.estado === 'Pendiente' ? styles.badgePendiente :
-                          styles.badgeAtrasado
-                        }`}>
+                        <span className={`${styles.parcelaListBadge} ${parcela.estado === 'Al día' ? styles.badgeAldia :
+                            parcela.estado === 'Pendiente' ? styles.badgePendiente :
+                              styles.badgeAtrasado
+                          }`}>
                           {parcela.estado}
                         </span>
                       </div>
@@ -903,7 +910,7 @@ export const Mapa = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Vista de respaldo durante la carga */}
             {isLoading && (
               <div className={styles.mapLoadingOverlay}>
@@ -929,60 +936,60 @@ export const Mapa = () => {
               </h2>
               <div className={styles.detailContent}>
                 <p className={styles.detailRow}>
-                  <span className={styles.detailLabel}>ID Parcela:</span> 
+                  <span className={styles.detailLabel}>ID Parcela:</span>
                   <span className={styles.detailValue}>{parcelaSeleccionada.idParcela}</span>
                 </p>
                 <p className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Dirección:</span> 
+                  <span className={styles.detailLabel}>Dirección:</span>
                   <span className={styles.detailValue}>{parcelaSeleccionada.direccion}</span>
                 </p>
                 <p className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Área:</span> 
+                  <span className={styles.detailLabel}>Área:</span>
                   <span className={styles.detailValue}>{parcelaSeleccionada.area} hectáreas</span>
                 </p>
                 <p className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Valor Catastral:</span> 
+                  <span className={styles.detailLabel}>Valor Catastral:</span>
                   <span className={styles.detailValue}>{formatCLP(parcelaSeleccionada.valorCatastral)}</span>
                 </p>
                 <p className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Fecha Adquisición:</span> 
+                  <span className={styles.detailLabel}>Fecha Adquisición:</span>
                   <span className={styles.detailValue}>{formatFecha(parcelaSeleccionada.fechaAdquisicion)}</span>
                 </p>
                 <p className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Comunidad:</span> 
+                  <span className={styles.detailLabel}>Comunidad:</span>
                   <span className={styles.detailValue}>{parcelaSeleccionada.comunidad.nombre}</span>
                 </p>
                 <p className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Propietario:</span> 
+                  <span className={styles.detailLabel}>Propietario:</span>
                   <span className={styles.detailValue}>
                     {parcelaSeleccionada.propietario ? parcelaSeleccionada.propietario.nombreCompleto : 'No asignado'}
                   </span>
                 </p>
                 {parcelaSeleccionada.propietario?.email && (
                   <p className={styles.detailRow}>
-                    <span className={styles.detailLabel}>Email:</span> 
+                    <span className={styles.detailLabel}>Email:</span>
                     <span className={styles.detailValue}>{parcelaSeleccionada.propietario.email}</span>
                   </p>
                 )}
                 <p className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Gastos Pendientes:</span> 
+                  <span className={styles.detailLabel}>Gastos Pendientes:</span>
                   <span className={styles.detailValue}>
                     {parcelaSeleccionada.gastosPendientes || 0}
                   </span>
                 </p>
                 {parcelaSeleccionada.ultimoPago && (
                   <p className={styles.detailRow}>
-                    <span className={styles.detailLabel}>Último Pago:</span> 
+                    <span className={styles.detailLabel}>Último Pago:</span>
                     <span className={styles.detailValue}>{formatFecha(parcelaSeleccionada.ultimoPago)}</span>
                   </p>
                 )}
                 <p className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Coordenadas:</span> 
+                  <span className={styles.detailLabel}>Coordenadas:</span>
                   <span className={styles.detailValue}>
                     {parcelaSeleccionada.ubicacion.lat.toFixed(6)}, {parcelaSeleccionada.ubicacion.lng.toFixed(6)}
                   </span>
                 </p>
-                
+
                 <div className={styles.detailSectionTitle}>Acciones de Gestión</div>
                 <div className={styles.detailActions}>
                   <Link to="/admin/contratos" className={`${styles.actionButton} ${styles.contractButton}`}>
@@ -1024,9 +1031,9 @@ export const Mapa = () => {
                     </Link>
                   )}
                 </div>
-                
+
                 <div className={styles.detailSectionDivider}></div>
-                
+
                 <div className={styles.detailSectionTitle}>Historial de Pagos</div>
                 <div className={styles.detailHistorySection}>
                   <div className={styles.historyEmptyState}>

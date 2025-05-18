@@ -17,6 +17,7 @@ import { Alertas } from './pages/admin/alertas/Alertas';
 import { Usuarios } from './pages/admin/usuarios/Usuarios';
 import { GestionarNotificaciones } from './pages/admin/notificaciones/GestionarNotificaciones';
 import { PerfilAdmin } from './pages/admin/perfil/PerfilAdmin';
+import { Gastos } from './pages/admin/gastos/Gastos';
 import { LoadingTransition } from './components/LoadingTransition';
 import type { ReactNode } from 'react';
 import './App.css';
@@ -87,6 +88,11 @@ function App() {
               <Pagos />
             </ProtectedRoute>
           } />
+          <Route path="/dashboard/gastos" element={
+            <ProtectedRoute requiredRole="copropietario">
+              <Gastos />
+            </ProtectedRoute>
+          } />
           <Route path="/dashboard/documentos" element={
             <ProtectedRoute requiredRole="copropietario">
               <Historial />
@@ -106,6 +112,7 @@ function App() {
           {/* Redirecciones para mantener compatibilidad con rutas antiguas */}
           <Route path="/parcelas" element={<Navigate to="/dashboard/parcelas" />} />
           <Route path="/pagos" element={<Navigate to="/dashboard/pagos" />} />
+          <Route path="/gastos" element={<Navigate to="/dashboard/gastos" />} />
           <Route path="/documentos" element={<Navigate to="/dashboard/documentos" />} />
           <Route path="/estadisticas" element={<Navigate to="/dashboard/estadisticas" />} />
           <Route path="/perfil" element={<Navigate to="/dashboard/perfil" />} />
@@ -124,6 +131,11 @@ function App() {
           <Route path="/admin/resumen" element={
             <ProtectedRoute requiredRole="admin">
               <Resumen />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/gastos" element={
+            <ProtectedRoute requiredRole="admin">
+              <Gastos />
             </ProtectedRoute>
           } />
           <Route path="/admin/contratos" element={

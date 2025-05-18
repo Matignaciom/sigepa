@@ -14,8 +14,29 @@ declare global {
 const GoogleMapComponent = ({ coordinates }: { coordinates: { lat: number, lng: number } }) => {
   // En un entorno de producción real, se utilizaría la biblioteca @react-google-maps/api
   useEffect(() => {
+    // Variable para guardar referencia al script
+    let mapScript: HTMLScriptElement | null = null;
+    
     // Función para cargar el mapa de Google
     const loadGoogleMaps = () => {
+      // Definir la función global initMap primero, antes de cargar el script
+      window.initMap = () => {
+        const mapDiv = document.getElementById('google-map');
+        if (mapDiv) {
+          const map = new window.google.maps.Map(mapDiv, {
+            center: { lat: coordinates.lat, lng: coordinates.lng },
+            zoom: 15,
+          });
+
+          // Añadir un marcador
+          new window.google.maps.Marker({
+            position: { lat: coordinates.lat, lng: coordinates.lng },
+            map: map,
+            title: 'Mi Parcela'
+          });
+        }
+      };
+
       // Comprobar si la API de Google Maps ya está cargada
       if (!window.google) {
         // Crear script para cargar la API
@@ -23,25 +44,18 @@ const GoogleMapComponent = ({ coordinates }: { coordinates: { lat: number, lng: 
         script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyA7BnbM1NEQv3C-7Jj8S9mYL7BQ7JZ--G8&callback=initMap`;
         script.async = true;
         script.defer = true;
-        document.head.appendChild(script);
-
-        // Definir la función global initMap
-        window.initMap = () => {
+        
+        // Manejar errores de carga
+        script.onerror = () => {
+          console.error('Error al cargar la API de Google Maps');
           const mapDiv = document.getElementById('google-map');
           if (mapDiv) {
-            const map = new window.google.maps.Map(mapDiv, {
-              center: { lat: coordinates.lat, lng: coordinates.lng },
-              zoom: 15,
-            });
-
-            // Añadir un marcador
-            new window.google.maps.Marker({
-              position: { lat: coordinates.lat, lng: coordinates.lng },
-              map: map,
-              title: 'Mi Parcela'
-            });
+            mapDiv.innerHTML = '<div style="padding: 20px; text-align: center;">Error al cargar el mapa. Por favor, recargue la página.</div>';
           }
         };
+        
+        document.head.appendChild(script);
+        mapScript = script;
       } else {
         // Si ya está cargada, inicializar el mapa directamente
         window.initMap();
@@ -55,6 +69,11 @@ const GoogleMapComponent = ({ coordinates }: { coordinates: { lat: number, lng: 
       // Eliminar la función global si existe
       if (window.initMap) {
         delete window.initMap;
+      }
+      
+      // Eliminar el script si se creó uno
+      if (mapScript && document.head.contains(mapScript)) {
+        document.head.removeChild(mapScript);
       }
     };
   }, [coordinates]);

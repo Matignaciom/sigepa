@@ -11,12 +11,16 @@ USE `sigepa_db`;
 -- -----------------------------------------------------
 -- Table `Comunidad`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `Comunidad` (
-  `idComunidad` INT NOT NULL AUTO_INCREMENT,
-  `nombre` VARCHAR(255) NOT NULL,
-  `fecha_creacion` DATE NOT NULL DEFAULT (CURDATE()),
-  PRIMARY KEY (`idComunidad`)
-) ENGINE = InnoDB;
+   CREATE TABLE IF NOT EXISTS `Comunidad` (
+     `idComunidad` INT NOT NULL AUTO_INCREMENT,
+     `nombre` VARCHAR(255) NOT NULL,
+     `fecha_creacion` DATE NOT NULL DEFAULT (CURDATE()),
+     `direccion_administrativa` VARCHAR(255),
+     `telefono_contacto` VARCHAR(20),
+     `email_contacto` VARCHAR(255),
+     `sitio_web` VARCHAR(255),
+     PRIMARY KEY (`idComunidad`)
+   ) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `Usuario`

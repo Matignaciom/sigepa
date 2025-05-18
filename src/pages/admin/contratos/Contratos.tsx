@@ -120,7 +120,7 @@ export const Contratos = () => {
     fechaInicio: '',
     fechaFin: '',
   });
-  
+
   const visualizadorRef = useRef<HTMLDivElement>(null);
   const currentYear = new Date().getFullYear();
 
@@ -139,8 +139,8 @@ export const Contratos = () => {
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
-  const contratosFiltrados = filtroEstado === 'todos' 
-    ? contratos 
+  const contratosFiltrados = filtroEstado === 'todos'
+    ? contratos
     : contratos.filter(contrato => contrato.estado.toLowerCase() === filtroEstado);
 
   // Función para abrir/cerrar el menú en móviles
@@ -202,7 +202,7 @@ export const Contratos = () => {
       // Renovar por un año más desde la fecha actual
       const fechaFin = new Date(fechaActual);
       fechaFin.setFullYear(fechaFin.getFullYear() + 1);
-      
+
       // Aquí se llamaría a la API para actualizar el contrato
       setTimeout(() => {
         setMensajeTexto(`El contrato ha sido renovado exitosamente hasta ${fechaFin.toLocaleDateString()}.`);
@@ -253,13 +253,13 @@ export const Contratos = () => {
   const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
     // Aquí iría la lógica para guardar el contrato (nuevo o editado)
-    setMensajeTexto(formMode === 'crear' 
-      ? 'Contrato creado exitosamente' 
+    setMensajeTexto(formMode === 'crear'
+      ? 'Contrato creado exitosamente'
       : 'Contrato actualizado exitosamente');
     setMensajeTipo('exito');
     setMostrarMensaje(true);
     setMostrarFormulario(false);
-    
+
     setTimeout(() => {
       setMostrarMensaje(false);
     }, 3000);
@@ -284,7 +284,7 @@ export const Contratos = () => {
       {/* Botón de menú hamburguesa para móviles */}
       {isMobile && (
         <>
-          <button 
+          <button
             onClick={toggleMenu}
             style={{
               position: 'fixed',
@@ -339,10 +339,10 @@ export const Contratos = () => {
               }}
             ></span>
           </button>
-          
+
           {/* Overlay para cerrar el menú al hacer clic fuera */}
           {menuOpen && (
-            <div 
+            <div
               style={{
                 position: 'fixed',
                 top: 0,
@@ -357,9 +357,9 @@ export const Contratos = () => {
           )}
         </>
       )}
-      
+
       {/* Panel lateral izquierdo */}
-      <div 
+      <div
         className={`${styles.leftPanel} ${menuOpen ? styles.showMenu : ''}`}
         style={isMobile ? {
           position: 'fixed',
@@ -388,7 +388,7 @@ export const Contratos = () => {
             <h3 className={styles.navTitle}>Principal</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin" 
+                <Link to="/admin"
                   className={`${styles.navLink} ${window.location.pathname === '/admin' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -397,7 +397,7 @@ export const Contratos = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/mapa" 
+                <Link to="/admin/mapa"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/mapa' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -406,7 +406,7 @@ export const Contratos = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/resumen" 
+                <Link to="/admin/resumen"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/resumen' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -416,12 +416,21 @@ export const Contratos = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Gestión</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/contratos" 
+                <Link to="/admin/gastos"
+                  className={`${styles.navLink} ${window.location.pathname === '/admin/gastos' ? styles.active : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className={styles.navIcon}>💰</span>
+                  Gastos
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/contratos"
                   className={`${styles.navLink} ${styles.active}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -430,7 +439,7 @@ export const Contratos = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/alertas" 
+                <Link to="/admin/alertas"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/alertas' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -439,7 +448,7 @@ export const Contratos = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/usuarios" 
+                <Link to="/admin/usuarios"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/usuarios' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -449,12 +458,12 @@ export const Contratos = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Comunicación</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/notificaciones" 
+                <Link to="/admin/notificaciones"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/notificaciones' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -464,12 +473,12 @@ export const Contratos = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Cuenta</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/perfil" 
+                <Link to="/admin/perfil"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/perfil' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -478,11 +487,11 @@ export const Contratos = () => {
                 </Link>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => {
                     setMenuOpen(false);
                     handleLogout();
-                  }} 
+                  }}
                   className={styles.navLinkButton}
                 >
                   <span className={styles.navIcon}>🚪</span>
@@ -499,9 +508,9 @@ export const Contratos = () => {
         <div className={`${styles.decorationCircle} ${styles.circle1}`}></div>
         <div className={`${styles.decorationCircle} ${styles.circle2}`}></div>
       </div>
-      
+
       {/* Contenido principal */}
-      <div 
+      <div
         className={styles.mainContent}
         style={isMobile ? { padding: '1rem', paddingTop: '60px' } : {}}
       >
@@ -511,14 +520,14 @@ export const Contratos = () => {
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
           </div>
         </header>
-        
+
         {/* Filtros y botón de nuevo contrato */}
         <div className={styles.filtros}>
           <div className={styles.filtroItem}>
             <label htmlFor="filtroEstado">Filtrar por estado:</label>
-            <select 
-              id="filtroEstado" 
-              value={filtroEstado} 
+            <select
+              id="filtroEstado"
+              value={filtroEstado}
               onChange={(e) => setFiltroEstado(e.target.value)}
               className={styles.select}
             >
@@ -527,13 +536,13 @@ export const Contratos = () => {
               <option value="expirado">Expirados</option>
             </select>
           </div>
-          
+
           <button className={styles.btnNuevo} onClick={handleNuevoContrato}>
             <span className={styles.btnIcon}>📝</span>
             Nuevo Contrato
           </button>
         </div>
-        
+
         {/* Tabla de contratos */}
         <div className={styles.tablaContainer}>
           <table className={styles.tabla}>
@@ -573,7 +582,7 @@ export const Contratos = () => {
             </tbody>
           </table>
         </div>
-        
+
         {contratosFiltrados.length === 0 && (
           <div className={styles.noResultados}>No se encontraron contratos con los filtros seleccionados.</div>
         )}
@@ -607,18 +616,18 @@ export const Contratos = () => {
                     <p><strong>Fecha de Inicio:</strong> {contratoSeleccionado.fechaInicio}</p>
                     <p><strong>Fecha de Fin:</strong> {contratoSeleccionado.fechaFin}</p>
                     <p><strong>Estado:</strong> {contratoSeleccionado.estado}</p>
-                    
+
                     <p className={styles.pdfText}>
                       Este contrato establece los términos y condiciones para el uso y administración
                       de la parcela identificada, de acuerdo con las regulaciones establecidas por
                       la Comunidad y en conformidad con las leyes vigentes.
                     </p>
-                    
+
                     <p className={styles.pdfText}>
                       El propietario se compromete a mantener el estado de la parcela según las
                       normativas y a cumplir con los pagos establecidos por la administración.
                     </p>
-                    
+
                     <div className={styles.pdfSignatures}>
                       <div className={styles.signature}>
                         <div className={styles.signatureLine}></div>
@@ -648,12 +657,12 @@ export const Contratos = () => {
               </div>
               <form onSubmit={handleSubmitForm} className={styles.formulario}>
                 {/* Campo oculto para idComunidad o mostrado si tiene múltiples comunidades */}
-                <input 
-                  type="hidden" 
-                  name="idComunidad" 
+                <input
+                  type="hidden"
+                  name="idComunidad"
                   value={formData.idComunidad}
                 />
-                
+
                 <div className={styles.formGroup}>
                   <label htmlFor="nombreParcela">Parcela</label>
                   <input
@@ -666,7 +675,7 @@ export const Contratos = () => {
                     required
                   />
                 </div>
-                
+
                 <div className={styles.formGroup}>
                   <label htmlFor="nombrePropietario">Propietario</label>
                   <input
@@ -679,7 +688,7 @@ export const Contratos = () => {
                     required
                   />
                 </div>
-                
+
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
                     <label htmlFor="fechaInicio">Fecha Inicio</label>
@@ -693,7 +702,7 @@ export const Contratos = () => {
                       required
                     />
                   </div>
-                  
+
                   <div className={styles.formGroup}>
                     <label htmlFor="fechaFin">Fecha Fin</label>
                     <input
@@ -707,7 +716,7 @@ export const Contratos = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div className={styles.formGroup}>
                   <label htmlFor="estado">Estado</label>
                   <select
@@ -722,7 +731,7 @@ export const Contratos = () => {
                     <option value="Expirado">Expirado</option>
                   </select>
                 </div>
-                
+
                 <div className={styles.formGroup}>
                   <label htmlFor="pdf_ruta">Documento PDF</label>
                   <div className={styles.fileInputContainer}>
@@ -741,7 +750,7 @@ export const Contratos = () => {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className={styles.formActions}>
                   <button type="button" className={styles.btnCancelar} onClick={handleCloseFormulario}>
                     Cancelar

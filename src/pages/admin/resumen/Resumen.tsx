@@ -7,30 +7,30 @@ interface EstadisticaResumen {
   totalUsuarios: number;
   usuariosAdministradores: number;
   usuariosCopropietarios: number;
-  
+
   // Estadísticas de Parcelas
   totalParcelas: number;
   parcelasAlDia: number;
   parcelasPendientes: number;
   parcelasAtrasadas: number;
-  
+
   // Estadísticas de Pagos
   pagosPendientes: number;
   pagosPagados: number;
   pagosFallidos: number;
   montoRecaudadoMes: number;
-  
+
   // Estadísticas de Contratos
   contratosVigentes: number;
   contratosExpirados: number;
-  
+
   // Estadísticas de Gastos Comunes
   gastosOrdinarios: number;
   gastosExtraordinarios: number;
   gastosPendientes: number;
   gastosActivos: number;
   gastosCerrados: number;
-  
+
   // Estadísticas de Notificaciones y Avisos
   notificacionesEnviadas: number;
   avisosActivos: number;
@@ -42,30 +42,30 @@ export const Resumen = () => {
     totalUsuarios: 0,
     usuariosAdministradores: 0,
     usuariosCopropietarios: 0,
-    
+
     // Parcelas
     totalParcelas: 0,
     parcelasAlDia: 0,
     parcelasPendientes: 0,
     parcelasAtrasadas: 0,
-    
+
     // Pagos
     pagosPendientes: 0,
     pagosPagados: 0,
     pagosFallidos: 0,
     montoRecaudadoMes: 0,
-    
+
     // Contratos
     contratosVigentes: 0,
     contratosExpirados: 0,
-    
+
     // Gastos Comunes
     gastosOrdinarios: 0,
     gastosExtraordinarios: 0,
     gastosPendientes: 0,
     gastosActivos: 0,
     gastosCerrados: 0,
-    
+
     // Notificaciones y Avisos
     notificacionesEnviadas: 0,
     avisosActivos: 0
@@ -74,7 +74,7 @@ export const Resumen = () => {
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  
+
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
@@ -96,11 +96,11 @@ export const Resumen = () => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // En un entorno real, esto sería una llamada a la API
         // const response = await adminService.getResumenData();
-        
+
         // Datos simulados para desarrollo basados en el schema.sql
         setTimeout(() => {
           setEstadisticas({
@@ -108,30 +108,30 @@ export const Resumen = () => {
             totalUsuarios: 105,
             usuariosAdministradores: 5,
             usuariosCopropietarios: 100,
-            
+
             // Parcelas
             totalParcelas: 120,
             parcelasAlDia: 80,
             parcelasPendientes: 25,
             parcelasAtrasadas: 15,
-            
+
             // Pagos
             pagosPendientes: 35,
             pagosPagados: 82,
             pagosFallidos: 3,
             montoRecaudadoMes: 4500000,
-            
+
             // Contratos
             contratosVigentes: 115,
             contratosExpirados: 5,
-            
+
             // Gastos Comunes
             gastosOrdinarios: 12,
             gastosExtraordinarios: 3,
             gastosPendientes: 2,
             gastosActivos: 10,
             gastosCerrados: 3,
-            
+
             // Notificaciones y Avisos
             notificacionesEnviadas: 250,
             avisosActivos: 8
@@ -147,7 +147,7 @@ export const Resumen = () => {
 
     fetchDashboardData();
   }, []);
-  
+
   // Función para abrir/cerrar el menú en móviles
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -209,7 +209,7 @@ export const Resumen = () => {
     return (
       <div className={styles.errorContainer}>
         <p className={styles.errorMessage}>{error}</p>
-        <button 
+        <button
           className={styles.retryButton}
           onClick={() => window.location.reload()}
         >
@@ -224,7 +224,7 @@ export const Resumen = () => {
       {/* Botón de menú hamburguesa explícito para móviles */}
       {isMobile && (
         <>
-          <button 
+          <button
             onClick={toggleMenu}
             style={{
               position: 'fixed',
@@ -279,10 +279,10 @@ export const Resumen = () => {
               }}
             ></span>
           </button>
-          
+
           {/* Overlay para cerrar el menú al hacer clic fuera */}
           {menuOpen && (
-            <div 
+            <div
               style={{
                 position: 'fixed',
                 top: 0,
@@ -297,8 +297,8 @@ export const Resumen = () => {
           )}
         </>
       )}
-      
-      <div 
+
+      <div
         className={`${styles.leftPanel} ${menuOpen ? styles.showMenu : ''}`}
         style={isMobile ? {
           position: 'fixed',
@@ -317,7 +317,7 @@ export const Resumen = () => {
           <div className={styles.brandLogo}>
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
           </div>
-          <h1 className={styles.brandTitle}>Panel de Estadísticas</h1>
+          <h1 className={styles.brandTitle}>Panel de Administración</h1>
           <p className={styles.brandDescription}>
             Visualización de métricas clave del sistema incluyendo usuarios, parcelas, contratos, gastos y pagos.
           </p>
@@ -327,7 +327,7 @@ export const Resumen = () => {
             <h3 className={styles.navTitle}>Principal</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin" 
+                <Link to="/admin"
                   className={`${styles.navLink} ${window.location.pathname === '/admin' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -336,7 +336,7 @@ export const Resumen = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/mapa" 
+                <Link to="/admin/mapa"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/mapa' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -345,7 +345,7 @@ export const Resumen = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/resumen" 
+                <Link to="/admin/resumen"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/resumen' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -355,12 +355,21 @@ export const Resumen = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Gestión</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/contratos" 
+                <Link to="/admin/gastos"
+                  className={`${styles.navLink} ${window.location.pathname === '/admin/gastos' ? styles.active : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className={styles.navIcon}>💰</span>
+                  Gastos
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/contratos"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/contratos' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -369,7 +378,7 @@ export const Resumen = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/alertas" 
+                <Link to="/admin/alertas"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/alertas' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -378,7 +387,7 @@ export const Resumen = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/usuarios" 
+                <Link to="/admin/usuarios"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/usuarios' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -388,12 +397,12 @@ export const Resumen = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Comunicación</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/notificaciones" 
+                <Link to="/admin/notificaciones"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/notificaciones' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -403,12 +412,12 @@ export const Resumen = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Cuenta</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/perfil" 
+                <Link to="/admin/perfil"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/perfil' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -417,11 +426,11 @@ export const Resumen = () => {
                 </Link>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => {
                     setMenuOpen(false);
                     handleLogout();
-                  }} 
+                  }}
                   className={styles.navLinkButton}
                 >
                   <span className={styles.navIcon}>🚪</span>
@@ -438,18 +447,18 @@ export const Resumen = () => {
         <div className={`${styles.decorationCircle} ${styles.circle1}`}></div>
         <div className={`${styles.decorationCircle} ${styles.circle2}`}></div>
       </div>
-      
-      <div 
+
+      <div
         className={styles.mainContent}
         style={isMobile ? { padding: '1rem', paddingTop: '60px' } : {}}
       >
         <header className={styles.header}>
-          <h2 className={styles.dashboardTitle}>Estadísticas del Sistema</h2>
+          <h2 className={styles.dashboardTitle}>Panel de Administración</h2>
           <div className={styles.headerBrand}>
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
           </div>
         </header>
-        
+
         {/* Sección Usuarios */}
         <section>
           <h2 className={styles.sectionTitle}>Usuarios</h2>
@@ -463,7 +472,7 @@ export const Resumen = () => {
                 <p className={styles.statNumber}>{formatearNumero(estadisticas.totalUsuarios)}</p>
               </div>
             </div>
-            
+
             <div className={styles.statCard}>
               <div className={styles.statIconContainer}>
                 <span className={styles.statIcon}>👨‍💼</span>
@@ -499,7 +508,7 @@ export const Resumen = () => {
                 <p className={styles.statNumber}>{formatearNumero(estadisticas.totalParcelas)}</p>
               </div>
             </div>
-            
+
             <div className={styles.statCard}>
               <div className={styles.statIconContainer}>
                 <span className={styles.statIcon}>✅</span>
@@ -529,7 +538,7 @@ export const Resumen = () => {
               </div>
               <div className={styles.statContent}>
                 <h3>Parcelas Atrasadas</h3>
-                <p className={styles.statNumber} style={{color: "#dc2626"}}>{formatearNumero(estadisticas.parcelasAtrasadas)}</p>
+                <p className={styles.statNumber} style={{ color: "#dc2626" }}>{formatearNumero(estadisticas.parcelasAtrasadas)}</p>
               </div>
             </div>
           </div>
@@ -548,7 +557,7 @@ export const Resumen = () => {
                 <p className={styles.statNumber}>$ {formatearNumero(estadisticas.montoRecaudadoMes)}</p>
               </div>
             </div>
-            
+
             <div className={styles.statCard}>
               <div className={styles.statIconContainer}>
                 <span className={styles.statIcon}>⏱️</span>
@@ -594,7 +603,7 @@ export const Resumen = () => {
                 <p className={styles.statNumber}>{formatearNumero(estadisticas.gastosOrdinarios)}</p>
               </div>
             </div>
-            
+
             <div className={styles.statCard}>
               <div className={styles.statIconContainer}>
                 <span className={styles.statIcon}>📊</span>
@@ -612,8 +621,8 @@ export const Resumen = () => {
               <div className={styles.statContent}>
                 <h3>Estado de Gastos</h3>
                 <p className={styles.statDetail}>
-                  Pendientes: {formatearNumero(estadisticas.gastosPendientes)} | 
-                  Activos: {formatearNumero(estadisticas.gastosActivos)} | 
+                  Pendientes: {formatearNumero(estadisticas.gastosPendientes)} |
+                  Activos: {formatearNumero(estadisticas.gastosActivos)} |
                   Cerrados: {formatearNumero(estadisticas.gastosCerrados)}
                 </p>
               </div>
@@ -634,7 +643,7 @@ export const Resumen = () => {
                 <p className={styles.statNumber}>{formatearNumero(estadisticas.contratosVigentes)}</p>
               </div>
             </div>
-            
+
             <div className={styles.statCard}>
               <div className={styles.statIconContainer}>
                 <span className={styles.statIcon}>⚠️</span>

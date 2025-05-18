@@ -60,12 +60,12 @@ export const Alertas = () => {
     prioridad: 'todos',
     estado: 'todos'
   });
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  
+
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
@@ -108,8 +108,8 @@ export const Alertas = () => {
   };
 
   const marcarComoResuelta = (id: number) => {
-    setAlertas(prev => 
-      prev.map(alerta => 
+    setAlertas(prev =>
+      prev.map(alerta =>
         alerta.id === id ? { ...alerta, estado: 'Resuelta' } : alerta
       )
     );
@@ -127,14 +127,14 @@ export const Alertas = () => {
         return '';
     }
   };
-  
+
   // Función para cerrar sesión
   const handleLogout = () => {
     // Aquí iría la lógica para cerrar sesión
     localStorage.removeItem('user');
     window.location.href = '/login';
   };
-  
+
   // Función para abrir/cerrar el menú en móviles
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -153,7 +153,7 @@ export const Alertas = () => {
     return (
       <div className={styles.errorContainer}>
         <p className={styles.errorMessage}>{error}</p>
-        <button 
+        <button
           className={styles.retryButton}
           onClick={() => window.location.reload()}
         >
@@ -168,7 +168,7 @@ export const Alertas = () => {
       {/* Botón de menú hamburguesa para móviles */}
       {isMobile && (
         <>
-          <button 
+          <button
             onClick={toggleMenu}
             style={{
               position: 'fixed',
@@ -223,10 +223,10 @@ export const Alertas = () => {
               }}
             ></span>
           </button>
-          
+
           {/* Overlay para cerrar el menú al hacer clic fuera */}
           {menuOpen && (
-            <div 
+            <div
               style={{
                 position: 'fixed',
                 top: 0,
@@ -241,8 +241,8 @@ export const Alertas = () => {
           )}
         </>
       )}
-      
-      <div 
+
+      <div
         className={`${styles.leftPanel} ${menuOpen ? styles.showMenu : ''}`}
         style={isMobile ? {
           position: 'fixed',
@@ -271,7 +271,7 @@ export const Alertas = () => {
             <h3 className={styles.navTitle}>Principal</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin" 
+                <Link to="/admin"
                   className={`${styles.navLink} ${window.location.pathname === '/admin' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -280,7 +280,7 @@ export const Alertas = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/mapa" 
+                <Link to="/admin/mapa"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/mapa' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -289,7 +289,7 @@ export const Alertas = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/resumen" 
+                <Link to="/admin/resumen"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/resumen' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -299,12 +299,21 @@ export const Alertas = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Gestión</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/contratos" 
+                <Link to="/admin/gastos"
+                  className={`${styles.navLink} ${window.location.pathname === '/admin/gastos' ? styles.active : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className={styles.navIcon}>💰</span>
+                  Gastos
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/contratos"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/contratos' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -313,7 +322,7 @@ export const Alertas = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/alertas" 
+                <Link to="/admin/alertas"
                   className={`${styles.navLink} ${styles.active}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -322,7 +331,7 @@ export const Alertas = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/usuarios" 
+                <Link to="/admin/usuarios"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/usuarios' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -332,12 +341,12 @@ export const Alertas = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Comunicación</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/notificaciones" 
+                <Link to="/admin/notificaciones"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/notificaciones' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -347,12 +356,12 @@ export const Alertas = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Cuenta</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/perfil" 
+                <Link to="/admin/perfil"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/perfil' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -361,11 +370,11 @@ export const Alertas = () => {
                 </Link>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => {
                     setMenuOpen(false);
                     handleLogout();
-                  }} 
+                  }}
                   className={styles.navLinkButton}
                 >
                   <span className={styles.navIcon}>🚪</span>
@@ -382,8 +391,8 @@ export const Alertas = () => {
         <div className={`${styles.decorationCircle} ${styles.circle1}`}></div>
         <div className={`${styles.decorationCircle} ${styles.circle2}`}></div>
       </div>
-      
-      <div 
+
+      <div
         className={styles.mainContent}
         style={isMobile ? { padding: '1rem', paddingTop: '60px' } : {}}
       >
@@ -393,17 +402,17 @@ export const Alertas = () => {
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
           </div>
         </header>
-        
+
         {/* Filtros de alertas */}
         <div className={styles.activityContainer}>
           <div className={styles.filtros}>
             <div className={styles.filtrosGroup}>
               <div className={styles.filtroItem}>
                 <label htmlFor="tipo">Tipo:</label>
-                <select 
-                  id="tipo" 
+                <select
+                  id="tipo"
                   name="tipo"
-                  value={filtros.tipo} 
+                  value={filtros.tipo}
                   onChange={handleFiltroChange}
                   className={styles.select}
                 >
@@ -413,13 +422,13 @@ export const Alertas = () => {
                   <option value="Sistema">Sistema</option>
                 </select>
               </div>
-              
+
               <div className={styles.filtroItem}>
                 <label htmlFor="prioridad">Prioridad:</label>
-                <select 
-                  id="prioridad" 
+                <select
+                  id="prioridad"
                   name="prioridad"
-                  value={filtros.prioridad} 
+                  value={filtros.prioridad}
                   onChange={handleFiltroChange}
                   className={styles.select}
                 >
@@ -429,13 +438,13 @@ export const Alertas = () => {
                   <option value="Baja">Baja</option>
                 </select>
               </div>
-              
+
               <div className={styles.filtroItem}>
                 <label htmlFor="estado">Estado:</label>
-                <select 
-                  id="estado" 
+                <select
+                  id="estado"
                   name="estado"
-                  value={filtros.estado} 
+                  value={filtros.estado}
                   onChange={handleFiltroChange}
                   className={styles.select}
                 >
@@ -445,14 +454,14 @@ export const Alertas = () => {
                 </select>
               </div>
             </div>
-            
+
             <Link to="/admin/notificaciones" className={styles.createNotificationButton}>
               {!isMobile && <span className={styles.btnIcon}>✉️</span>}
               <span>Gestionar Notificaciones</span>
             </Link>
           </div>
         </div>
-        
+
         {/* Contenedor de alertas */}
         <section>
           <h2 className={styles.sectionTitle}>
@@ -466,28 +475,28 @@ export const Alertas = () => {
                   <div className={styles.alertaHeader}>
                     <div className={styles.statIconContainer}>
                       <span className={styles.statIcon}>
-                        {alerta.tipo === 'Pago' ? '💰' : 
-                         alerta.tipo === 'Contrato' ? '📄' : '🔧'}
+                        {alerta.tipo === 'Pago' ? '💰' :
+                          alerta.tipo === 'Contrato' ? '📄' : '🔧'}
                       </span>
                     </div>
                     <span className={`${styles.alertaBadge} ${getPrioridadClass(alerta.prioridad)}`}>
                       {alerta.prioridad}
                     </span>
                   </div>
-                  
+
                   <div className={styles.statContent}>
                     <h3>{alerta.tipo}</h3>
                     <p className={styles.mensaje}>{alerta.mensaje}</p>
                     <p className={styles.statDetail}>Fecha: {alerta.fechaCreacion}</p>
                   </div>
-                  
+
                   <div className={styles.alertaFooter}>
                     <span className={`${styles.estadoBadge} ${alerta.estado === 'Pendiente' ? styles.estadoPendiente : styles.estadoResuelta}`}>
                       {alerta.estado}
                     </span>
-                    
+
                     {alerta.estado === 'Pendiente' && (
-                      <button 
+                      <button
                         className={styles.resolverButton}
                         onClick={() => marcarComoResuelta(alerta.id)}
                       >

@@ -7,12 +7,12 @@ interface ResumenData {
   totalUsuarios: number;
   totalParcelas: number;
   parcelasActivas: number;
-  
+
   // Información de pagos
   pagosPendientes: number;
   pagosPagados: number;
   montoRecaudadoMes: number;
-  
+
   // Información de comunidad
   nombreComunidad: string;
   totalCopropietarios: number;
@@ -20,7 +20,7 @@ interface ResumenData {
   // Información de contratos
   contratosVigentes: number;
   contratosProximosVencer: number;
-  
+
   // Alertas y avisos
   alertasActivas: number;
   avisosRecientes: number;
@@ -42,7 +42,7 @@ export const Admin = () => {
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  
+
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
@@ -64,11 +64,11 @@ export const Admin = () => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // En un entorno real, esto sería una llamada a la API
         // const response = await adminService.getDashboardSummary();
-        
+
         // Datos simulados para desarrollo basados en el esquema SQL
         setTimeout(() => {
           setResumenData({
@@ -76,20 +76,20 @@ export const Admin = () => {
             totalUsuarios: 105,
             totalParcelas: 120,
             parcelasActivas: 105,
-            
+
             // Información de pagos
             pagosPendientes: 35,
             pagosPagados: 82,
             montoRecaudadoMes: 4500000,
-            
+
             // Información de comunidad
             nombreComunidad: "Comunidad Las Flores",
             totalCopropietarios: 100,
-            
+
             // Información de contratos
             contratosVigentes: 115,
             contratosProximosVencer: 8,
-            
+
             // Alertas y avisos
             alertasActivas: 12,
             avisosRecientes: 5
@@ -137,7 +137,7 @@ export const Admin = () => {
               parcelaId: 17
             }
           ]);
-          
+
           setIsLoading(false);
         }, 800);
       } catch (err) {
@@ -149,7 +149,7 @@ export const Admin = () => {
 
     fetchDashboardData();
   }, []);
-  
+
   // Función para abrir/cerrar el menú en móviles
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
@@ -230,7 +230,7 @@ export const Admin = () => {
     return (
       <div className={styles.errorContainer}>
         <p className={styles.errorMessage}>{error}</p>
-        <button 
+        <button
           className={styles.retryButton}
           onClick={() => window.location.reload()}
         >
@@ -245,7 +245,7 @@ export const Admin = () => {
       {/* Botón de menú hamburguesa explícito para móviles */}
       {isMobile && (
         <>
-          <button 
+          <button
             onClick={toggleMenu}
             style={{
               position: 'fixed',
@@ -300,10 +300,10 @@ export const Admin = () => {
               }}
             ></span>
           </button>
-          
+
           {/* Overlay para cerrar el menú al hacer clic fuera */}
           {menuOpen && (
-            <div 
+            <div
               style={{
                 position: 'fixed',
                 top: 0,
@@ -318,8 +318,8 @@ export const Admin = () => {
           )}
         </>
       )}
-      
-      <div 
+
+      <div
         className={`${styles.leftPanel} ${menuOpen ? styles.showMenu : ''}`}
         style={isMobile ? {
           position: 'fixed',
@@ -348,7 +348,7 @@ export const Admin = () => {
             <h3 className={styles.navTitle}>Principal</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin" 
+                <Link to="/admin"
                   className={`${styles.navLink} ${window.location.pathname === '/admin' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -357,7 +357,7 @@ export const Admin = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/mapa" 
+                <Link to="/admin/mapa"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/mapa' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -366,7 +366,7 @@ export const Admin = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/resumen" 
+                <Link to="/admin/resumen"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/resumen' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -376,12 +376,21 @@ export const Admin = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Gestión</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/contratos" 
+                <Link to="/admin/gastos"
+                  className={`${styles.navLink} ${window.location.pathname === '/admin/gastos' ? styles.active : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className={styles.navIcon}>💰</span>
+                  Gastos
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/contratos"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/contratos' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -390,7 +399,7 @@ export const Admin = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/alertas" 
+                <Link to="/admin/alertas"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/alertas' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -399,7 +408,7 @@ export const Admin = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/usuarios" 
+                <Link to="/admin/usuarios"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/usuarios' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -409,12 +418,12 @@ export const Admin = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Comunicación</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/notificaciones" 
+                <Link to="/admin/notificaciones"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/notificaciones' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -424,12 +433,12 @@ export const Admin = () => {
               </li>
             </ul>
           </div>
-          
+
           <div className={styles.navSection}>
             <h3 className={styles.navTitle}>Cuenta</h3>
             <ul className={styles.navList}>
               <li>
-                <Link to="/admin/perfil" 
+                <Link to="/admin/perfil"
                   className={`${styles.navLink} ${window.location.pathname === '/admin/perfil' ? styles.active : ''}`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -438,11 +447,11 @@ export const Admin = () => {
                 </Link>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => {
                     setMenuOpen(false);
                     handleLogout();
-                  }} 
+                  }}
                   className={styles.navLinkButton}
                 >
                   <span className={styles.navIcon}>🚪</span>
@@ -459,8 +468,8 @@ export const Admin = () => {
         <div className={`${styles.decorationCircle} ${styles.circle1}`}></div>
         <div className={`${styles.decorationCircle} ${styles.circle2}`}></div>
       </div>
-      
-      <div 
+
+      <div
         className={styles.mainContent}
         style={isMobile ? { padding: '1rem', paddingTop: '60px' } : {}}
       >
@@ -475,7 +484,7 @@ export const Admin = () => {
             </div>
           </div>
         </header>
-        
+
         {/* Resumen de estadísticas */}
         <div className={styles.statsContainer}>
           <div className={styles.statCard}>
@@ -490,7 +499,7 @@ export const Admin = () => {
               </p>
             </div>
           </div>
-          
+
           <div className={styles.statCard}>
             <div className={styles.statIconContainer}>
               <span className={styles.statIcon}>🏞️</span>
@@ -503,7 +512,7 @@ export const Admin = () => {
               </p>
             </div>
           </div>
-          
+
           <div className={styles.statCard}>
             <div className={styles.statIconContainer}>
               <span className={styles.statIcon}>💰</span>
@@ -518,7 +527,7 @@ export const Admin = () => {
               </p>
             </div>
           </div>
-          
+
           <div className={styles.statCard}>
             <div className={styles.statIconContainer}>
               <span className={styles.statIcon}>📄</span>
@@ -599,7 +608,7 @@ export const Admin = () => {
                 <div className={styles.activityContent}>
                   <p className={styles.activityText}>
                     <strong>{actividad.usuario}</strong> {actividad.descripcion}
-                    {actividad.parcelaId && 
+                    {actividad.parcelaId &&
                       <span className={styles.activityParcel}> (Parcela #{actividad.parcelaId})</span>
                     }
                   </p>
@@ -607,7 +616,7 @@ export const Admin = () => {
                 </div>
               </div>
             ))}
-            
+
             <div className={styles.viewAllActivity}>
               <Link to="/admin/resumen">
                 Ver más información
@@ -622,12 +631,12 @@ export const Admin = () => {
             <span className={styles.btnIcon}>✉️</span>
             <span>Gestionar Notificaciones</span>
           </Link>
-          
+
           <Link to="/admin/usuarios" className={styles.actionButton}>
             <span className={styles.btnIcon}>👤</span>
             <span>Gestionar Usuarios</span>
           </Link>
-          
+
           <Link to="/admin/contratos" className={styles.actionButton}>
             <span className={styles.btnIcon}>📄</span>
             <span>Gestionar Contratos</span>
