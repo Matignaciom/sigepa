@@ -89,7 +89,7 @@ export const Dashboard = () => {
       
       try {
         // Obtener el resumen del dashboard
-        const resumenResponse = await api.get(
+        const resumenResponse = await api.get<{ data: ResumenData }>(
           '/.netlify/functions/obtener-resumen-dashboard'
         );
         
@@ -101,7 +101,7 @@ export const Dashboard = () => {
         }
         
         // Obtener actividades recientes
-        const actividadesResponse = await api.get(
+        const actividadesResponse = await api.get<{ data: Actividad[] }>(
           '/.netlify/functions/obtener-actividades-recientes?limit=4'
         );
         
@@ -112,7 +112,7 @@ export const Dashboard = () => {
         }
         
         // Obtener parcelas del usuario
-        const parcelasResponse = await api.get(
+        const parcelasResponse = await api.get<{ data: { parcelas: Parcela[] } }>(
           '/.netlify/functions/obtener-parcelas-usuario'
         );
         
@@ -421,7 +421,7 @@ export const Dashboard = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Estado de Cuenta</h3>
-              <p className={styles.statNumber}>{resumenData?.estadoCuenta}</p>
+              <p className={styles.statNumber}>{resumenData?.estadoCuenta || 'No disponible'}</p>
             </div>
           </div>
           
@@ -431,8 +431,8 @@ export const Dashboard = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Próximo Pago</h3>
-              <p className={styles.statNumber}>{resumenData?.proximoPago.fecha}</p>
-              <p className={`${styles.statDetail} ${styles.darkText}`}>{resumenData?.proximoPago.concepto}</p>
+              <p className={styles.statNumber}>{resumenData?.proximoPago?.fecha || 'No disponible'}</p>
+              <p className={`${styles.statDetail} ${styles.darkText}`}>{resumenData?.proximoPago?.concepto || 'No hay pagos pendientes'}</p>
             </div>
           </div>
           
@@ -442,7 +442,7 @@ export const Dashboard = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Monto a Pagar</h3>
-              <p className={styles.statNumber}>{resumenData?.proximoPago.monto}</p>
+              <p className={styles.statNumber}>{resumenData?.proximoPago?.monto || '$0'}</p>
             </div>
           </div>
           
