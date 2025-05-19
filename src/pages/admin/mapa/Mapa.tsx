@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Mapa.module.css';
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { obtenerParcelasMapa, buscarParcelaMapa, obtenerEstadisticasParcelas, actualizarCoordenadasParcela } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
+import { LoadingTransition } from '../../../components/LoadingTransition';
 
 interface Usuario {
   idUsuario: number;
@@ -74,6 +77,17 @@ export const Mapa = () => {
   const [mapLoadError, setMapLoadError] = useState(false);
   const [mapInfoWindow, setMapInfoWindow] = useState<Parcela | null>(null);
   const mapLoadTimeoutRef = useRef<number | null>(null);
+  const [estadisticas, setEstadisticas] = useState<any>({
+    total: 0,
+    por_estado: {
+      "Al día": 0,
+      "Pendiente": 0,
+      "Atrasado": 0
+    }
+  });
+  const [buscando, setBuscando] = useState(false);
+  const { user } = useAuth();
+  const token = localStorage.getItem('token') || '';
 
   const currentYear = new Date().getFullYear();
 
@@ -98,22 +112,20 @@ export const Mapa = () => {
 
   useEffect(() => {
     const cargarComunidades = async () => {
-      // En un entorno real, esto sería una llamada a la API
-      // const response = await adminService.getComunidades();
-
-      // Datos simulados de comunidades
-      setTimeout(() => {
-        const comunidadesData: Comunidad[] = [
-          { idComunidad: 1, nombre: 'Valle Verde' },
-          { idComunidad: 2, nombre: 'Hacienda Los Almendros' },
-          { idComunidad: 3, nombre: 'Parque Los Nogales' },
-        ];
-        setComunidades(comunidadesData);
-      }, 300);
+      try {
+        if (token) {
+          const response = await obtenerParcelasMapa(token);
+          if (response.success && response.data.comunidad) {
+            setComunidades([response.data.comunidad]);
+          }
+        }
+      } catch (error) {
+        console.error('Error al cargar comunidad:', error);
+      }
     };
 
     cargarComunidades();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     const cargarParcelas = async () => {
@@ -121,172 +133,26 @@ export const Mapa = () => {
       setError(null);
 
       try {
-        // En un entorno real, esto sería una llamada a la API
-        // const response = await adminService.getParcelas();
-
-        // Datos simulados para desarrollo con la estructura de la base de datos
-        setTimeout(() => {
-          const parcelasData: Parcela[] = [
-            {
-              idParcela: 1,
-              nombre: 'Parcela Arrayán',
-              direccion: 'Camino El Arrayán 2500, Lo Barnechea',
-              ubicacion: { lat: -33.41, lng: -70.62 },
-              area: 1.5, // 1.5 hectáreas
-              estado: 'Al día',
-              fechaAdquisicion: '2022-05-15',
-              valorCatastral: 65000000,
-              propietario: {
-                idUsuario: 5,
-                nombreCompleto: 'Roberto Gómez',
-                email: 'rgomez@example.com'
-              },
-              comunidad: {
-                idComunidad: 1,
-                nombre: 'Valle Verde'
-              },
-              gastosPendientes: 0,
-              ultimoPago: '2023-08-15'
-            },
-            {
-              idParcela: 2,
-              nombre: 'Parcela Los Cipreses',
-              direccion: 'Camino Los Cipreses 350, Pirque',
-              ubicacion: { lat: -33.42, lng: -70.63 },
-              area: 2.2,
-              estado: 'Al día',
-              fechaAdquisicion: '2021-10-23',
-              valorCatastral: 85000000,
-              propietario: {
-                idUsuario: 7,
-                nombreCompleto: 'María González',
-                email: 'mgonzalez@example.com'
-              },
-              comunidad: {
-                idComunidad: 1,
-                nombre: 'Valle Verde'
-              },
-              gastosPendientes: 0,
-              ultimoPago: '2023-08-10'
-            },
-            {
-              idParcela: 3,
-              nombre: 'Parcela El Algarrobal',
-              direccion: 'Camino El Algarrobal Km 5, Colina',
-              ubicacion: { lat: -33.43, lng: -70.64 },
-              area: 1.8,
-              estado: 'Pendiente',
-              fechaAdquisicion: '2022-03-07',
-              valorCatastral: 58000000,
-              propietario: null,
-              comunidad: {
-                idComunidad: 2,
-                nombre: 'Hacienda Los Almendros'
-              },
-              gastosPendientes: 1,
-              ultimoPago: '2023-07-05'
-            },
-            {
-              idParcela: 4,
-              nombre: 'Parcela Las Encinas',
-              direccion: 'Camino Las Encinas 780, Calera de Tango',
-              ubicacion: { lat: -33.44, lng: -70.65 },
-              area: 3.2,
-              estado: 'Pendiente',
-              fechaAdquisicion: '2020-12-18',
-              valorCatastral: 120000000,
-              propietario: null,
-              comunidad: {
-                idComunidad: 2,
-                nombre: 'Hacienda Los Almendros'
-              },
-              gastosPendientes: 2,
-              ultimoPago: '2023-06-15'
-            },
-            {
-              idParcela: 5,
-              nombre: 'Parcela El Quillay',
-              direccion: 'Camino El Quillay 455, Lampa',
-              ubicacion: { lat: -33.45, lng: -70.66 },
-              area: 1.9,
-              estado: 'Al día',
-              fechaAdquisicion: '2021-09-30',
-              valorCatastral: 72000000,
-              propietario: {
-                idUsuario: 12,
-                nombreCompleto: 'Carlos Rodríguez',
-                email: 'crodriguez@example.com'
-              },
-              comunidad: {
-                idComunidad: 3,
-                nombre: 'Parque Los Nogales'
-              },
-              gastosPendientes: 0,
-              ultimoPago: '2023-08-12'
-            },
-            {
-              idParcela: 6,
-              nombre: 'Parcela Los Aromos',
-              direccion: 'Camino Los Aromos 920, Buin',
-              ubicacion: { lat: -33.46, lng: -70.67 },
-              area: 2.5,
-              estado: 'Al día',
-              fechaAdquisicion: '2021-04-15',
-              valorCatastral: 95000000,
-              propietario: {
-                idUsuario: 15,
-                nombreCompleto: 'Ana Martínez',
-                email: 'amartinez@example.com'
-              },
-              comunidad: {
-                idComunidad: 3,
-                nombre: 'Parque Los Nogales'
-              },
-              gastosPendientes: 0,
-              ultimoPago: '2023-08-03'
-            },
-            {
-              idParcela: 7,
-              nombre: 'Parcela Los Espinos',
-              direccion: 'Camino Los Espinos 1200, Padre Hurtado',
-              ubicacion: { lat: -33.47, lng: -70.68 },
-              area: 1.7,
-              estado: 'Atrasado',
-              fechaAdquisicion: '2022-06-08',
-              valorCatastral: 62000000,
-              propietario: null,
-              comunidad: {
-                idComunidad: 1,
-                nombre: 'Valle Verde'
-              },
-              gastosPendientes: 3,
-              ultimoPago: '2023-05-20'
-            },
-            {
-              idParcela: 8,
-              nombre: 'Parcela El Canelo',
-              direccion: 'Camino El Canelo 550, San José de Maipo',
-              ubicacion: { lat: -33.48, lng: -70.69 },
-              area: 2.8,
-              estado: 'Al día',
-              fechaAdquisicion: '2020-08-22',
-              valorCatastral: 105000000,
-              propietario: {
-                idUsuario: 21,
-                nombreCompleto: 'Pedro Sánchez',
-                email: 'psanchez@example.com'
-              },
-              comunidad: {
-                idComunidad: 2,
-                nombre: 'Hacienda Los Almendros'
-              },
-              gastosPendientes: 0,
-              ultimoPago: '2023-08-05'
-            }
-          ];
-          setParcelas(parcelasData);
-          setIsLoading(false);
-        }, 800);
+        if (token) {
+          // Solo enviamos el filtro por estado si no es 'todos'
+          const filtro = filtroEstado !== 'todos' ? { estado: filtroEstado } : undefined;
+          const response = await obtenerParcelasMapa(token, filtro);
+          
+          if (response.success) {
+            setParcelas(response.data.parcelas || []);
+            setEstadisticas(response.data.estadisticas || {
+              total: 0,
+              por_estado: {
+                "Al día": 0,
+                "Pendiente": 0,
+                "Atrasado": 0
+              }
+            });
+          } else {
+            setError(response.message || 'Error al cargar parcelas');
+          }
+        }
+        setIsLoading(false);
       } catch (err) {
         console.error('Error al cargar parcelas:', err);
         setError('No se pudieron cargar los datos de las parcelas. Por favor, intente nuevamente.');
@@ -295,7 +161,7 @@ export const Mapa = () => {
     };
 
     cargarParcelas();
-  }, []);
+  }, [token, filtroEstado]);
 
   useEffect(() => {
     // Establecer un timeout para detectar si el mapa no carga
@@ -335,9 +201,46 @@ export const Mapa = () => {
     setBusqueda(e.target.value);
   };
 
-  const handleBuscar = () => {
-    // Lógica de búsqueda en un entorno real
-    console.log(`Buscando: ${busqueda}`);
+  const handleBuscar = async () => {
+    if (!busqueda.trim()) {
+      // Si la búsqueda está vacía, cargamos todas las parcelas de nuevo
+      const filtro = filtroEstado !== 'todos' ? { estado: filtroEstado } : undefined;
+      try {
+        setIsLoading(true);
+        const response = await obtenerParcelasMapa(token, filtro);
+        if (response.success) {
+          setParcelas(response.data.parcelas || []);
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error al recargar parcelas:', error);
+        setError('Error al recargar parcelas');
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    setBuscando(true);
+    setIsLoading(true);
+    
+    try {
+      if (token) {
+        const response = await buscarParcelaMapa(token, busqueda);
+        if (response.success) {
+          setParcelas(response.data.parcelas || []);
+        } else {
+          setError(response.message || 'Error al buscar parcelas');
+          setParcelas([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error en la búsqueda:', error);
+      setError('Error al realizar la búsqueda. Por favor, intente nuevamente.');
+      setParcelas([]);
+    } finally {
+      setBuscando(false);
+      setIsLoading(false);
+    }
   };
 
   // Función para abrir/cerrar el menú en móviles
@@ -353,21 +256,11 @@ export const Mapa = () => {
   };
 
   const parcelasFiltradas = parcelas.filter(parcela => {
-    // Filtro por estado
-    if (filtroEstado !== 'todos' && parcela.estado !== filtroEstado) {
-      return false;
-    }
-
-    // Filtro por comunidad
+    // Solo aplicamos el filtro por comunidad, ya que el filtro por estado
+    // se hace directamente en la llamada a la API
     if (filtroComunidad !== 'todos' && parcela.comunidad.idComunidad !== filtroComunidad) {
       return false;
     }
-
-    // Filtro por búsqueda
-    if (busqueda && !parcela.nombre.toLowerCase().includes(busqueda.toLowerCase())) {
-      return false;
-    }
-
     return true;
   });
 
@@ -403,10 +296,50 @@ export const Mapa = () => {
     return fecha.toLocaleDateString('es-CL');
   };
 
+  // Función para actualizar coordenadas de una parcela desde el mapa
+  const handleActualizarCoordenadas = async (idParcela: number, latitud: number, longitud: number) => {
+    try {
+      if (!token) {
+        throw new Error('No hay sesión de usuario');
+      }
+      
+      const response = await actualizarCoordenadasParcela(
+        token,
+        idParcela,
+        latitud,
+        longitud
+      );
+      
+      if (response.success) {
+        // Actualizamos las coordenadas en el estado local
+        setParcelas(prevParcelas => 
+          prevParcelas.map(p => {
+            if (p.idParcela === idParcela) {
+              return {
+                ...p,
+                ubicacion: {
+                  lat: latitud,
+                  lng: longitud
+                }
+              };
+            }
+            return p;
+          })
+        );
+        
+        // Opcional: mostrar mensaje de éxito
+        alert('Coordenadas actualizadas correctamente');
+      }
+    } catch (error) {
+      console.error('Error al actualizar coordenadas:', error);
+      alert('Error al actualizar coordenadas. Por favor, intente nuevamente.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
-        <div className={styles.spinner}></div>
+        <LoadingTransition />
         <p>Cargando mapa de parcelas...</p>
       </div>
     );
@@ -685,22 +618,24 @@ export const Mapa = () => {
                 </select>
               </div>
 
-              <div className={styles.filterContainer}>
-                <label htmlFor="comunidad-filter">Comunidad:</label>
-                <select
-                  id="comunidad-filter"
-                  className={styles.filterSelect}
-                  value={filtroComunidad === 'todos' ? 'todos' : filtroComunidad}
-                  onChange={handleFiltroComunidadChange}
-                >
-                  <option value="todos">Todas</option>
-                  {comunidades.map(comunidad => (
-                    <option key={comunidad.idComunidad} value={comunidad.idComunidad}>
-                      {comunidad.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {comunidades.length > 1 && (
+                <div className={styles.filterContainer}>
+                  <label htmlFor="comunidad-filter">Comunidad:</label>
+                  <select
+                    id="comunidad-filter"
+                    className={styles.filterSelect}
+                    value={filtroComunidad === 'todos' ? 'todos' : filtroComunidad}
+                    onChange={handleFiltroComunidadChange}
+                  >
+                    <option value="todos">Todas</option>
+                    {comunidades.map(comunidad => (
+                      <option key={comunidad.idComunidad} value={comunidad.idComunidad}>
+                        {comunidad.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div className={styles.searchContainer}>
@@ -710,12 +645,14 @@ export const Mapa = () => {
                 className={styles.searchInput}
                 value={busqueda}
                 onChange={handleBusquedaChange}
+                onKeyDown={(e) => e.key === 'Enter' && handleBuscar()}
               />
               <button
                 className={styles.searchButton}
                 onClick={handleBuscar}
+                disabled={buscando}
               >
-                Buscar
+                {buscando ? 'Buscando...' : 'Buscar'}
               </button>
             </div>
           </div>
@@ -736,22 +673,24 @@ export const Mapa = () => {
               </select>
             </div>
 
-            <div className={styles.filterContainer}>
-              <label htmlFor="comunidad-filter">Comunidad:</label>
-              <select
-                id="comunidad-filter"
-                className={styles.filterSelect}
-                value={filtroComunidad === 'todos' ? 'todos' : filtroComunidad}
-                onChange={handleFiltroComunidadChange}
-              >
-                <option value="todos">Todas</option>
-                {comunidades.map(comunidad => (
-                  <option key={comunidad.idComunidad} value={comunidad.idComunidad}>
-                    {comunidad.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {comunidades.length > 1 && (
+              <div className={styles.filterContainer}>
+                <label htmlFor="comunidad-filter">Comunidad:</label>
+                <select
+                  id="comunidad-filter"
+                  className={styles.filterSelect}
+                  value={filtroComunidad === 'todos' ? 'todos' : filtroComunidad}
+                  onChange={handleFiltroComunidadChange}
+                >
+                  <option value="todos">Todas</option>
+                  {comunidades.map(comunidad => (
+                    <option key={comunidad.idComunidad} value={comunidad.idComunidad}>
+                      {comunidad.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className={styles.searchContainer}>
               <input
@@ -760,12 +699,14 @@ export const Mapa = () => {
                 className={styles.searchInput}
                 value={busqueda}
                 onChange={handleBusquedaChange}
+                onKeyDown={(e) => e.key === 'Enter' && handleBuscar()}
               />
               <button
                 className={styles.searchButton}
                 onClick={handleBuscar}
+                disabled={buscando}
               >
-                Buscar
+                {buscando ? 'Buscando...' : 'Buscar'}
               </button>
             </div>
           </div>
@@ -791,24 +732,24 @@ export const Mapa = () => {
             <div className={styles.mapStats}>
               <div className={styles.statItem}>
                 <span className={styles.statLabel}>Total parcelas:</span>
-                <span className={styles.statValue}>{parcelas.length}</span>
+                <span className={styles.statValue}>{estadisticas.total || parcelas.length}</span>
               </div>
               <div className={styles.statItem}>
                 <span className={styles.statLabel}>Al día:</span>
                 <span className={styles.statValue}>
-                  {parcelas.filter(p => p.estado === 'Al día').length}
+                  {estadisticas.por_estado?.["Al día"] || parcelas.filter(p => p.estado === 'Al día').length}
                 </span>
               </div>
               <div className={styles.statItem}>
                 <span className={styles.statLabel}>Pendientes:</span>
                 <span className={styles.statValue}>
-                  {parcelas.filter(p => p.estado === 'Pendiente').length}
+                  {estadisticas.por_estado?.["Pendiente"] || parcelas.filter(p => p.estado === 'Pendiente').length}
                 </span>
               </div>
               <div className={styles.statItem}>
                 <span className={styles.statLabel}>Atrasadas:</span>
                 <span className={styles.statValue}>
-                  {parcelas.filter(p => p.estado === 'Atrasado').length}
+                  {estadisticas.por_estado?.["Atrasado"] || parcelas.filter(p => p.estado === 'Atrasado').length}
                 </span>
               </div>
             </div>
@@ -841,6 +782,18 @@ export const Mapa = () => {
                       onClick={() => setMapInfoWindow(parcela)}
                       icon={markerIcons[parcela.estado]}
                       title={parcela.nombre}
+                      draggable={true}
+                      onDragEnd={(e) => {
+                        if (e.latLng) {
+                          const newLat = e.latLng.lat();
+                          const newLng = e.latLng.lng();
+                          
+                          // Confirmar antes de actualizar
+                          if (window.confirm(`¿Desea actualizar las coordenadas de "${parcela.nombre}" a esta nueva ubicación?`)) {
+                            handleActualizarCoordenadas(parcela.idParcela, newLat, newLng);
+                          }
+                        }
+                      }}
                     />
                   ))}
 

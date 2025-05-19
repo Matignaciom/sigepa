@@ -16,6 +16,7 @@ import {
   Filler
 } from 'chart.js';
 import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
+import { pagosService, type EstadisticasPagos } from '../../../services/api';
 
 // Registrar componentes de Chart.js
 ChartJS.register(
@@ -71,115 +72,87 @@ const chartOptions = {
   }
 };
 
+// Interfaz para la estructura de la respuesta de la función Netlify (el contenido de apiResponse.data)
+interface NetlifyFunctionResponsePayload {
+  success: boolean;
+  message: string;
+  data: EstadisticasPagos; // Las estadísticas reales
+}
+
 export const Estadisticas = () => {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState('anual');
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [estadisticas, setEstadisticas] = useState<EstadisticasPagos | null>(null);
+  
   const { user } = useAuth();
   
   const currentYear = new Date().getFullYear();
   
-  // Datos de ejemplo para las estadísticas
-  const datosEstadisticas = {
-    pagosRealizados: 12,
-    montoTotal: 1800000,
-    pagosPuntuales: 11,
-    pagosAtrasados: 1,
-    porcentajePuntualidad: 91.67,
-    saldoPendiente: 0,
-    proximoPago: '15/06/2023',
-    montoProximoPago: 150000
+  // Función para formatear montos en pesos chilenos
+  const formatMonto = (monto: number) => {
+    if (isNaN(monto)) {
+      return new Intl.NumberFormat('es-CL', {
+        style: 'currency',
+        currency: 'CLP'
+      }).format(0);
+    }
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP'
+    }).format(monto);
   };
   
-  // Datos para el gráfico de pagos mensuales (simulados)
-  const datosPagosMensuales = [
-    { mes: 'Ene', monto: 150000, puntual: true },
-    { mes: 'Feb', monto: 150000, puntual: true },
-    { mes: 'Mar', monto: 150000, puntual: true },
-    { mes: 'Abr', monto: 150000, puntual: true },
-    { mes: 'May', monto: 150000, puntual: true },
-    { mes: 'Jun', monto: 150000, puntual: false },
-    { mes: 'Jul', monto: 150000, puntual: true },
-    { mes: 'Ago', monto: 150000, puntual: true },
-    { mes: 'Sep', monto: 150000, puntual: true },
-    { mes: 'Oct', monto: 150000, puntual: true },
-    { mes: 'Nov', monto: 150000, puntual: true },
-    { mes: 'Dic', monto: 150000, puntual: true },
-  ];
+  // Cargar los datos de estadísticas desde la API
+  useEffect(() => {
+    const cargarEstadisticas = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const apiResponse = await pagosService.obtenerEstadisticasPagos();
 
-  // Datos para el gráfico de distribución de pagos por estado (simulados)
-  // Basado en el enum de estado en la tabla Pago: ENUM('Pendiente','Pagado','Fallido')
-  const datosEstadoPagos = {
-    labels: ['Pagado', 'Pendiente', 'Fallido'],
-    datasets: [
-      {
-        data: [25, 5, 2],
-        backgroundColor: [
-          'rgba(79, 70, 229, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
-          'rgba(231, 76, 60, 0.8)'
-        ],
-        borderColor: [
-          'rgba(79, 70, 229, 1)',
-          'rgba(245, 158, 11, 1)',
-          'rgba(231, 76, 60, 1)'
-        ],
-        borderWidth: 1
+        if (apiResponse.success && apiResponse.data) {
+          // apiResponse.data es la respuesta directa de la función Netlify
+          // Necesitamos castearla o tratarla como 'any' para acceder a su estructura interna.
+          const netlifyResponse = apiResponse.data as any as NetlifyFunctionResponsePayload;
+
+          if (netlifyResponse.success && netlifyResponse.data) {
+            const actualStats = netlifyResponse.data;
+
+            // Convertir montos de string a número si es necesario
+            if (actualStats.historialPagosMensuales) {
+              actualStats.historialPagosMensuales = actualStats.historialPagosMensuales.map(item => ({
+                ...item,
+                monto: typeof item.monto === 'string' ? parseFloat(item.monto) : Number(item.monto)
+              }));
+            }
+            // Asegurar que montoTotalPagado y saldoPendiente sean números
+            actualStats.montoTotalPagado = Number(actualStats.montoTotalPagado);
+            actualStats.saldoPendiente = Number(actualStats.saldoPendiente);
+            
+            setEstadisticas(actualStats);
+            console.log('Estadísticas procesadas y asignadas al estado:', actualStats);
+          } else {
+            setError(netlifyResponse.message || 'Error en los datos de estadísticas recibidos.');
+            console.error('Respuesta interna de Netlify no exitosa o sin datos:', netlifyResponse);
+          }
+        } else {
+          setError(apiResponse.error || 'Fallo al cargar estadísticas desde la API.');
+          console.error('Respuesta de API no exitosa o sin datos:', apiResponse);
+        }
+      } catch (err) {
+        console.error('Excepción al cargar estadísticas:', err);
+        setError('Error de conexión o excepción al cargar estadísticas.');
+      } finally {
+        setLoading(false);
       }
-    ]
-  };
-
-  // Datos para el gráfico de evolución de puntualidad (simulados)
-  // Basado en la tabla GastoParcela y su estado: ENUM('Pendiente','Pagado','Atrasado')
-  const datosPuntualidad = {
-    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-    datasets: [
-      {
-        label: 'Porcentaje de Puntualidad',
-        data: [100, 100, 95, 100, 90, 85, 100, 100, 95, 90, 100, 95],
-        borderColor: 'rgba(79, 70, 229, 1)',
-        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-        fill: true,
-        tension: 0.4
-      }
-    ]
-  };
-
-  // Datos para el gráfico de distribución de gastos por tipo (simulados)
-  // Basado en el enum de tipo en la tabla GastoComun: ENUM('Cuota Ordinaria','Cuota Extraordinaria','Multa','Otro')
-  const datosTipoGastos = {
-    labels: ['Cuota Ordinaria', 'Cuota Extraordinaria', 'Multa', 'Otro'],
-    datasets: [
-      {
-        data: [70, 15, 10, 5],
-        backgroundColor: [
-          'rgba(79, 70, 229, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
-          'rgba(231, 76, 60, 0.8)',
-          'rgba(52, 152, 219, 0.8)'
-        ]
-      }
-    ]
-  };
-
-  // Datos para el gráfico de barras (basado en los datos mensuales)
-  const datosGraficoBarras = {
-    labels: datosPagosMensuales.map(item => item.mes),
-    datasets: [
-      {
-        label: 'Pagos Mensuales',
-        data: datosPagosMensuales.map(item => item.monto),
-        backgroundColor: datosPagosMensuales.map(item => 
-          item.puntual ? 'rgba(79, 70, 229, 0.8)' : 'rgba(231, 76, 60, 0.8)'
-        ),
-        borderColor: datosPagosMensuales.map(item => 
-          item.puntual ? 'rgba(79, 70, 229, 1)' : 'rgba(231, 76, 60, 1)'
-        ),
-        borderWidth: 1
-      }
-    ]
-  };
-
+    };
+    
+    cargarEstadisticas();
+  }, []);
+  
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth <= 576);
@@ -194,14 +167,6 @@ export const Estadisticas = () => {
     // Limpiar listener al desmontar
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
-  
-  // Función para formatear montos en pesos chilenos
-  const formatMonto = (monto: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP'
-    }).format(monto);
-  };
   
   // Función para cambiar el periodo de visualización
   const cambiarPeriodo = (periodo: string) => {
@@ -244,6 +209,115 @@ export const Estadisticas = () => {
   
   const links = isAdmin ? adminLinks : copropietarioLinks;
   
+  // Renderizado condicional para estadísticas cargadas
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingSpinner}></div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className={styles.errorContainer}>
+        <div className={styles.errorIcon}>⚠️</div>
+        <h2>Error al cargar estadísticas</h2>
+        <p>{error}</p>
+        <button 
+          className={styles.retryButton}
+          onClick={() => window.location.reload()}
+        >
+          Intentar nuevamente
+        </button>
+      </div>
+    );
+  }
+  
+  // Asegurar que proximoPago siempre tenga una estructura válida
+  const proximoPago = estadisticas?.proximoPago || { fecha: null, monto: 0, concepto: "No hay próximos vencimientos" };
+  
+  // Asegurar que distribucionPagosEstado tenga valores correctos 
+  const distribucionEstado = estadisticas?.distribucionPagosEstado || { alDia: 0, pendiente: 0, atrasado: 0 };
+  
+  // Asegurar que distribucionGastosPorTipo tenga valores correctos
+  const distribucionTipos = estadisticas?.distribucionGastosPorTipo || { ordinaria: 0, extraordinaria: 0, multa: 0, otro: 0 };
+  
+  // Datos para los gráficos basados en la respuesta de la API
+  const datosGraficoBarras = {
+    labels: estadisticas?.historialPagosMensuales?.map(item => item.etiqueta) || [],
+    datasets: [
+      {
+        label: 'Pagos Mensuales',
+        data: estadisticas?.historialPagosMensuales?.map(item => item.monto) || [],
+        backgroundColor: 'rgba(79, 70, 229, 0.8)',
+        borderColor: 'rgba(79, 70, 229, 1)',
+        borderWidth: 1
+      }
+    ]
+  };
+
+  // Datos para el gráfico de distribución de pagos por estado
+  const datosEstadoPagos = {
+    labels: ['Al día', 'Pendiente', 'Atrasado'],
+    datasets: [
+      {
+        data: [
+          distribucionEstado.alDia,
+          distribucionEstado.pendiente,
+          distribucionEstado.atrasado
+        ],
+        backgroundColor: [
+          'rgba(79, 70, 229, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(231, 76, 60, 0.8)'
+        ],
+        borderColor: [
+          'rgba(79, 70, 229, 1)',
+          'rgba(245, 158, 11, 1)',
+          'rgba(231, 76, 60, 1)'
+        ],
+        borderWidth: 1
+      }
+    ]
+  };
+
+  // Datos para el gráfico de evolución de puntualidad
+  const datosPuntualidad = {
+    labels: estadisticas?.evolucionPuntualidad?.map(item => item.etiqueta) || [],
+    datasets: [
+      {
+        label: 'Porcentaje de Puntualidad',
+        data: estadisticas?.evolucionPuntualidad?.map(item => item.porcentaje) || [],
+        borderColor: 'rgba(79, 70, 229, 1)',
+        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+        fill: true,
+        tension: 0.4
+      }
+    ]
+  };
+
+  // Datos para el gráfico de distribución de gastos por tipo
+  const datosTipoGastos = {
+    labels: ['Cuota Ordinaria', 'Cuota Extraordinaria', 'Multa', 'Otro'],
+    datasets: [
+      {
+        data: [
+          distribucionTipos.ordinaria,
+          distribucionTipos.extraordinaria,
+          distribucionTipos.multa,
+          distribucionTipos.otro
+        ],
+        backgroundColor: [
+          'rgba(79, 70, 229, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(231, 76, 60, 0.8)',
+          'rgba(52, 152, 219, 0.8)'
+        ]
+      }
+    ]
+  };
+
   return (
     <div className={styles.dashboardContainer}>
       {/* Botón de menú hamburguesa para móviles */}
@@ -456,27 +530,6 @@ export const Estadisticas = () => {
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.favicon} /> SIGEPA
           </div>
         </header>
-
-        <div className={styles.periodSelector}>
-          <button 
-            className={`${styles.periodButton} ${periodoSeleccionado === 'mensual' ? styles.activePeriod : ''}`}
-            onClick={() => cambiarPeriodo('mensual')}
-          >
-            Mensual
-          </button>
-          <button 
-            className={`${styles.periodButton} ${periodoSeleccionado === 'trimestral' ? styles.activePeriod : ''}`}
-            onClick={() => cambiarPeriodo('trimestral')}
-          >
-            Trimestral
-          </button>
-          <button 
-            className={`${styles.periodButton} ${periodoSeleccionado === 'anual' ? styles.activePeriod : ''}`}
-            onClick={() => cambiarPeriodo('anual')}
-          >
-            Anual
-          </button>
-        </div>
         
         {/* Resumen de estadísticas */}
         <div className={styles.statsContainer}>
@@ -486,7 +539,7 @@ export const Estadisticas = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Pagos Realizados</h3>
-              <p className={styles.statNumber}>{datosEstadisticas.pagosRealizados}</p>
+              <p className={styles.statNumber}>{estadisticas?.pagosRealizados || 0}</p>
             </div>
           </div>
           
@@ -496,7 +549,7 @@ export const Estadisticas = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Monto Total Pagado</h3>
-              <p className={styles.statNumber}>{formatMonto(datosEstadisticas.montoTotal)}</p>
+              <p className={styles.statNumber}>{formatMonto(estadisticas?.montoTotalPagado || 0)}</p>
             </div>
           </div>
           
@@ -506,7 +559,7 @@ export const Estadisticas = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Pagos Puntuales</h3>
-              <p className={styles.statNumber}>{datosEstadisticas.pagosPuntuales}</p>
+              <p className={styles.statNumber}>{estadisticas?.pagosPuntuales || 0}</p>
             </div>
           </div>
           
@@ -516,7 +569,7 @@ export const Estadisticas = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Pagos Atrasados</h3>
-              <p className={styles.statNumber}>{datosEstadisticas.pagosAtrasados}</p>
+              <p className={styles.statNumber}>{estadisticas?.pagosAtrasados || 0}</p>
             </div>
           </div>
           
@@ -526,7 +579,7 @@ export const Estadisticas = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Puntualidad</h3>
-              <p className={styles.statNumber}>{datosEstadisticas.porcentajePuntualidad}%</p>
+              <p className={styles.statNumber}>{estadisticas?.puntualidad || 0}%</p>
             </div>
           </div>
           
@@ -536,7 +589,7 @@ export const Estadisticas = () => {
             </div>
             <div className={styles.statContent}>
               <h3>Saldo Pendiente</h3>
-              <p className={styles.statNumber}>{formatMonto(datosEstadisticas.saldoPendiente)}</p>
+              <p className={styles.statNumber}>{formatMonto(estadisticas?.saldoPendiente || 0)}</p>
             </div>
           </div>
         </div>
@@ -571,7 +624,7 @@ export const Estadisticas = () => {
               <div className={styles.chartLegend}>
                 <div className={styles.legendItem}>
                   <span className={styles.legendColor} style={{backgroundColor: 'rgba(79, 70, 229, 0.8)'}}></span>
-                  <span>Pagado</span>
+                  <span>Al día</span>
                 </div>
                 <div className={styles.legendItem}>
                   <span className={styles.legendColor} style={{backgroundColor: 'rgba(245, 158, 11, 0.8)'}}></span>
@@ -579,7 +632,7 @@ export const Estadisticas = () => {
                 </div>
                 <div className={styles.legendItem}>
                   <span className={styles.legendColor} style={{backgroundColor: 'rgba(231, 76, 60, 0.8)'}}></span>
-                  <span>Fallido</span>
+                  <span>Atrasado</span>
                 </div>
               </div>
             </div>
@@ -627,6 +680,7 @@ export const Estadisticas = () => {
                     ...chartOptions.scales.y,
                     max: 100,
                     ticks: {
+                      // @ts-ignore
                       callback: function(value) {
                         return value + '%';
                       }
@@ -649,20 +703,28 @@ export const Estadisticas = () => {
               <div className={styles.proximoPagoInfo}>
                 <div className={styles.proximoPagoItem}>
                   <span className={styles.proximoPagoLabel}>Fecha:</span>
-                  <span className={styles.proximoPagoValue}>{datosEstadisticas.proximoPago}</span>
+                  <span className={styles.proximoPagoValue}>
+                    {proximoPago.fecha 
+                      ? new Date(proximoPago.fecha).toLocaleDateString('es-CL')
+                      : 'No hay próximos vencimientos'}
+                  </span>
                 </div>
                 <div className={styles.proximoPagoItem}>
                   <span className={styles.proximoPagoLabel}>Monto:</span>
-                  <span className={styles.proximoPagoValue}>{formatMonto(datosEstadisticas.montoProximoPago)}</span>
+                  <span className={styles.proximoPagoValue}>{formatMonto(proximoPago.monto || 0)}</span>
                 </div>
+                {proximoPago.concepto && proximoPago.concepto !== "No hay próximos vencimientos" && (
+                  <div className={styles.proximoPagoItem}>
+                    <span className={styles.proximoPagoLabel}>Concepto:</span>
+                    <span className={styles.proximoPagoValue}>{proximoPago.concepto}</span>
+                  </div>
+                )}
               </div>
-              
-              <button className={styles.pagarButton}>Realizar Pago</button>
             </div>
           </div>
         </section>
 
-        {/* Botón para realizar pago */}
+        {/* Botón para gestionar pagos */}
         <div className={styles.actionContainer}>
           <Link to="/dashboard/pagos" className={styles.primaryActionButton}>
             <span className={styles.btnIcon}>💰</span>

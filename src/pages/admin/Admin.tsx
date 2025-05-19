@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Admin.module.css';
+import { obtenerResumenDashboardAdmin } from '../../services/api';
 
 interface ResumenData {
   // Información general
@@ -66,80 +67,56 @@ export const Admin = () => {
       setError(null);
 
       try {
-        // En un entorno real, esto sería una llamada a la API
-        // const response = await adminService.getDashboardSummary();
-
-        // Datos simulados para desarrollo basados en el esquema SQL
-        setTimeout(() => {
-          setResumenData({
-            // Información general
-            totalUsuarios: 105,
-            totalParcelas: 120,
-            parcelasActivas: 105,
-
-            // Información de pagos
-            pagosPendientes: 35,
-            pagosPagados: 82,
-            montoRecaudadoMes: 4500000,
-
-            // Información de comunidad
-            nombreComunidad: "Comunidad Las Flores",
-            totalCopropietarios: 100,
-
-            // Información de contratos
-            contratosVigentes: 115,
-            contratosProximosVencer: 8,
-
-            // Alertas y avisos
-            alertasActivas: 12,
-            avisosRecientes: 5
-          });
-
-          // Datos simulados de actividades recientes basados en el esquema de Actividad
-          setActividadesRecientes([
-            {
-              id: 1,
-              tipo: 'pago',
-              descripcion: 'Realizó un pago de cuota mensual',
-              fecha: 'Hace 2 horas',
-              usuario: 'María González',
-              parcelaId: 23
-            },
-            {
-              id: 2,
-              tipo: 'documento',
-              descripcion: 'Subió un nuevo contrato',
-              fecha: 'Hace 5 horas',
-              usuario: 'Admin Sistema',
-              parcelaId: 12
-            },
-            {
-              id: 3,
-              tipo: 'notificacion',
-              descripcion: 'Generó alerta por pago vencido',
-              fecha: 'Hace 1 día',
-              usuario: 'Sistema',
-              parcelaId: 45
-            },
-            {
-              id: 4,
-              tipo: 'otro',
-              descripcion: 'Registró un nuevo copropietario',
-              fecha: 'Hace 2 días',
-              usuario: 'Admin Sistema'
-            },
-            {
-              id: 5,
-              tipo: 'pago',
-              descripcion: 'Marcó como atrasado el pago de cuota',
-              fecha: 'Hace 3 días',
-              usuario: 'Sistema',
-              parcelaId: 17
-            }
-          ]);
-
+        const response = await obtenerResumenDashboardAdmin();
+        
+        console.log('Respuesta de la API:', response);
+        
+        if (response.success && response.data) {
+          console.log('Datos recibidos:', response.data);
+          
+          // Verificar que resumenData exista
+          if (!response.data.resumenData) {
+            console.error('Error: resumenData es undefined en la respuesta');
+            throw new Error('La estructura de datos recibida no es válida');
+          }
+          
+          // Asegurarnos de que todos los valores numéricos sean números
+          const resumen = {
+            ...response.data.resumenData,
+            totalUsuarios: Number(response.data.resumenData.totalUsuarios || 0),
+            totalParcelas: Number(response.data.resumenData.totalParcelas || 0),
+            parcelasActivas: Number(response.data.resumenData.parcelasActivas || 0),
+            pagosPendientes: Number(response.data.resumenData.pagosPendientes || 0),
+            pagosPagados: Number(response.data.resumenData.pagosPagados || 0),
+            montoRecaudadoMes: Number(response.data.resumenData.montoRecaudadoMes || 0),
+            totalCopropietarios: Number(response.data.resumenData.totalCopropietarios || 0),
+            contratosVigentes: Number(response.data.resumenData.contratosVigentes || 0),
+            contratosProximosVencer: Number(response.data.resumenData.contratosProximosVencer || 0),
+            alertasActivas: Number(response.data.resumenData.alertasActivas || 0),
+            avisosRecientes: Number(response.data.resumenData.avisosRecientes || 0)
+          };
+          
+          setResumenData(resumen);
+          
+          // Verificar que actividadesRecientes exista antes de hacer map
+          if (response.data.actividadesRecientes && Array.isArray(response.data.actividadesRecientes)) {
+            const actividadesFormateadas = response.data.actividadesRecientes.map(act => ({
+              ...act,
+              id: Number(act.id || 0),
+              tipo: mapearTipoActividad(act.tipo || 'otro'),
+              parcelaId: act.parcelaId ? Number(act.parcelaId) : undefined
+            }));
+            setActividadesRecientes(actividadesFormateadas);
+          } else {
+            // Si no hay actividades recientes, establecer un array vacío
+            setActividadesRecientes([]);
+          }
+          
           setIsLoading(false);
-        }, 800);
+        } else {
+          console.error('Error en la respuesta:', response.error || 'Respuesta no exitosa');
+          throw new Error(response.error || 'Error al obtener datos del dashboard');
+        }
       } catch (err) {
         console.error('Error al cargar datos del dashboard:', err);
         setError('No se pudieron cargar los datos del panel. Por favor, intente nuevamente.');
@@ -149,6 +126,20 @@ export const Admin = () => {
 
     fetchDashboardData();
   }, []);
+
+  // Función auxiliar para mapear el tipo de actividad 
+  const mapearTipoActividad = (tipo: string): 'pago' | 'documento' | 'notificacion' | 'otro' => {
+    switch (tipo) {
+      case 'pago':
+        return 'pago';
+      case 'documento':
+        return 'documento';
+      case 'notificacion':
+        return 'notificacion';
+      default:
+        return 'otro';
+    }
+  };
 
   // Función para abrir/cerrar el menú en móviles
   const toggleMenu = () => {

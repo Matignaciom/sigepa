@@ -10,6 +10,7 @@ interface GastoComun {
   tipo: 'Cuota Ordinaria' | 'Cuota Extraordinaria' | 'Multa' | 'Otro';
   idComunidad: number;
   estado: 'Pendiente' | 'Activo' | 'Cerrado';
+  descripcion?: string;
 }
 
 interface GastoParcela {
@@ -35,8 +36,10 @@ interface ResumenGastos {
 export const Gastos = () => {
   const [gastos, setGastos] = useState<GastoComun[]>([]);
   const [distribuciones, setDistribuciones] = useState<GastoParcela[]>([]);
+  const [distribucionesActivas, setDistribucionesActivas] = useState<GastoParcela[]>([]);
   const [resumen, setResumen] = useState<ResumenGastos | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingDistribuciones, setLoadingDistribuciones] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gastoSeleccionado, setGastoSeleccionado] = useState<GastoComun | null>(null);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -50,6 +53,30 @@ export const Gastos = () => {
   
   const currentYear = new Date().getFullYear();
 
+  // Estado para manejar el formulario de gastos
+  const [formGasto, setFormGasto] = useState({
+    concepto: '',
+    montoTotal: '',
+    fechaVencimiento: '',
+    tipo: 'Cuota Ordinaria',
+    descripcion: '',
+    estado: 'Pendiente',
+    metodoDistribucion: 'equitativo'
+  });
+  
+  // Estado para manejar el formulario de pago
+  const [formPago, setFormPago] = useState({
+    idGasto: 0,
+    idParcela: 0,
+    montoPagado: '',
+    metodoPago: 'Efectivo',
+    descripcion: ''
+  });
+  
+  // Modal de pago
+  const [modalPago, setModalPago] = useState(false);
+  const [parcelaPago, setParcelaPago] = useState<GastoParcela | null>(null);
+  
   // Función para formatear fechas
   const formatearFecha = (fechaStr: string) => {
     const fecha = new Date(fechaStr);
@@ -91,149 +118,55 @@ export const Gastos = () => {
       setError(null);
       
       try {
-        // En un entorno real, esto sería una llamada a la API
-        // const responseComunidad = await fetch('/api/comunidad/actual');
-        // const dataComunidad = await responseComunidad.json();
-        // setNombreComunidad(dataComunidad.nombre);
+        // Obtener token de autenticación del localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No se encontró token de autenticación');
+        }
         
-        // Simular respuesta para desarrollo
-        setTimeout(() => {
-          setNombreComunidad('Comunidad Las Flores');
-          
-          // Simular resumen de gastos
-          setResumen({
-            totalGastos: 24,
-            montoTotal: 12500000,
-            gastosActivos: 15,
-            gastosPendientes: 5,
-            gastosCerrados: 4,
-            pagosRecibidos: 85,
-            montoPagado: 9750000,
-            montoPendiente: 2750000
-          });
-          
-          // Simular lista de gastos
-          setGastos([
-            {
-              idGasto: 1,
-              concepto: 'Cuota mensual Enero 2023',
-              montoTotal: 1200000,
-              fechaVencimiento: '2023-01-31',
-              tipo: 'Cuota Ordinaria',
-              idComunidad: 1,
-              estado: 'Cerrado'
-            },
-            {
-              idGasto: 2,
-              concepto: 'Reparación camino principal',
-              montoTotal: 3500000,
-              fechaVencimiento: '2023-03-15',
-              tipo: 'Cuota Extraordinaria',
-              idComunidad: 1,
-              estado: 'Activo'
-            },
-            {
-              idGasto: 3,
-              concepto: 'Cuota mensual Febrero 2023',
-              montoTotal: 1200000,
-              fechaVencimiento: '2023-02-28',
-              tipo: 'Cuota Ordinaria',
-              idComunidad: 1,
-              estado: 'Cerrado'
-            },
-            {
-              idGasto: 4,
-              concepto: 'Mantención áreas verdes',
-              montoTotal: 850000,
-              fechaVencimiento: '2023-04-10',
-              tipo: 'Cuota Ordinaria',
-              idComunidad: 1,
-              estado: 'Activo'
-            },
-            {
-              idGasto: 5,
-              concepto: 'Multa por retraso en pago',
-              montoTotal: 120000,
-              fechaVencimiento: '2023-04-30',
-              tipo: 'Multa',
-              idComunidad: 1,
-              estado: 'Pendiente'
-            },
-            {
-              idGasto: 6,
-              concepto: 'Cuota mensual Marzo 2023',
-              montoTotal: 1200000,
-              fechaVencimiento: '2023-03-31',
-              tipo: 'Cuota Ordinaria',
-              idComunidad: 1,
-              estado: 'Activo'
-            },
-            {
-              idGasto: 7,
-              concepto: 'Evento comunidad',
-              montoTotal: 650000,
-              fechaVencimiento: '2023-05-15',
-              tipo: 'Otro',
-              idComunidad: 1,
-              estado: 'Pendiente'
-            }
-          ]);
-          
-          // Simular distribuciones
-          setDistribuciones([
-            {
-              idGasto: 2,
-              idParcela: 1,
-              nombreParcela: 'Parcela 1A',
-              propietario: 'Juan Pérez',
-              monto_prorrateado: 35000,
-              estado: 'Pagado'
-            },
-            {
-              idGasto: 2,
-              idParcela: 2,
-              nombreParcela: 'Parcela 1B',
-              propietario: 'María González',
-              monto_prorrateado: 35000,
-              estado: 'Pendiente'
-            },
-            {
-              idGasto: 2,
-              idParcela: 3,
-              nombreParcela: 'Parcela 2A',
-              propietario: 'Carlos Rodríguez',
-              monto_prorrateado: 35000,
-              estado: 'Atrasado'
-            },
-            {
-              idGasto: 2,
-              idParcela: 4,
-              nombreParcela: 'Parcela 2B',
-              propietario: 'Ana Martínez',
-              monto_prorrateado: 35000,
-              estado: 'Pagado'
-            },
-            {
-              idGasto: 2,
-              idParcela: 5,
-              nombreParcela: 'Parcela 3A',
-              propietario: 'Roberto Silva',
-              monto_prorrateado: 35000,
-              estado: 'Pendiente'
-            }
-          ]);
-          
-          setIsLoading(false);
-        }, 800);
+        // Obtener datos de la comunidad (esto podría necesitar otra función)
+        // Por ahora, mantenemos este valor
+        setNombreComunidad('Comunidad Las Flores');
+        
+        // Obtener resumen de gastos
+        const resumenResponse = await fetch('/.netlify/functions/obtener-resumen-gastos', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        if (!resumenResponse.ok) {
+          throw new Error('Error al obtener resumen de gastos');
+        }
+        
+        const resumenData = await resumenResponse.json();
+        if (resumenData.success) {
+          setResumen(resumenData.data);
+        } else {
+          throw new Error(resumenData.message || 'Error al obtener resumen de gastos');
+        }
+        
+        // Obtener lista de gastos sin filtros aplicados
+        await fetchGastos(true);
+        
+        setIsLoading(false);
       } catch (err) {
         console.error('Error al cargar datos de gastos:', err);
-        setError('No se pudieron cargar los datos de gastos. Por favor, intente nuevamente.');
+        setError('No se pudieron cargar los datos de gastos: ' + (err instanceof Error ? err.message : 'Error desconocido'));
         setIsLoading(false);
       }
     };
     
     fetchData();
   }, []);
+  
+  // Efecto para recargar gastos cuando cambian los filtros
+  useEffect(() => {
+    // Solo si ya hemos cargado datos inicialmente (para evitar cargas duplicadas)
+    if (!isLoading) {
+      fetchGastos(false);
+    }
+  }, [filtroTipo, filtroEstado, busqueda]);
   
   // Filtrar gastos según los filtros aplicados
   const gastosFiltrados = gastos.filter(gasto => {
@@ -256,37 +189,113 @@ export const Gastos = () => {
   });
   
   // Obtener distribuciones para un gasto específico
-  const obtenerDistribuciones = (idGasto: number) => {
-    return distribuciones.filter(dist => dist.idGasto === idGasto);
+  const obtenerDistribuciones = async (idGasto: number) => {
+    try {
+      // Si ya tenemos distribuciones para este gasto, las devolvemos
+      if (distribuciones.some(d => d.idGasto === idGasto)) {
+        return distribuciones.filter(dist => dist.idGasto === idGasto);
+      }
+      
+      // Si no, las solicitamos al servidor
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No se encontró token de autenticación');
+      }
+      
+      const response = await fetch(`/.netlify/functions/obtener-distribucion-gasto?idGasto=${idGasto}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al obtener distribución del gasto');
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        // Actualizar el estado de distribuciones con los nuevos datos
+        setDistribuciones(prev => [
+          ...prev.filter(d => d.idGasto !== idGasto),  // Eliminar distribuciones antiguas de este gasto
+          ...data.data.distribucion  // Añadir las nuevas distribuciones
+        ]);
+        
+        return data.data.distribucion;
+      } else {
+        throw new Error(data.message || 'Error al obtener distribución del gasto');
+      }
+    } catch (error) {
+      console.error('Error al obtener distribución:', error);
+      return [];
+    }
   };
   
   // Abrir modal para crear nuevo gasto
   const abrirModalNuevoGasto = () => {
+    // Resetear el formulario
+    setFormGasto({
+      concepto: '',
+      montoTotal: '',
+      fechaVencimiento: '',
+      tipo: 'Cuota Ordinaria',
+      descripcion: '',
+      estado: 'Pendiente',
+      metodoDistribucion: 'equitativo'
+    });
+    
     setGastoSeleccionado(null);
     setModalAbierto(true);
   };
   
   // Abrir modal para editar gasto existente
   const abrirModalEditarGasto = (gasto: GastoComun) => {
+    // Llenar el formulario con los datos del gasto
+    setFormGasto({
+      concepto: gasto.concepto,
+      montoTotal: gasto.montoTotal.toString(),
+      fechaVencimiento: gasto.fechaVencimiento.split('T')[0], // Obtener solo la fecha YYYY-MM-DD
+      tipo: gasto.tipo,
+      descripcion: gasto.descripcion || '',
+      estado: gasto.estado,
+      metodoDistribucion: 'equitativo' // Por defecto
+    });
+    
     setGastoSeleccionado(gasto);
     setModalAbierto(true);
   };
   
   // Abrir modal para ver/editar distribución
-  const abrirModalDistribucion = (gasto: GastoComun) => {
+  const abrirModalDistribucion = async (gasto: GastoComun) => {
     setGastoSeleccionado(gasto);
     setModalDistribucion(true);
+    setLoadingDistribuciones(true);
+    
+    try {
+      const distribucionesData = await obtenerDistribuciones(gasto.idGasto);
+      setDistribucionesActivas(distribucionesData);
+    } catch (error) {
+      console.error('Error al cargar distribuciones:', error);
+    } finally {
+      setLoadingDistribuciones(false);
+    }
   };
   
   // Cerrar modales
   const cerrarModales = () => {
     setModalAbierto(false);
     setModalDistribucion(false);
+    setModalPago(false);
   };
   
   // Función para abrir/cerrar el menú en móviles
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
+  };
+
+  // Función para cerrar sesión - estilo Admin.tsx
+  const handleLogout = () => {
+    localStorage.removeItem('user'); // Asumiendo que aquí se guarda la info de sesión
+    window.location.href = '/login'; // Redirige a la página de login
   };
   
   // Determinar clases CSS para tipo de gasto
@@ -318,6 +327,288 @@ export const Gastos = () => {
         return styles.estadoAtrasado;
       default:
         return '';
+    }
+  };
+  
+  // Crear nuevo gasto
+  const crearGasto = async (datosGasto: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No se encontró token de autenticación');
+      }
+      
+      setIsLoading(true);
+      
+      console.log('Enviando datos para crear gasto:', datosGasto);
+      
+      const response = await fetch('/.netlify/functions/crear-gasto-comun', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datosGasto)
+      });
+      
+      // Mostrar el estado de la respuesta para depuración
+      console.log('Respuesta del servidor:', response.status, response.statusText);
+      
+      const data = await response.json();
+      console.log('Datos de respuesta:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.message || `Error al crear el gasto: ${response.status} ${response.statusText}`);
+      }
+      
+      if (data.success) {
+        // Cerrar el modal
+        cerrarModales();
+        
+        // Refrescar la lista completa de gastos sin filtros aplicados
+        await fetchGastos(true);
+        
+        // Refrescar los datos de resumen
+        actualizarResumen();
+        
+        return true;
+      } else {
+        throw new Error(data.message || 'Error al crear el gasto');
+      }
+    } catch (error) {
+      console.error('Error al crear gasto:', error);
+      setError('Error al crear el gasto: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Editar gasto existente
+  const editarGasto = async (idGasto: number, datosActualizados: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No se encontró token de autenticación');
+      }
+      
+      setIsLoading(true);
+      
+      // Eliminar el campo descripcion que no existe en la tabla
+      const { descripcion, ...datosLimpios } = datosActualizados;
+      
+      console.log('Enviando datos para editar gasto:', { idGasto, ...datosLimpios });
+      
+      const response = await fetch('/.netlify/functions/editar-gasto-comun', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ idGasto, ...datosLimpios })
+      });
+      
+      // Mostrar el estado de la respuesta para depuración
+      console.log('Respuesta del servidor:', response.status, response.statusText);
+      
+      const data = await response.json();
+      console.log('Datos de respuesta:', data);
+      
+      if (!response.ok) {
+        throw new Error(data.message || `Error al editar el gasto: ${response.status} ${response.statusText}`);
+      }
+      
+      if (data.success) {
+        // Cerrar el modal
+        cerrarModales();
+        
+        // Refrescar la lista completa de gastos sin filtros aplicados
+        await fetchGastos(true);
+        
+        // Refrescar los datos de resumen
+        actualizarResumen();
+        
+        return true;
+      } else {
+        throw new Error(data.message || 'Error al editar el gasto');
+      }
+    } catch (error) {
+      console.error('Error al editar gasto:', error);
+      setError('Error al editar el gasto: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Función para actualizar el resumen de gastos
+  const actualizarResumen = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No se encontró token de autenticación');
+      }
+      
+      const response = await fetch('/.netlify/functions/obtener-resumen-gastos', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al obtener resumen de gastos');
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        setResumen(data.data);
+      } else {
+        throw new Error(data.message || 'Error al obtener resumen de gastos');
+      }
+    } catch (error) {
+      console.error('Error al actualizar resumen:', error);
+    }
+  };
+  
+  // Registrar pago de gasto
+  const registrarPagoGasto = async (datosPago: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No se encontró token de autenticación');
+      }
+      
+      const response = await fetch('/.netlify/functions/registrar-pago-gasto', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datosPago)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al registrar el pago');
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        // Cerrar el modal de pago
+        setModalPago(false);
+        setParcelaPago(null);
+        
+        // Refrescar datos de gastos sin filtros aplicados y resumen
+        await fetchGastos(true);
+        await actualizarResumen();
+        
+        // Si hay un gasto seleccionado, actualizar sus distribuciones
+        if (gastoSeleccionado) {
+          const distribucionesActualizadas = await obtenerDistribuciones(gastoSeleccionado.idGasto);
+          setDistribucionesActivas(distribucionesActualizadas);
+        }
+        
+        return true;
+      } else {
+        throw new Error(data.message || 'Error al registrar el pago');
+      }
+    } catch (error) {
+      console.error('Error al registrar pago:', error);
+      setError('Error al registrar el pago: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+      return false;
+    }
+  };
+  
+  // Abrir modal de pago
+  const abrirModalPago = (gasto: GastoComun, parcela: GastoParcela) => {
+    setGastoSeleccionado(gasto);
+    setParcelaPago(parcela);
+    setFormPago({
+      idGasto: gasto.idGasto,
+      idParcela: parcela.idParcela,
+      montoPagado: parcela.monto_prorrateado.toString(),
+      metodoPago: 'Efectivo',
+      descripcion: `Pago de ${gasto.concepto} para parcela ${parcela.nombreParcela}`
+    });
+    setModalPago(true);
+  };
+  
+  // Función para actualizar la lista de gastos
+  const fetchGastos = async (resetFiltros = false) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No se encontró token de autenticación');
+      }
+      
+      // Si se pide resetear filtros, lo hacemos antes de la petición
+      if (resetFiltros) {
+        setFiltroTipo('todos');
+        setFiltroEstado('todos');
+        setBusqueda('');
+      }
+      
+      // Construir URL con parámetros de filtro
+      let url = '/.netlify/functions/obtener-gastos-admin';
+      const params = new URLSearchParams();
+      
+      // Aplicar filtros solo si no estamos reseteando
+      if (!resetFiltros) {
+        if (filtroTipo !== 'todos') params.append('tipo', filtroTipo);
+        if (filtroEstado !== 'todos') params.append('estado', filtroEstado);
+        if (busqueda) params.append('busqueda', busqueda);
+      }
+      
+      // Añadir parámetros a la URL si hay alguno
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const gastosResponse = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (!gastosResponse.ok) {
+        throw new Error('Error al obtener lista de gastos');
+      }
+      
+      const gastosData = await gastosResponse.json();
+      if (gastosData.success) {
+        setGastos(gastosData.data);
+        console.log(`Gastos cargados: ${gastosData.data.length}`);
+      } else {
+        throw new Error(gastosData.message || 'Error al obtener lista de gastos');
+      }
+    } catch (err) {
+      console.error('Error al cargar lista de gastos:', err);
+      setError('No se pudo cargar la lista de gastos: ' + (err instanceof Error ? err.message : 'Error desconocido'));
+    }
+  };
+  
+  // Manejar el envío del formulario de gasto
+  const handleSubmitGasto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validar datos básicos
+    if (!formGasto.concepto || !formGasto.montoTotal || !formGasto.fechaVencimiento) {
+      setError('Por favor complete todos los campos requeridos.');
+      return;
+    }
+    
+    // Formatear datos, excluyendo descripcion que no existe en la tabla
+    const { descripcion, ...datosGastoSinDescripcion } = formGasto;
+    
+    const datosGasto = {
+      ...datosGastoSinDescripcion,
+      montoTotal: parseFloat(formGasto.montoTotal)
+    };
+    
+    // Crear o editar según corresponda
+    if (gastoSeleccionado) {
+      await editarGasto(gastoSeleccionado.idGasto, datosGasto);
+    } else {
+      await crearGasto(datosGasto);
     }
   };
   
@@ -550,6 +841,18 @@ export const Gastos = () => {
                   Mi Perfil
                 </Link>
               </li>
+              <li>
+                <button 
+                  onClick={() => {
+                    setMenuOpen(false); // Cerrar menú en móvil si está abierto
+                    handleLogout();
+                  }}
+                  className={styles.navLinkButton} 
+                >
+                  <span className={styles.navIcon}>🚪</span> {/* Ícono de Admin.tsx */}
+                  Cerrar Sesión
+                </button>
+              </li>
             </ul>
           </div>
         </nav>
@@ -722,6 +1025,20 @@ export const Gastos = () => {
                   </button>
                   <button 
                     className={styles.accionBoton}
+                    onClick={() => {
+                      // Primero obtenemos las distribuciones para mostrar en el modal de pago
+                      abrirModalDistribucion(gasto);
+                      // Y luego mostramos el modal de selección de parcela para pago
+                      setTimeout(() => {
+                        setModalDistribucion(false);
+                        // Si hay distribuciones, abrimos modal para seleccionar parcela
+                        if (distribucionesActivas.length > 0) {
+                          setModalPago(true);
+                        } else {
+                          setError('No hay distribuciones asociadas a este gasto');
+                        }
+                      }, 500);
+                    }}
                     title="Registrar pago"
                   >
                     💸
@@ -756,7 +1073,7 @@ export const Gastos = () => {
                   <div>Estado</div>
                 </div>
                 
-                {obtenerDistribuciones(gastoSeleccionado.idGasto).map((dist) => (
+                {distribucionesActivas.map((dist) => (
                   <div key={`${dist.idGasto}-${dist.idParcela}`} className={styles.distribucionItem}>
                     <div>
                       <span className={styles.iconoBadge}>{dist.idParcela}</span>
@@ -787,13 +1104,15 @@ export const Gastos = () => {
                 <button className={styles.closeButton} onClick={cerrarModales}>×</button>
               </div>
               
-              <form className={styles.formContainer}>
+              <form className={styles.formContainer} onSubmit={handleSubmitGasto}>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Concepto</label>
                   <input 
                     type="text" 
                     className={styles.formInput}
-                    defaultValue={gastoSeleccionado?.concepto || ''}
+                    name="concepto"
+                    value={formGasto.concepto}
+                    onChange={(e) => setFormGasto({ ...formGasto, concepto: e.target.value })}
                   />
                 </div>
                 
@@ -803,7 +1122,9 @@ export const Gastos = () => {
                     <input 
                       type="number" 
                       className={styles.formInput}
-                      defaultValue={gastoSeleccionado?.montoTotal || ''}
+                      name="montoTotal"
+                      value={formGasto.montoTotal}
+                      onChange={(e) => setFormGasto({ ...formGasto, montoTotal: e.target.value })}
                     />
                   </div>
                   
@@ -812,7 +1133,9 @@ export const Gastos = () => {
                     <input 
                       type="date" 
                       className={styles.formInput}
-                      defaultValue={gastoSeleccionado?.fechaVencimiento || ''}
+                      name="fechaVencimiento"
+                      value={formGasto.fechaVencimiento}
+                      onChange={(e) => setFormGasto({ ...formGasto, fechaVencimiento: e.target.value })}
                     />
                   </div>
                 </div>
@@ -822,7 +1145,9 @@ export const Gastos = () => {
                     <label className={styles.formLabel}>Tipo</label>
                     <select 
                       className={styles.formSelect}
-                      defaultValue={gastoSeleccionado?.tipo || 'Cuota Ordinaria'}
+                      name="tipo"
+                      value={formGasto.tipo}
+                      onChange={(e) => setFormGasto({ ...formGasto, tipo: e.target.value as 'Cuota Ordinaria' | 'Cuota Extraordinaria' | 'Multa' | 'Otro' })}
                     >
                       <option value="Cuota Ordinaria">Cuota Ordinaria</option>
                       <option value="Cuota Extraordinaria">Cuota Extraordinaria</option>
@@ -835,7 +1160,9 @@ export const Gastos = () => {
                     <label className={styles.formLabel}>Estado</label>
                     <select 
                       className={styles.formSelect}
-                      defaultValue={gastoSeleccionado?.estado || 'Pendiente'}
+                      name="estado"
+                      value={formGasto.estado}
+                      onChange={(e) => setFormGasto({ ...formGasto, estado: e.target.value as 'Pendiente' | 'Activo' | 'Cerrado' })}
                     >
                       <option value="Pendiente">Pendiente</option>
                       <option value="Activo">Activo</option>
@@ -848,8 +1175,10 @@ export const Gastos = () => {
                   <label className={styles.formLabel}>Descripción</label>
                   <textarea 
                     className={styles.formTextarea}
+                    name="descripcion"
                     rows={4}
-                    defaultValue={''}
+                    value={formGasto.descripcion}
+                    onChange={(e) => setFormGasto({ ...formGasto, descripcion: e.target.value })}
                   ></textarea>
                 </div>
                 
@@ -862,7 +1191,7 @@ export const Gastos = () => {
                     Cancelar
                   </button>
                   <button 
-                    type="button"
+                    type="submit"
                     className={styles.primaryButton}
                   >
                     {gastoSeleccionado ? 'Guardar Cambios' : 'Crear Gasto'}
@@ -907,7 +1236,7 @@ export const Gastos = () => {
                     <div>Estado</div>
                   </div>
                   
-                  {obtenerDistribuciones(gastoSeleccionado.idGasto).map((dist) => (
+                  {distribucionesActivas.map((dist) => (
                     <div key={`${dist.idGasto}-${dist.idParcela}`} className={styles.distribucionItem}>
                       <div>
                         <span className={styles.iconoBadge}>{dist.idParcela}</span>
@@ -952,6 +1281,153 @@ export const Gastos = () => {
                     className={styles.primaryButton}
                   >
                     Guardar Distribución
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Modal para selección de parcela para pago */}
+        {modalPago && gastoSeleccionado && !parcelaPago && (
+          <div className={styles.modalOverlay} onClick={cerrarModales}>
+            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h2 className={styles.modalTitle}>
+                  Seleccionar Parcela para Pago
+                </h2>
+                <button className={styles.closeButton} onClick={cerrarModales}>×</button>
+              </div>
+              
+              <div>
+                <div className={styles.formGroup}>
+                  <h3 className={styles.formTitle}>Gasto: {gastoSeleccionado.concepto}</h3>
+                  <p>Monto Total: {formatearMonto(gastoSeleccionado.montoTotal)}</p>
+                  <p>Fecha Vencimiento: {formatearFecha(gastoSeleccionado.fechaVencimiento)}</p>
+                </div>
+                
+                <div className={styles.distribucionContainer}>
+                  <div className={styles.distribucionHeader}>
+                    <div>ID</div>
+                    <div>Parcela</div>
+                    <div>Propietario</div>
+                    <div>Monto</div>
+                    <div>Estado</div>
+                  </div>
+                  
+                  {distribucionesActivas
+                    .filter(dist => dist.estado !== 'Pagado') // Solo mostrar las que no están pagadas
+                    .map((dist) => (
+                    <div 
+                      key={`${dist.idGasto}-${dist.idParcela}`} 
+                      className={styles.distribucionItem}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => abrirModalPago(gastoSeleccionado, dist)}
+                    >
+                      <div>
+                        <span className={styles.iconoBadge}>{dist.idParcela}</span>
+                      </div>
+                      <div>{dist.nombreParcela}</div>
+                      <div>{dist.propietario}</div>
+                      <div className={styles.gastoMonto}>{formatearMonto(dist.monto_prorrateado)}</div>
+                      <div>
+                        <span className={`${styles.gastoEstado} ${obtenerClaseEstado(dist.estado)}`}>
+                          {dist.estado}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {distribucionesActivas.filter(dist => dist.estado !== 'Pagado').length === 0 && (
+                    <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>
+                      No hay parcelas pendientes de pago para este gasto.
+                    </div>
+                  )}
+                </div>
+                
+                <div className={styles.modalFooter}>
+                  <button 
+                    type="button"
+                    className={styles.buttonNeutral}
+                    onClick={cerrarModales}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Modal para registrar pago */}
+        {modalPago && gastoSeleccionado && parcelaPago && (
+          <div className={styles.modalOverlay} onClick={cerrarModales}>
+            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h2 className={styles.modalTitle}>
+                  Registrar Pago
+                </h2>
+                <button className={styles.closeButton} onClick={cerrarModales}>×</button>
+              </div>
+              
+              <div>
+                <div className={styles.formGroup}>
+                  <h3 className={styles.formTitle}>Gasto: {gastoSeleccionado.concepto}</h3>
+                  <p>Monto Total: {formatearMonto(gastoSeleccionado.montoTotal)}</p>
+                  <p>Parcela: {parcelaPago.nombreParcela}</p>
+                  <p>Propietario: {parcelaPago.propietario}</p>
+                  <p>Monto Prorrateado: {formatearMonto(parcelaPago.monto_prorrateado)}</p>
+                </div>
+                
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Monto Pagado</label>
+                  <input 
+                    type="number" 
+                    className={styles.formInput}
+                    value={formPago.montoPagado}
+                    onChange={(e) => setFormPago({ ...formPago, montoPagado: e.target.value })}
+                  />
+                </div>
+                
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Método de Pago</label>
+                  <select 
+                    className={styles.formSelect}
+                    value={formPago.metodoPago}
+                    onChange={(e) => setFormPago({ ...formPago, metodoPago: e.target.value })}
+                  >
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                  </select>
+                </div>
+                
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Descripción</label>
+                  <textarea 
+                    className={styles.formTextarea}
+                    rows={4}
+                    value={formPago.descripcion}
+                    onChange={(e) => setFormPago({ ...formPago, descripcion: e.target.value })}
+                  ></textarea>
+                </div>
+                
+                <div className={styles.modalFooter}>
+                  <button 
+                    type="button"
+                    className={styles.buttonNeutral}
+                    onClick={() => {
+                      setParcelaPago(null); // Volver a la selección de parcela
+                    }}
+                  >
+                    Volver
+                  </button>
+                  <button 
+                    type="button"
+                    className={styles.primaryButton}
+                    onClick={() => registrarPagoGasto(formPago)}
+                  >
+                    Registrar Pago
                   </button>
                 </div>
               </div>

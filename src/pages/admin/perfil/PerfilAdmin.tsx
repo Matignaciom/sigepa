@@ -5,6 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../../../context/AuthContext';
 import styles from './PerfilAdmin.module.css';
+import { 
+  adminService,
+  type AdminProfile,
+  type ComunidadInfo
+} from '../../../services/api';
 
 // Esquema de validación para el formulario de perfil de administrador
 const perfilAdminSchema = z.object({
@@ -18,14 +23,14 @@ const perfilAdminSchema = z.object({
 
 // Esquema de validación para el cambio de contraseña
 const passwordSchema = z.object({
-  email: z.string().email('Correo electrónico inválido'),
-  password: z.string()
+  currentPassword: z.string().min(8, 'La contraseña actual debe tener al menos 8 caracteres'),
+  newPassword: z.string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .regex(/[A-Z]/, 'La contraseña debe tener al menos una letra mayúscula')
     .regex(/[a-z]/, 'La contraseña debe tener al menos una letra minúscula')
     .regex(/[0-9]/, 'La contraseña debe tener al menos un número'),
   confirmPassword: z.string().min(1, 'La confirmación de contraseña es requerida')
-}).refine(data => data.password === data.confirmPassword, {
+}).refine(data => data.newPassword === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
 });
@@ -33,7 +38,11 @@ const passwordSchema = z.object({
 // Esquema de validación para la información de la comunidad
 const comunidadSchema = z.object({
   nombre: z.string().min(3, 'El nombre de la comunidad es requerido'),
-  fecha_creacion: z.string().optional()
+  fecha_creacion: z.string().optional(),
+  direccion_administrativa: z.string().optional(),
+  telefono_contacto: z.string().optional(),
+  email_contacto: z.string().email('Email inválido').optional(),
+  sitio_web: z.string().optional()
 });
 
 type PerfilAdminFormData = z.infer<typeof perfilAdminSchema>;
@@ -102,8 +111,8 @@ export const PerfilAdmin = () => {
   } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
-      email: datosDeMuestra.email,
-      password: '',
+      currentPassword: '',
+      newPassword: '',
       confirmPassword: '',
     },
   });
@@ -136,93 +145,80 @@ export const PerfilAdmin = () => {
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
-  // Cargar datos del perfil
+  // Agregar un useEffect para cargar datos cuando el componente se monte
   useEffect(() => {
-    const loadProfileData = async () => {
-      setIsLoading(true);
+    // Cargar datos del perfil
+    const cargarPerfil = async () => {
       try {
-        console.log('Obteniendo perfil de administrador...');
+        setIsLoading(true);
+        const response = await adminService.obtenerPerfilAdmin();
         
-        // Obtener el token del localStorage
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          console.error('No hay token de autenticación');
-          setMessage({
-            text: 'No hay sesión activa. Por favor, inicie sesión nuevamente.',
-            type: 'error',
-          });
-          setIsLoading(false);
-          return;
-        }
-        
-        // Realizar la solicitud a la función de Netlify
-        const response = await fetch(`${import.meta.env.DEV 
-          ? 'http://localhost:8889/.netlify/functions'
-          : '/.netlify/functions'}/obtener-perfil-usuario`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success && data.data) {
-          console.log('Perfil de administrador obtenido correctamente:', data.data);
-          const perfil = data.data;
+        if (response.success && response.data) {
+          // Actualizar los datos del perfil
+          const adminData = response.data;
           
-          // Guardar los datos completos del perfil
-          const comunidadData = {
-            id: perfil.idComunidad,
-            nombre: perfil.comunidad,
-            fecha_creacion: perfil.comunidadStats?.fecha_creacion || '01/01/2023',
-            total_parcelas: perfil.comunidadStats?.total_parcelas || 0,
-            usuarios_registrados: perfil.comunidadStats?.usuarios_registrados || 0,
-            direccion_administrativa: perfil.direccionComunidad || '',
-            telefono_contacto: perfil.comunidadStats?.telefono_contacto || '',
-            email_contacto: perfil.comunidadStats?.email_contacto || '',
-            sitio_web: perfil.comunidadStats?.sitio_web || ''
+          // Actualizar formulario con datos personales
+          reset({
+            nombreCompleto: adminData.informacion_personal.nombreCompleto,
+            email: adminData.informacion_personal.email,
+            telefono: adminData.informacion_personal.telefono || '',
+            direccion: adminData.informacion_personal.direccion || '',
+            cargo: datosDeMuestra.cargo, // Mantener estos datos
+            rut: datosDeMuestra.rut // Mantener estos datos
+          });
+          
+          // Actualizar información de comunidad
+          const comunidadData = adminData.comunidad;
+          
+          // Actualizar la información de comunidad
+          datosDeMuestra.comunidad = {
+            id: comunidadData.idComunidad,
+            nombre: comunidadData.nombre,
+            fecha_creacion: comunidadData.fecha_creacion,
+            total_parcelas: comunidadData.total_parcelas,
+            usuarios_registrados: comunidadData.usuarios_registrados,
+            direccion_administrativa: comunidadData.direccion_administrativa || '',
+            telefono_contacto: comunidadData.telefono_contacto || '',
+            email_contacto: comunidadData.email_contacto || '',
+            sitio_web: comunidadData.sitio_web || ''
           };
           
-          // Actualizar el formulario con los datos obtenidos
-          reset({
-            nombreCompleto: perfil.nombreCompleto,
-            email: perfil.email,
-            telefono: perfil.telefono || '',
-            direccion: perfil.direccion || '',
-            cargo: 'Administrador de Comunidad',
-            rut: datosDeMuestra.rut, // Usar el RUT de muestra ya que no está en el API
-          });
+          // Actualizar datos de muestra
+          datosDeMuestra.nombreCompleto = adminData.informacion_personal.nombreCompleto;
+          datosDeMuestra.email = adminData.informacion_personal.email;
+          datosDeMuestra.telefono = adminData.informacion_personal.telefono || '';
+          datosDeMuestra.direccion = adminData.informacion_personal.direccion || '';
+          datosDeMuestra.fechaRegistro = adminData.actividad_cuenta.fecha_registro || '';
+          datosDeMuestra.ultimoAcceso = adminData.actividad_cuenta.ultimo_acceso || '';
+          datosDeMuestra.comunidadNombre = adminData.actividad_cuenta.comunidad || '';
           
-          // Actualizar el formulario de comunidad
+          // Actualizar formulario de comunidad
           resetComunidad({
             nombre: comunidadData.nombre,
-            fecha_creacion: comunidadData.fecha_creacion
+            fecha_creacion: comunidadData.fecha_creacion,
+            direccion_administrativa: comunidadData.direccion_administrativa || '',
+            telefono_contacto: comunidadData.telefono_contacto || '',
+            email_contacto: comunidadData.email_contacto || '',
+            sitio_web: comunidadData.sitio_web || ''
           });
-          
-          // Reemplazar los datos de muestra con los datos reales
-          datosDeMuestra.comunidad = comunidadData;
         } else {
-          console.warn('No se pudo obtener el perfil:', data.message || 'Error desconocido');
           setMessage({
-            text: 'Error al cargar el perfil: ' + (data.message || 'Error desconocido'),
-            type: 'error',
+            text: response.error || 'Error al cargar el perfil',
+            type: 'error'
           });
         }
       } catch (error) {
-        console.error('Error al cargar el perfil:', error);
+        console.error('Error al cargar perfil:', error);
         setMessage({
-          text: 'Error al cargar los datos del perfil',
-          type: 'error',
+          text: 'Error al cargar información del perfil',
+          type: 'error'
         });
       } finally {
         setIsLoading(false);
       }
     };
-
-    loadProfileData();
+    
+    cargarPerfil();
   }, [reset, resetComunidad]);
 
   const onSubmit = async (data: PerfilAdminFormData) => {
@@ -316,45 +312,33 @@ export const PerfilAdmin = () => {
   const onSubmitPassword = async (data: PasswordFormData) => {
     setIsLoading(true);
     setMessage(null);
-
+    
     try {
-      console.log('Cambiando contraseña:', data.email);
-      
-      // Realizar la solicitud a la función de Netlify para cambiar la contraseña
-      const response = await fetch(`${import.meta.env.DEV 
-        ? 'http://localhost:8889/.netlify/functions'
-        : '/.netlify/functions'}/cambiar-contrasena`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: data.email,
-          newPassword: data.password,
-          confirmPassword: data.confirmPassword
-        })
+      const response = await adminService.cambiarContrasenaAdmin({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword
       });
       
-      const responseData = await response.json();
-      
-      if (responseData.success) {
+      if (response.success) {
         setMessage({
           text: 'Contraseña actualizada correctamente',
-          type: 'success',
+          type: 'success'
         });
+        
         setChangePasswordMode(false);
         resetPassword();
       } else {
         setMessage({
-          text: responseData.message || 'Error al actualizar la contraseña',
-          type: 'error',
+          text: response.error || 'Error al cambiar la contraseña',
+          type: 'error'
         });
       }
     } catch (error) {
-      console.error('Error al actualizar la contraseña:', error);
+      console.error('Error al cambiar contraseña:', error);
       setMessage({
-        text: 'Error al actualizar la contraseña',
-        type: 'error',
+        text: 'Error al cambiar la contraseña',
+        type: 'error'
       });
     } finally {
       setIsLoading(false);
@@ -364,8 +348,8 @@ export const PerfilAdmin = () => {
   const handleCambiarPassword = () => {
     setChangePasswordMode(true);
     resetPassword({
-      email: datosDeMuestra.email,
-      password: '',
+      currentPassword: '',
+      newPassword: '',
       confirmPassword: '',
     });
   };
@@ -379,75 +363,46 @@ export const PerfilAdmin = () => {
   const onSubmitComunidad = async (data: ComunidadFormData) => {
     setIsLoading(true);
     setMessage(null);
-
+    
     try {
-      console.log('Actualizando información de la comunidad:', data);
-      
-      // Obtener el token del localStorage
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        setMessage({
-          text: 'No hay sesión activa. Por favor, inicie sesión nuevamente.',
-          type: 'error',
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      // Preparar los datos para enviar a la API
-      const comunidadData = {
+      // Enviar todos los campos del formulario directamente
+      const response = await adminService.editarComunidad({
         nombre: data.nombre,
-        direccion_administrativa: datosDeMuestra.comunidad.direccion_administrativa,
-        telefono_contacto: datosDeMuestra.comunidad.telefono_contacto,
-        email_contacto: datosDeMuestra.comunidad.email_contacto,
-        sitio_web: datosDeMuestra.comunidad.sitio_web
-      };
-      
-      // Realizar la solicitud a la función de Netlify
-      const response = await fetch(`${import.meta.env.DEV 
-        ? 'http://localhost:8889/.netlify/functions'
-        : '/.netlify/functions'}/editar-comunidad`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(comunidadData)
+        direccion_administrativa: data.direccion_administrativa || '',
+        telefono_contacto: data.telefono_contacto || '',
+        email_contacto: data.email_contacto || '',
+        sitio_web: data.sitio_web || ''
       });
       
-      const responseData = await response.json();
-      
-      if (responseData.success) {
+      if (response.success && response.data) {
         setMessage({
-          text: 'Información de la comunidad actualizada correctamente',
-          type: 'success',
+          text: 'Información de comunidad actualizada correctamente',
+          type: 'success'
         });
         
-        // Actualizar los datos locales con la respuesta
-        if (responseData.data) {
-          datosDeMuestra.comunidad = {
-            ...datosDeMuestra.comunidad,
-            nombre: responseData.data.nombre,
-            direccion_administrativa: responseData.data.direccion_administrativa,
-            telefono_contacto: responseData.data.telefono_contacto,
-            email_contacto: responseData.data.email_contacto,
-            sitio_web: responseData.data.sitio_web
-          };
-        }
+        // Actualizar datos de la comunidad
+        const comunidadActualizada = response.data;
+        datosDeMuestra.comunidad = {
+          ...datosDeMuestra.comunidad,
+          nombre: comunidadActualizada.nombre,
+          direccion_administrativa: comunidadActualizada.direccion_administrativa || '',
+          telefono_contacto: comunidadActualizada.telefono_contacto || '',
+          email_contacto: comunidadActualizada.email_contacto || '',
+          sitio_web: comunidadActualizada.sitio_web || ''
+        };
         
         setEditingComunidad(false);
       } else {
         setMessage({
-          text: responseData.message || 'Error al actualizar la información de la comunidad',
-          type: 'error',
+          text: response.error || 'Error al actualizar información de la comunidad',
+          type: 'error'
         });
       }
     } catch (error) {
-      console.error('Error al actualizar la información de la comunidad:', error);
+      console.error('Error al editar comunidad:', error);
       setMessage({
-        text: 'Error al actualizar la información de la comunidad',
-        type: 'error',
+        text: 'Error al actualizar información de la comunidad',
+        type: 'error'
       });
     } finally {
       setIsLoading(false);
@@ -1126,29 +1081,26 @@ export const PerfilAdmin = () => {
                 </div>
                 <form onSubmit={handleSubmitPassword(onSubmitPassword)} className={styles.form}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="email-password">Correo Electrónico</label>
+                    <label htmlFor="currentPassword">Contraseña Actual</label>
                     <input
-                      id="email-password"
-                      type="email"
-                      className={passwordErrors.email ? styles.inputError : ''}
-                      {...registerPassword('email')}
+                      id="currentPassword"
+                      type="password"
+                      className={passwordErrors.currentPassword ? styles.inputError : ''}
+                      {...registerPassword('currentPassword')}
                     />
-                    {passwordErrors.email && <span className={styles.errorText}>{passwordErrors.email.message}</span>}
-                    <small className={styles.formHelper}>
-                      Ingrese el email asociado a su cuenta para verificar su identidad
-                    </small>
+                    {passwordErrors.currentPassword && <span className={styles.errorText}>{passwordErrors.currentPassword.message}</span>}
                   </div>
 
                   <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                      <label htmlFor="password">Nueva Contraseña</label>
+                      <label htmlFor="newPassword">Nueva Contraseña</label>
                       <input
-                        id="password"
+                        id="newPassword"
                         type="password"
-                        className={passwordErrors.password ? styles.inputError : ''}
-                        {...registerPassword('password')}
+                        className={passwordErrors.newPassword ? styles.inputError : ''}
+                        {...registerPassword('newPassword')}
                       />
-                      {passwordErrors.password && <span className={styles.errorText}>{passwordErrors.password.message}</span>}
+                      {passwordErrors.newPassword && <span className={styles.errorText}>{passwordErrors.newPassword.message}</span>}
                     </div>
 
                     <div className={styles.formGroup}>

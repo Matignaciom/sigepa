@@ -114,6 +114,44 @@ export interface RespuestaProcesoPago {
   cantidadPagosRealizados?: number;
 }
 
+export interface ComunidadInfo {
+  idComunidad: number;
+  nombre: string;
+  fecha_creacion: string;
+  direccion_administrativa: string;
+  telefono_contacto: string;
+  email_contacto: string;
+  sitio_web: string;
+  total_parcelas: number;
+  usuarios_registrados: number;
+  total_copropietarios?: number;
+  total_administradores?: number;
+  gastos_pendientes?: number;
+  gastos_vencidos?: number;
+  estadisticas?: {
+    monto_total_anual: number;
+    pagos_atrasados: number;
+    pagos_realizados: number;
+  };
+}
+
+export interface AdminProfile {
+  informacion_personal: {
+    id: number;
+    nombreCompleto: string;
+    email: string;
+    rol: string;
+    telefono: string;
+    direccion: string;
+  };
+  actividad_cuenta: {
+    fecha_registro: string;
+    ultimo_acceso: string;
+    comunidad: string;
+  };
+  comunidad: ComunidadInfo;
+}
+
 // Opciones por defecto para las peticiones fetch
 const defaultOptions: RequestInit = {
   headers: {
@@ -242,6 +280,49 @@ export const parcelaService = {
   getParcelaHistory: () => api.get('/parcelas/history'),
 };
 
+// Interfaz para las estadísticas de pagos
+export interface EstadisticasPagos {
+  // Información general de pagos
+  pagosRealizados: number;
+  montoTotalPagado: number;
+  pagosPuntuales: number;
+  pagosAtrasados: number;
+  puntualidad: number;
+  saldoPendiente: number;
+  
+  // Gráficos
+  historialPagosMensuales: {
+    mes: string;
+    año: string;
+    etiqueta: string;
+    monto: number;
+  }[];
+  distribucionPagosEstado: {
+    alDia: number;
+    pendiente: number;
+    atrasado: number;
+  };
+  distribucionGastosPorTipo: {
+    ordinaria: number;
+    extraordinaria: number;
+    multa: number;
+    otro: number;
+  };
+  evolucionPuntualidad: {
+    mes: string;
+    año: string;
+    etiqueta: string;
+    porcentaje: number;
+  }[];
+  
+  // Próximo pago
+  proximoPago: {
+    fecha: string | null;
+    monto: number;
+    concepto: string;
+  };
+}
+
 export const pagosService = {
   // Funciones antiguas - mantenidas por compatibilidad
   getPendingPayments: () => api.get('/pagos/pendientes'),
@@ -258,6 +339,9 @@ export const pagosService = {
       : `${NETLIFY_FUNCTIONS_URL}/obtener-pagos-realizados`;
     return api.get<ResumenPagosRealizados>(url);
   },
+  
+  obtenerEstadisticasPagos: () => 
+    api.get<EstadisticasPagos>(`${NETLIFY_FUNCTIONS_URL}/obtener-estadisticas-pagos`),
   
   procesarPagoTransbank: (pagoData: { 
     idGasto?: number; 
@@ -315,4 +399,359 @@ export const adminService = {
   createNotification: (notificationData: any) => api.post('/admin/notificaciones', notificationData),
   getAlerts: () => api.get('/admin/alertas'),
   resolveAlert: (id: string) => api.put(`/admin/alertas/${id}/resolver`, {}),
+  
+  // Funciones específicas para el perfil del administrador
+  obtenerPerfilAdmin: () => 
+    fetchApi<AdminProfile>('/.netlify/functions/obtener-perfil-admin'),
+  
+  obtenerComunidadAdmin: () => 
+    fetchApi<ComunidadInfo>('/.netlify/functions/obtener-comunidad-admin'),
+  
+  editarComunidad: (comunidadData: {
+    nombre: string;
+    direccion_administrativa: string;
+    telefono_contacto: string;
+    email_contacto: string;
+    sitio_web: string;
+  }) => fetchApi<ComunidadInfo>(
+    '/.netlify/functions/editar-comunidad',
+    'PUT',
+    comunidadData
+  ),
+  
+  cambiarContrasenaAdmin: (passwordData: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => fetchApi<void>(
+    '/.netlify/functions/cambiar-contrasena-admin',
+    'POST',
+    passwordData
+  ),
+};
+
+// Funciones específicas para el administrador
+export async function obtenerPerfilAdmin(): Promise<ApiResponse<AdminProfile>> {
+  return fetchApi<AdminProfile>('/.netlify/functions/obtener-perfil-admin');
+}
+
+export async function obtenerComunidadAdmin(): Promise<ApiResponse<ComunidadInfo>> {
+  return fetchApi<ComunidadInfo>('/.netlify/functions/obtener-comunidad-admin');
+}
+
+export async function editarComunidad(
+  comunidadData: {
+    nombre: string;
+    direccion_administrativa: string;
+    telefono_contacto: string;
+    email_contacto: string;
+    sitio_web: string;
+  }
+): Promise<ApiResponse<ComunidadInfo>> {
+  return fetchApi<ComunidadInfo>(
+    '/.netlify/functions/editar-comunidad',
+    'PUT',
+    comunidadData
+  );
+}
+
+export async function cambiarContrasenaAdmin({
+  currentPassword,
+  newPassword,
+  confirmPassword,
+}: {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}): Promise<ApiResponse<void>> {
+  return fetchApi<void>(
+    '/.netlify/functions/cambiar-contrasena-admin',
+    'POST',
+    { currentPassword, newPassword, confirmPassword }
+  );
+}
+
+// Función para obtener resumen del dashboard del administrador
+export async function obtenerResumenDashboardAdmin(): Promise<ApiResponse<{
+  resumenData: {
+    totalUsuarios: number;
+    totalParcelas: number;
+    parcelasActivas: number;
+    pagosPendientes: number;
+    pagosPagados: number;
+    montoRecaudadoMes: number;
+    nombreComunidad: string;
+    totalCopropietarios: number;
+    contratosVigentes: number;
+    contratosProximosVencer: number;
+    alertasActivas: number;
+    avisosRecientes: number;
+  };
+  actividadesRecientes: {
+    id: number;
+    tipo: string;
+    descripcion: string;
+    fecha: string;
+    usuario: string;
+    parcelaId?: number;
+  }[];
+}>> {
+  try {
+    console.log('Consultando API para obtener resumen del dashboard');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No hay token de autenticación');
+      return {
+        success: false,
+        error: 'No hay token de autenticación',
+        data: {
+          resumenData: {
+            totalUsuarios: 0,
+            totalParcelas: 0,
+            parcelasActivas: 0,
+            pagosPendientes: 0,
+            pagosPagados: 0,
+            montoRecaudadoMes: 0,
+            nombreComunidad: "Sin autenticación",
+            totalCopropietarios: 0,
+            contratosVigentes: 0,
+            contratosProximosVencer: 0,
+            alertasActivas: 0,
+            avisosRecientes: 0
+          },
+          actividadesRecientes: []
+        }
+      };
+    }
+    
+    interface ResumenResponse {
+      data?: {
+        resumenData: {
+          totalUsuarios: number;
+          totalParcelas: number;
+          parcelasActivas: number;
+          pagosPendientes: number;
+          pagosPagados: number;
+          montoRecaudadoMes: number;
+          nombreComunidad: string;
+          totalCopropietarios: number;
+          contratosVigentes: number;
+          contratosProximosVencer: number;
+          alertasActivas: number;
+          avisosRecientes: number;
+        };
+        actividadesRecientes: {
+          id: number;
+          tipo: string;
+          descripcion: string;
+          fecha: string;
+          usuario: string;
+          parcelaId?: number;
+        }[];
+      };
+      resumenData?: {
+        totalUsuarios: number;
+        totalParcelas: number;
+        parcelasActivas: number;
+        pagosPendientes: number;
+        pagosPagados: number;
+        montoRecaudadoMes: number;
+        nombreComunidad: string;
+        totalCopropietarios: number;
+        contratosVigentes: number;
+        contratosProximosVencer: number;
+        alertasActivas: number;
+        avisosRecientes: number;
+      };
+      actividadesRecientes?: {
+        id: number;
+        tipo: string;
+        descripcion: string;
+        fecha: string;
+        usuario: string;
+        parcelaId?: number;
+      }[];
+    }
+    
+    const result = await fetchApi<ResumenResponse>(`${NETLIFY_FUNCTIONS_URL}/obtener-resumen-dashboard-admin`);
+    
+    // La respuesta de fetchApi ya incluye success y data, pero nuestra data está anidada
+    // dentro del campo "data" de la respuesta de la función Netlify
+    if (result.success && result.data) {
+      // Verificar si data.data existe (estructura de respuesta de Netlify)
+      if (result.data.data) {
+        // Transferir la estructura de datos correcta
+        return {
+          success: true,
+          data: result.data.data
+        };
+      }
+      
+      // Si data.resumenData existe directamente (por compatibilidad)
+      else if (result.data.resumenData) {
+        return {
+          success: true,
+          data: {
+            resumenData: result.data.resumenData,
+            actividadesRecientes: result.data.actividadesRecientes || []
+          }
+        };
+      }
+      
+      // La estructura no es la esperada
+      console.error('Estructura de respuesta incorrecta: No se encontró resumenData');
+      return {
+        success: false,
+        error: 'Estructura de respuesta incorrecta',
+        data: {
+          resumenData: {
+            totalUsuarios: 0,
+            totalParcelas: 0,
+            parcelasActivas: 0,
+            pagosPendientes: 0,
+            pagosPagados: 0,
+            montoRecaudadoMes: 0,
+            nombreComunidad: "Error en respuesta",
+            totalCopropietarios: 0,
+            contratosVigentes: 0,
+            contratosProximosVencer: 0,
+            alertasActivas: 0,
+            avisosRecientes: 0
+          },
+          actividadesRecientes: []
+        }
+      };
+    }
+    
+    return {
+      success: false,
+      error: result.error || 'Error desconocido',
+      data: {
+        resumenData: {
+          totalUsuarios: 0,
+          totalParcelas: 0,
+          parcelasActivas: 0,
+          pagosPendientes: 0,
+          pagosPagados: 0,
+          montoRecaudadoMes: 0,
+          nombreComunidad: "Error",
+          totalCopropietarios: 0,
+          contratosVigentes: 0,
+          contratosProximosVencer: 0,
+          alertasActivas: 0,
+          avisosRecientes: 0
+        },
+        actividadesRecientes: []
+      }
+    };
+  } catch (error) {
+    console.error('Error en obtenerResumenDashboardAdmin:', error);
+    return {
+      success: false,
+      error: 'Error al obtener resumen del dashboard',
+      data: {
+        resumenData: {
+          totalUsuarios: 0,
+          totalParcelas: 0,
+          parcelasActivas: 0,
+          pagosPendientes: 0,
+          pagosPagados: 0,
+          montoRecaudadoMes: 0,
+          nombreComunidad: "Error",
+          totalCopropietarios: 0,
+          contratosVigentes: 0,
+          contratosProximosVencer: 0,
+          alertasActivas: 0,
+          avisosRecientes: 0
+        },
+        actividadesRecientes: []
+      }
+    };
+  }
+}
+
+// Funciones para el mapa de administrador
+export const obtenerParcelasMapa = async (token: string, filtro?: { estado?: string }) => {
+  const queryParams = new URLSearchParams();
+  if (filtro?.estado && filtro.estado !== 'todos') {
+    queryParams.append('estado', filtro.estado);
+  }
+  
+  const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+  
+  const response = await fetch(`/.netlify/functions/obtener-parcelas-mapa${queryString}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al obtener parcelas del mapa');
+  }
+
+  return await response.json();
+};
+
+export const buscarParcelaMapa = async (token: string, busqueda: string, limite: number = 10) => {
+  const queryParams = new URLSearchParams({
+    busqueda,
+    limite: limite.toString()
+  });
+  
+  const response = await fetch(`/.netlify/functions/buscar-parcela-mapa?${queryParams.toString()}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al buscar parcelas');
+  }
+
+  return await response.json();
+};
+
+export const obtenerEstadisticasParcelas = async (token: string) => {
+  const response = await fetch('/.netlify/functions/obtener-estadisticas-parcelas', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al obtener estadísticas de parcelas');
+  }
+
+  return await response.json();
+};
+
+export const actualizarCoordenadasParcela = async (token: string, idParcela: number, latitud: number, longitud: number) => {
+  const response = await fetch('/.netlify/functions/actualizar-coordenadas-parcela', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      idParcela,
+      latitud,
+      longitud
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al actualizar coordenadas de la parcela');
+  }
+
+  return await response.json();
 };

@@ -1,7 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import styles from './Documentos.module.css';
+import axios from 'axios';
+// Importaciones para exportar a Excel
+import * as XLSX from 'xlsx';
+// Importaciones para exportar a PDF
+import { jsPDF } from 'jspdf';
+// Importar jspdf-autotable como una función normal
+import autoTable from 'jspdf-autotable';
 
 interface DocumentoItem {
   id: number;
@@ -13,16 +20,83 @@ interface DocumentoItem {
   comprobante: string | null;
 }
 
+interface PagoHistorialItem {
+  id: number;
+  montoPagado: number;
+  fechaPago: string;
+  estado: string;
+  comprobante: string | null;
+  descripcion: string | null;
+  concepto: string;
+  tipo: string;
+  nombreParcela: string;
+}
+
 export const Historial = () => {
-  const [filtroAnio, setFiltroAnio] = useState('2023');
+  const [filtroAnio, setFiltroAnio] = useState(new Date().getFullYear().toString());
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mostrarComprobante, setMostrarComprobante] = useState(false);
   const [comprobanteSeleccionado, setComprobanteSeleccionado] = useState<DocumentoItem | null>(null);
+  const [historialData, setHistorialData] = useState<DocumentoItem[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
   const { user } = useAuth();
   
   const currentYear = new Date().getFullYear();
+  
+  // Referencia al contenedor de la tabla para exportar a PDF
+  const tableRef = useRef<HTMLDivElement>(null);
+  
+  // Obtener el historial de pagos desde la API
+  useEffect(() => {
+    const obtenerHistorialPagos = async () => {
+      setCargando(true);
+      setError('');
+      try {
+        // Obtener el token de autenticación
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          throw new Error('No se encontró el token de autenticación');
+        }
+        
+        // Hacer la solicitud a la API
+        const response = await axios.get('/.netlify/functions/obtener-pagos-historial', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        // Verificar respuesta
+        if (response.data.success) {
+          // Convertir los datos de la API al formato requerido por nuestro componente
+          const pagosFormateados: DocumentoItem[] = response.data.data.map((pago: PagoHistorialItem) => ({
+            id: pago.id,
+            fecha: new Date(pago.fechaPago).toLocaleDateString('es-CL'),
+            tipo: pago.tipo.toLowerCase() === 'cuota ordinaria' ? 'pago' : 
+                  pago.tipo.toLowerCase() === 'documento' ? 'documento' : 'notificacion',
+            concepto: pago.concepto,
+            monto: pago.montoPagado,
+            estado: pago.estado,
+            comprobante: pago.comprobante
+          }));
+          
+          setHistorialData(pagosFormateados);
+        } else {
+          throw new Error(response.data.message || 'Error al obtener los datos');
+        }
+      } catch (err) {
+        console.error('Error al obtener historial de pagos:', err);
+        setError(err instanceof Error ? err.message : 'Error al cargar los datos');
+      } finally {
+        setCargando(false);
+      }
+    };
+    
+    obtenerHistorialPagos();
+  }, []);
   
   useEffect(() => {
     const checkIfMobile = () => {
@@ -38,64 +112,6 @@ export const Historial = () => {
     // Limpiar listener al desmontar
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
-  
-  // Datos de ejemplo para el historial
-  const historialData = [
-    {
-      id: 1,
-      fecha: '10/05/2023',
-      tipo: 'pago',
-      concepto: 'Pago Mensual Mayo 2023',
-      monto: 150000,
-      estado: 'Completado',
-      comprobante: 'COMP-2023-05-001'
-    },
-    {
-      id: 2,
-      fecha: '10/04/2023',
-      tipo: 'pago',
-      concepto: 'Pago Mensual Abril 2023',
-      monto: 150000,
-      estado: 'Completado',
-      comprobante: 'COMP-2023-04-001'
-    },
-    {
-      id: 3,
-      fecha: '15/03/2023',
-      tipo: 'documento',
-      concepto: 'Actualización de Contrato',
-      monto: null,
-      estado: 'Procesado',
-      comprobante: 'DOC-2023-03-001'
-    },
-    {
-      id: 4,
-      fecha: '10/03/2023',
-      tipo: 'pago',
-      concepto: 'Pago Mensual Marzo 2023',
-      monto: 150000,
-      estado: 'Completado',
-      comprobante: 'COMP-2023-03-001'
-    },
-    {
-      id: 5,
-      fecha: '20/02/2023',
-      tipo: 'notificacion',
-      concepto: 'Recordatorio de Pago',
-      monto: null,
-      estado: 'Leído',
-      comprobante: null
-    },
-    {
-      id: 6,
-      fecha: '10/02/2023',
-      tipo: 'pago',
-      concepto: 'Pago Mensual Febrero 2023',
-      monto: 150000,
-      estado: 'Completado',
-      comprobante: 'COMP-2023-02-001'
-    },
-  ];
   
   // Filtrar datos según los filtros seleccionados
   const datosFiltrados = historialData.filter(item => {
@@ -117,6 +133,7 @@ export const Historial = () => {
   const getEstadoClass = (estado: string): string => {
     switch (estado.toLowerCase()) {
       case 'completado':
+      case 'pagado':
         return styles.estadoCompletado;
       case 'procesado':
         return styles.estadoProcesado;
@@ -124,6 +141,8 @@ export const Historial = () => {
         return styles.estadoLeido;
       case 'pendiente':
         return styles.estadoPendiente;
+      case 'atrasado':
+        return styles.estadoAtrasado;
       default:
         return '';
     }
@@ -147,6 +166,7 @@ export const Historial = () => {
   const handleLogout = () => {
     // Aquí iría la lógica para cerrar sesión
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     window.location.href = '/login';
   };
   
@@ -164,6 +184,126 @@ export const Historial = () => {
   // Función para formatear fechas
   const formatFecha = (fecha: string) => {
     return fecha;
+  };
+
+  // Función para exportar a Excel
+  const exportarExcel = () => {
+    // Crear un array de datos para la exportación
+    const datosExcel = datosFiltrados.map(item => ({
+      'Fecha': item.fecha,
+      'Tipo': item.tipo === 'pago' ? 'Pago' : item.tipo === 'documento' ? 'Documento' : 'Notificación',
+      'Concepto': item.concepto,
+      'Monto': item.monto ? item.monto : '-',
+      'Estado': item.estado,
+      'Comprobante': item.comprobante || 'No disponible'
+    }));
+
+    // Crear una hoja de cálculo
+    const ws = XLSX.utils.json_to_sheet(datosExcel);
+    
+    // Crear un libro de trabajo y añadir la hoja
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'HistorialPagos');
+    
+    // Guardar el archivo
+    XLSX.writeFile(wb, `Historial_Documentos_${filtroAnio}.xlsx`);
+  };
+
+  // Función mejorada para exportar a PDF
+  const handleExportarPDF = () => {
+    try {
+      // Verificar si hay datos para exportar
+      if (datosFiltrados.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+      }
+      
+      // Crear un nuevo documento PDF
+      const doc = new jsPDF();
+      
+      // Añadir un logo o encabezado
+      doc.setFillColor(79, 70, 229);
+      doc.rect(14, 10, 10, 10, 'F');
+      
+      // Título del documento
+      doc.setFontSize(18);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Historial de Documentos y Pagos', 30, 18);
+      
+      // Línea separadora
+      doc.setDrawColor(220, 220, 220);
+      doc.line(14, 25, 196, 25);
+      
+      // Información del usuario y filtros
+      doc.setFontSize(10);
+      const nombreUsuario = user?.nombreCompleto || user?.name || 'Usuario';
+      doc.text(`Usuario: ${nombreUsuario}`, 14, 32);
+      doc.text(`Fecha de emisión: ${new Date().toLocaleDateString('es-CL')}`, 14, 37);
+      doc.text(`Filtros aplicados: Año ${filtroAnio} | Tipo: ${
+        filtroTipo === 'todos' ? 'Todos' : 
+        filtroTipo === 'pago' ? 'Pagos' : 
+        filtroTipo === 'documento' ? 'Documentos' : 'Notificaciones'
+      }`, 14, 42);
+      
+      // Preparar los datos para la tabla
+      const datosPDF = datosFiltrados.map(item => [
+        item.fecha,
+        item.tipo === 'pago' ? 'Pago' : item.tipo === 'documento' ? 'Documento' : 'Notificación',
+        item.concepto,
+        item.monto ? formatMonto(item.monto) : '-',
+        item.estado,
+        item.comprobante || 'No disponible'
+      ]);
+      
+      // Usar autoTable como una función independiente en lugar de un método de doc
+      autoTable(doc, {
+        head: [['Fecha', 'Tipo', 'Concepto', 'Monto', 'Estado', 'Comprobante']],
+        body: datosPDF,
+        startY: 48,
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [79, 70, 229], 
+          textColor: [255, 255, 255],
+          fontSize: 10
+        },
+        alternateRowStyles: { 
+          fillColor: [240, 240, 255] 
+        },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        },
+        margin: { top: 48 },
+        didDrawPage: (data) => {
+          // Pie de página
+          const pageSize = doc.internal.pageSize;
+          const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text(
+            `SIGEPA - Sistema de Gestión de Parcelas © ${currentYear} | Página ${data.pageNumber} de ${doc.getNumberOfPages()}`, 
+            pageSize.width / 2, 
+            pageHeight - 10, 
+            { align: 'center' }
+          );
+        }
+      });
+      
+      // Mensaje final
+      const finalY = (doc as any).lastAutoTable?.finalY || 150;
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Este documento es un resumen de sus pagos y documentos procesados en el sistema.', 14, finalY + 10);
+      doc.text('Para cualquier consulta, contáctese con administración.', 14, finalY + 15);
+            
+      // Guardar el PDF
+      doc.save(`Historial_Documentos_${filtroAnio}.pdf`);
+      
+      console.log('PDF exportado correctamente');
+    } catch (error) {
+      console.error('Error al exportar a PDF:', error);
+      alert('Ocurrió un error al exportar a PDF. Por favor, intente nuevamente.');
+    }
   };
 
   return (
@@ -391,9 +531,9 @@ export const Historial = () => {
                 onChange={(e) => setFiltroAnio(e.target.value)}
                 className={styles.select}
               >
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
-                <option value="2021">2021</option>
+                <option value={currentYear.toString()}>{currentYear}</option>
+                <option value={(currentYear - 1).toString()}>{currentYear - 1}</option>
+                <option value={(currentYear - 2).toString()}>{currentYear - 2}</option>
               </select>
             </div>
             
@@ -416,7 +556,15 @@ export const Historial = () => {
         
         <section>
           <div className={styles.activityContainer}>
-            {datosFiltrados.length > 0 ? (
+            {cargando ? (
+              <div className={styles.loadingState}>
+                <p>Cargando datos...</p>
+              </div>
+            ) : error ? (
+              <div className={styles.errorState}>
+                <p>Error al cargar los datos: {error}</p>
+              </div>
+            ) : datosFiltrados.length > 0 ? (
               <>
                 <div className={styles.tableHeader}>
                   <div className={styles.tableCell}>Fecha</div>
@@ -468,11 +616,19 @@ export const Historial = () => {
         </section>
         
         <div className={styles.exportOptions}>
-          <button className={styles.exportButton}>
+          <button 
+            className={styles.exportButton}
+            onClick={handleExportarPDF}
+            disabled={cargando || datosFiltrados.length === 0}
+          >
             <span className={styles.btnIcon}>📥</span>
             Exportar a PDF
           </button>
-          <button className={styles.exportButton}>
+          <button 
+            className={styles.exportButton}
+            onClick={exportarExcel}
+            disabled={cargando || datosFiltrados.length === 0}
+          >
             <span className={styles.btnIcon}>📊</span>
             Exportar a Excel
           </button>

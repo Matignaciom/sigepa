@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Parcelas.module.css';
 
@@ -12,75 +12,155 @@ declare global {
 
 // Componente para Google Maps
 const GoogleMapComponent = ({ coordinates }: { coordinates: { lat: number, lng: number } }) => {
-  // En un entorno de producción real, se utilizaría la biblioteca @react-google-maps/api
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapStatus, setMapStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  
+  // Validar coordenadas
+  const isValidCoord = (coord: any) => 
+    typeof coord === 'number' && !isNaN(coord) && isFinite(coord);
+  
+  const validLat = isValidCoord(coordinates.lat) ? coordinates.lat : -33.4489;
+  const validLng = isValidCoord(coordinates.lng) ? coordinates.lng : -70.6693;
+  
+  // Cargar el mapa solo una vez cuando el componente se monta
   useEffect(() => {
-    // Variable para guardar referencia al script
-    let mapScript: HTMLScriptElement | null = null;
+    // Si no hay un elemento de referencia, no hacer nada
+    if (!mapRef.current) {
+      console.error('El elemento de mapa no existe');
+      setMapStatus('error');
+      return;
+    }
     
-    // Función para cargar el mapa de Google
-    const loadGoogleMaps = () => {
-      // Definir la función global initMap primero, antes de cargar el script
-      window.initMap = () => {
-        const mapDiv = document.getElementById('google-map');
-        if (mapDiv) {
-          const map = new window.google.maps.Map(mapDiv, {
-            center: { lat: coordinates.lat, lng: coordinates.lng },
-            zoom: 15,
-          });
-
-          // Añadir un marcador
-          new window.google.maps.Marker({
-            position: { lat: coordinates.lat, lng: coordinates.lng },
-            map: map,
-            title: 'Mi Parcela'
-          });
-        }
-      };
-
-      // Comprobar si la API de Google Maps ya está cargada
-      if (!window.google) {
-        // Crear script para cargar la API
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyA7BnbM1NEQv3C-7Jj8S9mYL7BQ7JZ--G8&callback=initMap`;
-        script.async = true;
-        script.defer = true;
-        
-        // Manejar errores de carga
-        script.onerror = () => {
-          console.error('Error al cargar la API de Google Maps');
-          const mapDiv = document.getElementById('google-map');
-          if (mapDiv) {
-            mapDiv.innerHTML = '<div style="padding: 20px; text-align: center;">Error al cargar el mapa. Por favor, recargue la página.</div>';
-          }
-        };
-        
-        document.head.appendChild(script);
-        mapScript = script;
-      } else {
-        // Si ya está cargada, inicializar el mapa directamente
-        window.initMap();
+    // Función para mostrar un mapa estático como fallback
+    const showFallbackMap = () => {
+      if (mapRef.current) {
+        mapRef.current.innerHTML = `
+          <div style="padding: 20px; text-align: center; background-color: #f5f5f5; border-radius: 8px;">
+            <h3>Vista previa de ubicación</h3>
+            <p>Coordenadas: ${validLat.toFixed(6)}, ${validLng.toFixed(6)}</p>
+            <div style="margin: 10px 0; font-size: 12px; color: #666;">
+              La visualización del mapa no está disponible actualmente.
+            </div>
+          </div>
+        `;
       }
+      setMapStatus('error');
     };
-
-    loadGoogleMaps();
-
-    // Limpieza al desmontar
-    return () => {
-      // Eliminar la función global si existe
-      if (window.initMap) {
-        delete window.initMap;
+    
+    // Inicializar el mapa cuando Google Maps ya está cargado
+    const initializeMap = () => {
+      if (!window.google || !window.google.maps) {
+        showFallbackMap();
+        return;
       }
       
-      // Eliminar el script si se creó uno
-      if (mapScript && document.head.contains(mapScript)) {
-        document.head.removeChild(mapScript);
+      try {
+        const mapOptions = {
+          center: { lat: validLat, lng: validLng },
+          zoom: 15,
+          mapTypeControl: false,
+          fullscreenControl: false,
+          streetViewControl: false
+        };
+        
+        const map = new window.google.maps.Map(mapRef.current, mapOptions);
+        
+        new window.google.maps.Marker({
+          position: { lat: validLat, lng: validLng },
+          map: map,
+          title: 'Mi Parcela'
+        });
+        
+        setMapStatus('loaded');
+      } catch (error) {
+        console.error('Error al inicializar el mapa:', error);
+        showFallbackMap();
       }
     };
-  }, [coordinates]);
-
+    
+    // Crear un elemento script para cargar Google Maps API
+    const loadGoogleMapsScript = () => {
+      // Si hay un script de Google Maps en progreso, no crear otro
+      if (document.querySelector('script[src*="maps.googleapis.com/maps/api"]')) {
+        // Esperar a que la API se cargue
+        const checkGoogleInterval = setInterval(() => {
+          if (window.google && window.google.maps) {
+            clearInterval(checkGoogleInterval);
+            initializeMap();
+          }
+        }, 200);
+        
+        // Establecer un tiempo límite
+        setTimeout(() => {
+          clearInterval(checkGoogleInterval);
+          if (mapStatus === 'loading') {
+            showFallbackMap();
+          }
+        }, 10000);
+        
+        return;
+      }
+      
+      // Crear script
+      const script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyA7BnbM1NEQv3C-7Jj8S9mYL7BQ7JZ--G8&loading=async';
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = initializeMap;
+      script.onerror = showFallbackMap;
+      
+      document.head.appendChild(script);
+    };
+    
+    // Si Google Maps ya está cargado, inicializar directamente
+    if (window.google && window.google.maps) {
+      initializeMap();
+    } else {
+      loadGoogleMapsScript();
+    }
+    
+    // Establecer un tiempo límite general para la carga
+    const timeoutId = setTimeout(() => {
+      if (mapStatus === 'loading') {
+        showFallbackMap();
+      }
+    }, 10000);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [coordinates.lat, coordinates.lng, mapStatus]);
+  
   return (
     <div className={styles.mapContainer}>
-      <div id="google-map" className={styles.googleMap}></div>
+      {mapStatus === 'loading' && (
+        <div className={styles.mapLoading} style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          zIndex: 1
+        }}>
+          <div className={styles.spinner}></div>
+          <p>Cargando mapa...</p>
+        </div>
+      )}
+      <div 
+        ref={mapRef}
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          minHeight: '300px',
+          backgroundColor: '#f5f5f5'
+        }}
+      ></div>
     </div>
   );
 };
@@ -112,78 +192,31 @@ interface Parcela {
   }[];
 }
 
-export const Parcela = () => {
-  // Datos de ejemplo para múltiples parcelas basados en el schema.sql
-  const parcelasData: Parcela[] = [
-    {
-      idParcela: 1,
-      nombre: 'Parcela A-123',
-      direccion: 'Sector Norte, Lote 45, Valle Central',
-      ubicacion: {
-        lat: -33.4489,
-        lng: -70.6693
-      },
-      area: 0.75,
-      estado: 'Al día',
-      fechaAdquisicion: '15/03/2020',
-      valorCatastral: 75000000,
-      contrato: {
-        estado: 'Vigente',
-        fechaInicio: '15/03/2020',
-        fechaFin: '15/03/2030'
-      },
-      gastosPendientes: [
-        {
-          idGasto: 1,
-          concepto: 'Cuota Ordinaria Junio 2023',
-          monto: 150000,
-          fechaVencimiento: '15/06/2023',
-          estado: 'Pendiente'
-        }
-      ]
-    },
-    {
-      idParcela: 2,
-      nombre: 'Parcela B-456',
-      direccion: 'Sector Sur, Lote 12, Valle Central',
-      ubicacion: {
-        lat: -33.4579,
-        lng: -70.6583
-      },
-      area: 1.25,
-      estado: 'Pendiente',
-      fechaAdquisicion: '10/05/2019',
-      valorCatastral: 120000000,
-      contrato: {
-        estado: 'Vigente',
-        fechaInicio: '10/05/2019',
-        fechaFin: '10/05/2029'
-      },
-      gastosPendientes: [
-        {
-          idGasto: 2,
-          concepto: 'Cuota Extraordinaria Mejoras',
-          monto: 300000,
-          fechaVencimiento: '30/07/2023',
-          estado: 'Pendiente'
-        },
-        {
-          idGasto: 3,
-          concepto: 'Cuota Ordinaria Julio 2023',
-          monto: 180000,
-          fechaVencimiento: '15/07/2023',
-          estado: 'Pendiente'
-        }
-      ]
+// Interfaz para la respuesta de la API
+interface ParcelasResponse {
+  success: boolean;
+  message: string;
+  data: {
+    parcelas: Parcela[];
+    estadisticas: {
+      total: number;
+      por_estado: {
+        "Al día": number;
+        "Pendiente": number;
+        "Atrasado": number;
+      }
     }
-  ];
+  }
+}
 
+export const Parcela = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedParcelaIndex, setSelectedParcelaIndex] = useState(0);
   const [showParcelaSelector, setShowParcelaSelector] = useState(false);
+  const [parcelasData, setParcelasData] = useState<Parcela[]>([]);
   
   const currentYear = new Date().getFullYear();
 
@@ -198,10 +231,147 @@ export const Parcela = () => {
     // Añadir listener para cambios de tamaño
     window.addEventListener('resize', checkIfMobile);
 
-    // Simular carga de datos (en producción sería una llamada a la API)
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 600);
+    // Cargar datos de parcelas desde la API
+    const cargarParcelas = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Obtener token de autenticación
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          setError('No se ha encontrado la sesión de usuario');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Realizar llamada a la API
+        const response = await fetch('/.netlify/functions/obtener-parcelas-usuario', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const data: ParcelasResponse = await response.json();
+        
+        if (data.success && data.data.parcelas.length > 0) {
+          // Transformar los datos si es necesario
+          const parcelas = data.data.parcelas.map(parcela => {
+            // Si no tiene contrato, crear un objeto vacío
+            if (!parcela.contrato) {
+              parcela.contrato = {
+                estado: 'Sin contrato',
+                fechaInicio: '',
+                fechaFin: ''
+              };
+            }
+            
+            // Asegurar que los valores númericos sean del tipo correcto
+            const area = typeof parcela.area === 'string' ? parseFloat(parcela.area) : parcela.area;
+            const valorCatastral = typeof parcela.valorCatastral === 'string' ? 
+              parseFloat(parcela.valorCatastral) : parcela.valorCatastral;
+            
+            // Si no tiene datos de ubicación, usar valores por defecto
+            let ubicacion = { lat: -33.4489, lng: -70.6693 };
+
+            // Intentar extraer ubicación si existe
+            if (parcela.ubicacion) {
+              const isValidCoord = (coord) => 
+                typeof coord === 'number' && !isNaN(coord) && isFinite(coord);
+              
+              // Validar latitud y longitud
+              if (isValidCoord(parcela.ubicacion.lat) && isValidCoord(parcela.ubicacion.lng)) {
+                ubicacion = parcela.ubicacion;
+              } else if (typeof parcela.ubicacion === 'string') {
+                // Intentar extraer ubicación del formato ST_AsText(POINT(lng lat))
+                try {
+                  const match = /POINT\(([^ ]+) ([^)]+)\)/.exec(parcela.ubicacion);
+                  if (match) {
+                    const lng = parseFloat(match[1]);
+                    const lat = parseFloat(match[2]);
+                    
+                    if (isValidCoord(lat) && isValidCoord(lng)) {
+                      ubicacion = { lat, lng };
+                    }
+                  }
+                } catch (error) {
+                  console.error('Error al parsear ubicación:', error);
+                }
+              }
+            }
+            
+            // Cargar gastos pendientes desde la API
+            return {
+              ...parcela,
+              // Convertir explícitamente los campos numéricos
+              area: isNaN(area) ? 0 : area,
+              valorCatastral: isNaN(valorCatastral) ? 0 : valorCatastral,
+              // Si no tiene datos de ubicación, usar valores por defecto
+              ubicacion: ubicacion,
+              // Inicialmente dejar los gastos pendientes vacíos, se cargarán en otra llamada
+              gastosPendientes: []
+            };
+          });
+          
+          setParcelasData(parcelas);
+          
+          // Cargar los gastos pendientes para cada parcela
+          cargarGastosPendientes(parcelas);
+        } else {
+          setError(data.message || 'No se encontraron parcelas');
+        }
+      } catch (error) {
+        console.error('Error al cargar parcelas:', error);
+        setError('Error al cargar la información de parcelas');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    // Función para cargar los gastos pendientes de las parcelas
+    const cargarGastosPendientes = async (parcelas: Parcela[]) => {
+      try {
+        const token = localStorage.getItem('token');
+        
+        if (!token) return;
+        
+        // Obtener los pagos pendientes
+        const response = await fetch('/.netlify/functions/obtener-pagos-pendientes', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.data.pagosPendientes.length > 0) {
+          // Mapear los pagos pendientes a cada parcela
+          const parcelasConGastos = parcelas.map(parcela => {
+            const gastosDeParcela = data.data.pagosPendientes
+              .filter(pago => pago.idParcela === parcela.idParcela)
+              .map(pago => ({
+                idGasto: pago.idGasto,
+                concepto: pago.concepto,
+                monto: pago.monto,
+                fechaVencimiento: pago.fechaVencimiento,
+                estado: pago.estado
+              }));
+            
+            return {
+              ...parcela,
+              gastosPendientes: gastosDeParcela
+            };
+          });
+          
+          setParcelasData(parcelasConGastos);
+        }
+      } catch (error) {
+        console.error('Error al cargar gastos pendientes:', error);
+      }
+    };
+    
+    cargarParcelas();
 
     // Limpiar listener al desmontar
     return () => window.removeEventListener('resize', checkIfMobile);
@@ -216,21 +386,38 @@ export const Parcela = () => {
   const handleLogout = () => {
     // Aquí iría la lógica para cerrar sesión
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
     window.location.href = '/login';
   };
 
   // Formatear valor monetario
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: any) => {
+    // Validar si es un número o convertir a número si es un string
+    const valorNumerico = typeof value === 'string' ? parseFloat(value) : value;
+    
+    // Si no es un número válido, mostrar valor por defecto
+    if (isNaN(valorNumerico) || valorNumerico === null || valorNumerico === undefined) {
+      return "Valor no especificado";
+    }
+    
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
       currency: 'CLP',
       maximumFractionDigits: 0
-    }).format(value);
+    }).format(valorNumerico);
   };
 
   // Formatear superficie
-  const formatArea = (hectareas: number) => {
-    return `${hectareas.toFixed(2)} hectáreas (${(hectareas * 10000).toFixed(0)} m²)`;
+  const formatArea = (hectareas: any) => {
+    // Validar si es un número o convertir a número si es un string
+    const areaNumero = typeof hectareas === 'string' ? parseFloat(hectareas) : hectareas;
+    
+    // Si no es un número válido, mostrar valor por defecto
+    if (isNaN(areaNumero) || areaNumero === null || areaNumero === undefined) {
+      return "Área no especificada";
+    }
+    
+    return `${areaNumero.toFixed(2)} hectáreas (${(areaNumero * 10000).toFixed(0)} m²)`;
   };
 
   // Toggle selector de parcelas
@@ -245,7 +432,7 @@ export const Parcela = () => {
   };
 
   // Obtener la parcela seleccionada
-  const parcelaData = parcelasData[selectedParcelaIndex];
+  const parcelaData = parcelasData.length > 0 ? parcelasData[selectedParcelaIndex] : null;
 
   if (isLoading) {
     return (
@@ -256,10 +443,10 @@ export const Parcela = () => {
     );
   }
 
-  if (error) {
+  if (error || !parcelaData || parcelasData.length === 0) {
     return (
       <div className={styles.errorContainer}>
-        <p className={styles.errorMessage}>{error}</p>
+        <p className={styles.errorMessage}>{error || 'No se encontraron parcelas asociadas a su cuenta'}</p>
         <button 
           className={styles.retryButton}
           onClick={() => window.location.reload()}
@@ -618,14 +805,14 @@ export const Parcela = () => {
             Gastos Pendientes
           </h2>
           <div className={styles.activityContainer}>
-            {parcelaData.gastosPendientes.length > 0 ? (
+            {parcelaData.gastosPendientes && parcelaData.gastosPendientes.length > 0 ? (
               parcelaData.gastosPendientes.map(gasto => (
                 <div className={styles.activityItem} key={gasto.idGasto}>
                   <div className={styles.activityIcon}>💸</div>
                   <div className={styles.activityContent}>
                     <p className={styles.activityText}>{gasto.concepto}</p>
                     <p className={styles.activityTime}>
-                      Vencimiento: {gasto.fechaVencimiento} - Monto: {formatCurrency(gasto.monto)}
+                      Vencimiento: {new Date(gasto.fechaVencimiento).toLocaleDateString('es-CL')} - Monto: {formatCurrency(gasto.monto)}
                     </p>
                   </div>
                 </div>
@@ -648,7 +835,21 @@ export const Parcela = () => {
             <img src="/favicon.svg" alt="SIGEPA Logo" className={styles.faviconSmall} />
             Ubicación Geoespacial
           </h2>
-          <GoogleMapComponent coordinates={parcelaData.ubicacion} />
+          <div className={styles.mapContainer}>
+            {(parcelaData.ubicacion && 
+              typeof parcelaData.ubicacion === 'object' && 
+              'lat' in parcelaData.ubicacion && 
+              'lng' in parcelaData.ubicacion) ? (
+              <>
+                <GoogleMapComponent coordinates={parcelaData.ubicacion} />
+                
+              </>
+            ) : (
+              <div className={styles.noMapContainer} style={{padding: "20px", textAlign: "center"}}>
+                <p>No hay información de ubicación disponible para esta parcela.</p>
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Botones de acción */}
